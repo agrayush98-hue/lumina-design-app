@@ -1,4 +1,4 @@
-import DesignCanvas from './components/DesignCanvas'
+import DesignCanvas from './DesignCanvas'
 
 // ─────────────────────────────────────────────────────────────
 // STYLES  (scoped inline — no external CSS file needed for App)
