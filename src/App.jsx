@@ -1,7 +1,22 @@
+import { useState } from 'react'
 import DesignCanvas from './DesignCanvas'
 
+// ── Import UI Components ─────────────────────────────────────
+import Toolbar from './components/Toolbar'
+import FloorPlanUpload from './components/FloorPlanUpload'
+import FixturePanel from './components/FixturePanel'
+import ElectricalPanel from './components/ElectricalPanel'
+import RoomSettingsPanel from './components/RoomSettingsPanel'
+import ReportPanel from './components/ReportPanel'
+import LoadProjectModal from './components/LoadProjectModal'
+import FixtureLibraryModal from './components/FixtureLibraryModal'
+import RoomTabsBar from './components/RoomTabsBar'
+import FloorTabsBar from './components/FloorTabsBar'
+import SharedView from './components/SharedView'
+import AIRecommender from './components/AIRecommender'
+
 // ─────────────────────────────────────────────────────────────
-// STYLES  (scoped inline — no external CSS file needed for App)
+// STYLES
 // ─────────────────────────────────────────────────────────────
 const S = {
   root: {
@@ -43,13 +58,13 @@ const S = {
   logoMark: {
     width: 22,
     height: 22,
-    background: 'linear-gradient(135deg, #1e4a6e 0%, #39c5cf 100%)',
+    background: 'linear-gradient(135deg, #d4a843 0%, #f5e6c8 100%)',
     borderRadius: 3,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 10,
-    color: '#fff',
+    color: '#0f0f0f',
     fontWeight: 600,
   },
   divider: {
@@ -100,8 +115,75 @@ const S = {
     letterSpacing: '0.08em',
   },
 
-  // ── Main area ────────────────────────────────────────────────
-  main: {
+  // ── Main layout: sidebar + canvas area ────────────────────
+  mainWrapper: {
+    flex: 1,
+    display: 'flex',
+    overflow: 'hidden',
+  },
+
+  // ── Left sidebar (panels) ────────────────────────────────
+  sidebar: {
+    width: 320,
+    background: '#0d1117',
+    borderRight: '1px solid #1a2b3c',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+
+  sidebarTabs: {
+    display: 'flex',
+    gap: 0,
+    borderBottom: '1px solid #1a2b3c',
+    background: '#0a0f14',
+    flexShrink: 0,
+  },
+
+  sidebarTab: {
+    flex: 1,
+    padding: '10px 12px',
+    fontFamily: 'IBM Plex Mono, monospace',
+    fontSize: 10,
+    textAlign: 'center',
+    cursor: 'pointer',
+    borderBottom: '2px solid transparent',
+    color: '#2d4f68',
+    transition: 'all 0.2s',
+    userSelect: 'none',
+  },
+
+  sidebarTabActive: {
+    color: '#d4a843',
+    borderBottomColor: '#d4a843',
+  },
+
+  sidebarContent: {
+    flex: 1,
+    overflow: 'auto',
+    padding: '12px',
+  },
+
+  // ── Canvas area ──────────────────────────────────────────
+  canvasArea: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+
+  canvasToolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 12px',
+    background: '#0a0f14',
+    borderBottom: '1px solid #1a2b3c',
+    flexShrink: 0,
+  },
+
+  canvasMain: {
     flex: 1,
     display: 'flex',
     alignItems: 'center',
@@ -110,10 +192,10 @@ const S = {
     position: 'relative',
   },
 
-  // ── Canvas wrapper ───────────────────────────────────────────
   canvasWrap: {
     position: 'relative',
   },
+
   canvasLabel: {
     position: 'absolute',
     top: -28,
@@ -124,17 +206,50 @@ const S = {
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
   },
-  canvasId: {
-    position: 'absolute',
-    top: -28,
-    right: 0,
-    fontFamily: 'IBM Plex Mono, monospace',
-    fontSize: 10,
-    color: '#1e3448',
-    letterSpacing: '0.06em',
+
+  // ── Right sidebar (results) ──────────────────────────────
+  rightSidebar: {
+    width: 280,
+    background: '#0d1117',
+    borderLeft: '1px solid #1a2b3c',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
   },
 
-  // ── Status bar ───────────────────────────────────────────────
+  rightTabs: {
+    display: 'flex',
+    gap: 0,
+    borderBottom: '1px solid #1a2b3c',
+    background: '#0a0f14',
+    flexShrink: 0,
+  },
+
+  rightTab: {
+    flex: 1,
+    padding: '10px 12px',
+    fontFamily: 'IBM Plex Mono, monospace',
+    fontSize: 10,
+    textAlign: 'center',
+    cursor: 'pointer',
+    borderBottom: '2px solid transparent',
+    color: '#2d4f68',
+    transition: 'all 0.2s',
+    userSelect: 'none',
+  },
+
+  rightTabActive: {
+    color: '#d4a843',
+    borderBottomColor: '#d4a843',
+  },
+
+  rightContent: {
+    flex: 1,
+    overflow: 'auto',
+    padding: '12px',
+  },
+
+  // ── Status bar ───────────────────────────────────────────
   statusBar: {
     height: 28,
     minHeight: 28,
@@ -165,9 +280,14 @@ const S = {
 }
 
 // ─────────────────────────────────────────────────────────────
-// COMPONENT
+// MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
 export default function App() {
+  const [leftTab, setLeftTab] = useState('settings') // 'settings', 'library', 'floor'
+  const [rightTab, setRightTab] = useState('electrical') // 'electrical', 'report', 'ai'
+  const [showLoadModal, setShowLoadModal] = useState(false)
+  const [showLibraryModal, setShowLibraryModal] = useState(false)
+
   return (
     <div style={S.root}>
 
@@ -179,7 +299,7 @@ export default function App() {
             LUMINA DESIGN
           </div>
           <div style={S.divider} />
-          <span style={S.headerTag}>Canvas v0.1</span>
+          <span style={S.headerTag}>Engineering Platform</span>
         </div>
 
         <div style={S.headerRight}>
@@ -191,14 +311,127 @@ export default function App() {
         </div>
       </header>
 
-      {/* ── Canvas area ─────────────────────────────────────── */}
-      <main style={S.main}>
-        <div style={S.canvasWrap}>
-          <span style={S.canvasLabel}>floor plan — ground floor</span>
-          <span style={S.canvasId}>#PROJ-001 · ROOM-01</span>
-          <DesignCanvas />
+      {/* ── Main content area ──────────────────────────────── */}
+      <div style={S.mainWrapper}>
+
+        {/* ── LEFT SIDEBAR: Settings, Library, Floors ──────── */}
+        <div style={S.sidebar}>
+          <div style={S.sidebarTabs}>
+            <div
+              style={{
+                ...S.sidebarTab,
+                ...(leftTab === 'settings' ? S.sidebarTabActive : {}),
+              }}
+              onClick={() => setLeftTab('settings')}
+            >
+              SETTINGS
+            </div>
+            <div
+              style={{
+                ...S.sidebarTab,
+                ...(leftTab === 'library' ? S.sidebarTabActive : {}),
+              }}
+              onClick={() => setLeftTab('library')}
+            >
+              LIBRARY
+            </div>
+            <div
+              style={{
+                ...S.sidebarTab,
+                ...(leftTab === 'floor' ? S.sidebarTabActive : {}),
+              }}
+              onClick={() => setLeftTab('floor')}
+            >
+              FLOORS
+            </div>
+          </div>
+
+          <div style={S.sidebarContent}>
+            {leftTab === 'settings' && <RoomSettingsPanel />}
+            {leftTab === 'library' && (
+              <div style={{ padding: '12px', textAlign: 'center' }}>
+                <button
+                  onClick={() => setShowLibraryModal(true)}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#d4a843',
+                    color: '#0f0f0f',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                  }}
+                >
+                  Open Fixture Library
+                </button>
+              </div>
+            )}
+            {leftTab === 'floor' && <FloorPlanUpload />}
+          </div>
         </div>
-      </main>
+
+        {/* ── CENTER: Canvas ──────────────────────────────── */}
+        <div style={S.canvasArea}>
+          {/* Toolbar */}
+          <div style={S.canvasToolbar}>
+            <Toolbar onLoadProject={() => setShowLoadModal(true)} />
+          </div>
+
+          {/* Canvas + room/floor tabs */}
+          <div style={S.canvasMain}>
+            <div>
+              <RoomTabsBar />
+              <div style={S.canvasWrap}>
+                <DesignCanvas />
+              </div>
+              <FloorTabsBar />
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT SIDEBAR: Electrical, Report, AI ──────── */}
+        <div style={S.rightSidebar}>
+          <div style={S.rightTabs}>
+            <div
+              style={{
+                ...S.rightTab,
+                ...(rightTab === 'electrical' ? S.rightTabActive : {}),
+              }}
+              onClick={() => setRightTab('electrical')}
+            >
+              ELECTRICAL
+            </div>
+            <div
+              style={{
+                ...S.rightTab,
+                ...(rightTab === 'report' ? S.rightTabActive : {}),
+              }}
+              onClick={() => setRightTab('report')}
+            >
+              REPORT
+            </div>
+            <div
+              style={{
+                ...S.rightTab,
+                ...(rightTab === 'ai' ? S.rightTabActive : {}),
+              }}
+              onClick={() => setRightTab('ai')}
+            >
+              AI
+            </div>
+          </div>
+
+          <div style={S.rightContent}>
+            {rightTab === 'electrical' && <ElectricalPanel />}
+            {rightTab === 'report' && <ReportPanel />}
+            {rightTab === 'ai' && <AIRecommender />}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modals ──────────────────────────────────────────── */}
+      {showLoadModal && <LoadProjectModal onClose={() => setShowLoadModal(false)} />}
+      {showLibraryModal && <FixtureLibraryModal onClose={() => setShowLibraryModal(false)} />}
 
       {/* ── Status bar ──────────────────────────────────────── */}
       <footer style={S.statusBar}>
@@ -216,11 +449,11 @@ export default function App() {
             AREA <span style={S.statusVal}>24.00 m²</span>
           </div>
           <div style={S.statusItem}>
-            OBJECTS <span style={S.statusVal}>0</span>
+            FIXTURES <span style={S.statusVal}>0</span>
           </div>
         </div>
         <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, color: '#1e3448' }}>
-          REACT · KONVA · VITE
+          REACT · KONVA · VITE · FIREBASE
         </div>
       </footer>
 
