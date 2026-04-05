@@ -1,144 +1,95 @@
-import { useRef } from 'react'
-import { Stage, Layer, Rect, Line, Text, Group, Arrow } from 'react-konva'
+import { useRef, useMemo } from 'react'
+import { Stage, Layer, Rect, Line, Text, Group, Arrow, Circle, RegularPolygon, Star } from 'react-konva'
+import BeamVisualization from './components/BeamVisualization'
+import LuxHeatMap from './components/LuxHeatMap'
+import { computeRoomGeometry } from './utils/canvasConstants'
 
-// ─────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────
 const CANVAS_W = 1000
 const CANVAS_H = 700
 
-// Room dimensions in real-world units (mm)
-const ROOM_W_MM = 6000   // 6 m
-const ROOM_H_MM = 4000   // 4 m
-
-// Scale: pixels per millimetre
-// Fit room into ~640×420 of the 1000×700 canvas (leaves margin for labels)
-const SCALE = Math.min(
-  (CANVAS_W - 260) / ROOM_W_MM,
-  (CANVAS_H - 220) / ROOM_H_MM,
-)
-
-// Room pixel dimensions
-const ROOM_PX_W = ROOM_W_MM * SCALE
-const ROOM_PX_H = ROOM_H_MM * SCALE
-
-// Room origin — centred on canvas, shifted slightly left for right-side panel space
-const ROOM_X = Math.round((CANVAS_W - ROOM_PX_W) / 2) - 20
-const ROOM_Y = Math.round((CANVAS_H - ROOM_PX_H) / 2) + 10
-
-// Grid cell in mm (500 mm = 0.5 m squares)
-const GRID_STEP_MM   = 500
-const GRID_STEP_PX   = GRID_STEP_MM * SCALE
-
-// ─────────────────────────────────────────────────────────────
-// THEME COLOURS  (matches index.css tokens, duplicated here
-// because Konva draws to Canvas API — CSS variables don't apply)
-// ─────────────────────────────────────────────────────────────
 const C = {
-  bgVoid:        '#090c10',
+  bgVoid:        '#060a0e',
   bgCanvas:      '#0d1117',
-  gridMinor:     '#111923',
-  gridMajor:     '#151f2c',
-  roomFill:      '#0e1929',
-  roomStroke:    '#2e7aad',
-  roomGlow:      '#1a4060',
-  cornerMark:    '#39c5cf',
-  dimLine:       '#2d4f68',
-  dimArrow:      '#3a6b8a',
-  dimText:       '#5a8fad',
-  dimTextBright: '#7db8d4',
-  labelBg:       '#111d28',
+  gridMinor:     '#111a25',
+  gridMajor:     '#1a2b3c',
+  roomFill:      '#0e1e30',
+  roomStroke:    '#00e5ff',
+  roomGlow:      '#003a4a',
+  cornerMark:    '#00e5ff',
+  dimLine:       '#1e3a4a',
+  dimArrow:      '#2a5a6a',
+  dimText:       '#2d4f68',
+  dimTextBright: '#3a7a8e',
+  labelBg:       '#0a1520',
   labelText:     '#cdd9e5',
   labelMuted:    '#4a7a96',
-  axisText:      '#2a4a5e',
-  tickMark:      '#1e3448',
+  axisText:      '#2d4f68',
+  tickMark:      '#1a2b3c',
   statusGreen:   '#3dba74',
   statusDot:     '#2a9457',
 }
 
-// ─────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────
+// ── Sub-components — all receive geometry object `g` ─────────────────────────
 
-/** Background grid — two passes: minor (500mm) and major (1000mm) */
-function BackgroundGrid() {
-  const minorLines = []
-  const majorLines = []
+function BackgroundGrid({ g, gridSize }) {
+  const minorStep = (gridSize * g.scale) / 2
+  const majorStep = gridSize * g.scale
+  const minorLines = [], majorLines = []
 
-  // Vertical lines across full canvas
-  for (let x = 0; x <= CANVAS_W; x += GRID_STEP_PX / 2) {
-    const isMajor = Math.abs(x % GRID_STEP_PX) < 0.5
+  for (let x = 0; x <= CANVAS_W; x += minorStep) {
+    const isMajor = majorStep > 0 && Math.abs(x % majorStep) < 0.5
     ;(isMajor ? majorLines : minorLines).push(
       <Line key={`v-${x}`} points={[x, 0, x, CANVAS_H]}
         stroke={isMajor ? C.gridMajor : C.gridMinor}
         strokeWidth={isMajor ? 0.75 : 0.4} />
     )
   }
-
-  // Horizontal lines across full canvas
-  for (let y = 0; y <= CANVAS_H; y += GRID_STEP_PX / 2) {
-    const isMajor = Math.abs(y % GRID_STEP_PX) < 0.5
+  for (let y = 0; y <= CANVAS_H; y += minorStep) {
+    const isMajor = majorStep > 0 && Math.abs(y % majorStep) < 0.5
     ;(isMajor ? majorLines : minorLines).push(
       <Line key={`h-${y}`} points={[0, y, CANVAS_W, y]}
         stroke={isMajor ? C.gridMajor : C.gridMinor}
         strokeWidth={isMajor ? 0.75 : 0.4} />
     )
   }
-
   return <Group>{minorLines}{majorLines}</Group>
 }
 
-/** Ruler ticks along top and left edges */
-function RulerTicks() {
+function RulerTicks({ g, gridSize }) {
+  const { roomX, roomY, scale, roomW_mm, roomH_mm } = g
   const ticks = []
   const TICK_H = 6
-  const FONT   = { fontSize: 8, fontFamily: 'IBM Plex Mono', fill: C.axisText }
+  const FONT = { fontSize: 8, fontFamily: 'IBM Plex Mono', fill: C.axisText }
 
-  // Top ruler — marks every 0.5 m starting from room origin
-  for (let m = 0; m <= ROOM_W_MM; m += GRID_STEP_MM) {
-    const px = ROOM_X + m * SCALE
+  for (let m = 0; m <= roomW_mm; m += gridSize) {
+    const px = roomX + m * scale
     ticks.push(
-      <Line key={`rt-${m}`}
-        points={[px, ROOM_Y - 8, px, ROOM_Y - 8 + TICK_H]}
-        stroke={C.tickMark} strokeWidth={1} />,
-      <Text key={`rl-${m}`}
-        x={px - 10} y={ROOM_Y - 24}
-        text={`${(m / 1000).toFixed(1)}m`}
-        width={20} align='center'
-        {...FONT} />
+      <Line key={`rt-${m}`} points={[px, roomY - 8, px, roomY - 8 + TICK_H]} stroke={C.tickMark} strokeWidth={1} />,
+      <Text key={`rl-${m}`} x={px - 10} y={roomY - 24} text={`${(m / 1000).toFixed(1)}m`}
+        width={20} align='center' {...FONT} />
     )
   }
-
-  // Left ruler — marks every 0.5 m
-  for (let m = 0; m <= ROOM_H_MM; m += GRID_STEP_MM) {
-    const py = ROOM_Y + m * SCALE
+  for (let m = 0; m <= roomH_mm; m += gridSize) {
+    const py = roomY + m * scale
     ticks.push(
-      <Line key={`lt-${m}`}
-        points={[ROOM_X - 8, py, ROOM_X - 8 + TICK_H, py]}
-        stroke={C.tickMark} strokeWidth={1} />,
-      <Text key={`ll-${m}`}
-        x={ROOM_X - 38} y={py - 5}
-        text={`${(m / 1000).toFixed(1)}m`}
-        width={28} align='right'
-        {...FONT} />
+      <Line key={`lt-${m}`} points={[roomX - 8, py, roomX - 8 + TICK_H, py]} stroke={C.tickMark} strokeWidth={1} />,
+      <Text key={`ll-${m}`} x={roomX - 38} y={py - 5} text={`${(m / 1000).toFixed(1)}m`}
+        width={28} align='right' {...FONT} />
     )
   }
-
   return <Group>{ticks}</Group>
 }
 
-/** Corner accent marks — small L-shaped brackets at room corners */
-function CornerMarks() {
+function CornerMarks({ g }) {
+  const { roomX, roomY, roomPxW, roomPxH } = g
   const SIZE = 14
   const STROKE = { stroke: C.cornerMark, strokeWidth: 1.5 }
   const corners = [
-    // [cx, cy, hDir, vDir]  +1 = inward from that corner
-    [ROOM_X,           ROOM_Y,            1,  1],
-    [ROOM_X + ROOM_PX_W, ROOM_Y,          -1,  1],
-    [ROOM_X,           ROOM_Y + ROOM_PX_H, 1, -1],
-    [ROOM_X + ROOM_PX_W, ROOM_Y + ROOM_PX_H, -1, -1],
+    [roomX,            roomY,             1,  1],
+    [roomX + roomPxW,  roomY,            -1,  1],
+    [roomX,            roomY + roomPxH,   1, -1],
+    [roomX + roomPxW,  roomY + roomPxH,  -1, -1],
   ]
-
   return (
     <Group>
       {corners.map(([cx, cy, hd, vd], i) => (
@@ -151,203 +102,248 @@ function CornerMarks() {
   )
 }
 
-/** Dimension arrows — width (top) and height (right) */
-function DimensionLines() {
-  const OFFSET    = 32   // px offset from room edge
+function DimensionLines({ g }) {
+  const { roomX, roomY, roomPxW, roomPxH, roomW_mm, roomH_mm } = g
+  const OFFSET    = 32
   const FONT_DIM  = { fontSize: 11, fontFamily: 'IBM Plex Mono', fill: C.dimTextBright, fontStyle: '500' }
   const FONT_UNIT = { fontSize: 9,  fontFamily: 'IBM Plex Mono', fill: C.dimText }
 
-  // Width arrow — above room
-  const wY   = ROOM_Y - OFFSET
-  const wMid = ROOM_X + ROOM_PX_W / 2
+  const wY   = roomY - OFFSET
+  const wMid = roomX + roomPxW / 2
+  const hX   = roomX + roomPxW + OFFSET
+  const hMid = roomY + roomPxH / 2
 
-  // Height arrow — right of room
-  const hX   = ROOM_X + ROOM_PX_W + OFFSET
-  const hMid = ROOM_Y + ROOM_PX_H / 2
+  const ARROW_PROPS = { fill: C.dimArrow, stroke: C.dimLine, strokeWidth: 1, pointerLength: 6, pointerWidth: 4 }
 
-  const ARROW_PROPS = {
-    fill: C.dimArrow,
-    stroke: C.dimLine,
-    strokeWidth: 1,
-    pointerLength: 6,
-    pointerWidth:  4,
-  }
+  const wLabel = Math.round(roomW_mm).toString()
+  const hLabel = Math.round(roomH_mm).toString()
 
   return (
     <Group>
-      {/* Dimension extension lines */}
-      <Line points={[ROOM_X, ROOM_Y, ROOM_X, wY - 4]}
-        stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
-      <Line points={[ROOM_X + ROOM_PX_W, ROOM_Y, ROOM_X + ROOM_PX_W, wY - 4]}
-        stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
-      <Line points={[ROOM_X + ROOM_PX_W, ROOM_Y, hX + 4, ROOM_Y]}
-        stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
-      <Line points={[ROOM_X + ROOM_PX_W, ROOM_Y + ROOM_PX_H, hX + 4, ROOM_Y + ROOM_PX_H]}
-        stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
+      <Line points={[roomX, roomY, roomX, wY - 4]} stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
+      <Line points={[roomX + roomPxW, roomY, roomX + roomPxW, wY - 4]} stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
+      <Line points={[roomX + roomPxW, roomY, hX + 4, roomY]} stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
+      <Line points={[roomX + roomPxW, roomY + roomPxH, hX + 4, roomY + roomPxH]} stroke={C.dimLine} strokeWidth={0.75} dash={[3, 4]} />
 
-      {/* Width dimension — bidirectional arrow above */}
-      <Arrow points={[wMid, wY, ROOM_X + 2, wY]} {...ARROW_PROPS} />
-      <Arrow points={[wMid, wY, ROOM_X + ROOM_PX_W - 2, wY]} {...ARROW_PROPS} />
-      <Line points={[ROOM_X + 2, wY, ROOM_X + ROOM_PX_W - 2, wY]}
-        stroke={C.dimLine} strokeWidth={1} />
+      <Arrow points={[wMid, wY, roomX + 2, wY]} {...ARROW_PROPS} />
+      <Arrow points={[wMid, wY, roomX + roomPxW - 2, wY]} {...ARROW_PROPS} />
+      <Line points={[roomX + 2, wY, roomX + roomPxW - 2, wY]} stroke={C.dimLine} strokeWidth={1} />
+      <Rect x={wMid - 30} y={wY - 18} width={60} height={16} fill={C.labelBg} cornerRadius={2} />
+      <Text x={wMid - 28} y={wY - 15} text={wLabel} width={34} align='right' {...FONT_DIM} />
+      <Text x={wMid + 8}  y={wY - 14} text="mm" {...FONT_UNIT} />
 
-      {/* Width label */}
-      <Rect x={wMid - 26} y={wY - 18} width={52} height={16}
-        fill={C.labelBg} cornerRadius={2} />
-      <Text x={wMid - 24} y={wY - 15} text="6000" width={28} align='right'
-        {...FONT_DIM} />
-      <Text x={wMid + 6} y={wY - 14} text="mm" {...FONT_UNIT} />
-
-      {/* Height dimension — bidirectional arrow right */}
-      <Arrow points={[hX, hMid, hX, ROOM_Y + 2]} {...ARROW_PROPS} />
-      <Arrow points={[hX, hMid, hX, ROOM_Y + ROOM_PX_H - 2]} {...ARROW_PROPS} />
-      <Line points={[hX, ROOM_Y + 2, hX, ROOM_Y + ROOM_PX_H - 2]}
-        stroke={C.dimLine} strokeWidth={1} />
-
-      {/* Height label */}
-      <Rect x={hX + 8} y={hMid - 8} width={52} height={16}
-        fill={C.labelBg} cornerRadius={2} />
-      <Text x={hX + 10} y={hMid - 5} text="4000" width={28} align='left'
-        {...FONT_DIM} />
-      <Text x={hX + 40} y={hMid - 4} text="mm" {...FONT_UNIT} />
+      <Arrow points={[hX, hMid, hX, roomY + 2]} {...ARROW_PROPS} />
+      <Arrow points={[hX, hMid, hX, roomY + roomPxH - 2]} {...ARROW_PROPS} />
+      <Line points={[hX, roomY + 2, hX, roomY + roomPxH - 2]} stroke={C.dimLine} strokeWidth={1} />
+      <Rect x={hX + 8} y={hMid - 8} width={60} height={16} fill={C.labelBg} cornerRadius={2} />
+      <Text x={hX + 10} y={hMid - 5} text={hLabel} width={34} align='left' {...FONT_DIM} />
+      <Text x={hX + 46} y={hMid - 4} text="mm" {...FONT_UNIT} />
     </Group>
   )
 }
 
-/** Room geometry — fill, glow shadow, stroke outline */
-function RoomGeometry() {
+function RoomGeometry({ g }) {
+  const { roomX, roomY, roomPxW, roomPxH } = g
   return (
     <Group>
-      {/* Outer glow — soft shadow rect, slightly larger */}
-      <Rect
-        x={ROOM_X - 3} y={ROOM_Y - 3}
-        width={ROOM_PX_W + 6} height={ROOM_PX_H + 6}
-        fill='transparent'
-        stroke={C.roomGlow}
-        strokeWidth={6}
-        cornerRadius={1}
-        opacity={0.4}
-      />
-      {/* Room fill */}
-      <Rect
-        x={ROOM_X} y={ROOM_Y}
-        width={ROOM_PX_W} height={ROOM_PX_H}
-        fill={C.roomFill}
-      />
-      {/* Room boundary */}
-      <Rect
-        x={ROOM_X} y={ROOM_Y}
-        width={ROOM_PX_W} height={ROOM_PX_H}
-        fill='transparent'
-        stroke={C.roomStroke}
-        strokeWidth={1.5}
-      />
+      <Rect x={roomX - 3} y={roomY - 3} width={roomPxW + 6} height={roomPxH + 6}
+        fill='transparent' stroke={C.roomGlow} strokeWidth={6} cornerRadius={1} opacity={0.4} />
+      <Rect x={roomX} y={roomY} width={roomPxW} height={roomPxH} fill={C.roomFill} />
+      <Rect x={roomX} y={roomY} width={roomPxW} height={roomPxH}
+        fill='transparent' stroke={C.roomStroke} strokeWidth={1.5} />
     </Group>
   )
 }
 
-/** Internal grid lines within the room only */
-function RoomGrid() {
+function RoomGrid({ g, gridSize }) {
+  const { roomX, roomY, roomPxW, roomPxH, scale, roomW_mm, roomH_mm } = g
   const lines = []
 
-  // Vertical interior lines
-  for (let m = GRID_STEP_MM; m < ROOM_W_MM; m += GRID_STEP_MM) {
-    const x = ROOM_X + m * SCALE
-    lines.push(
-      <Line key={`rv-${m}`}
-        points={[x, ROOM_Y + 1, x, ROOM_Y + ROOM_PX_H - 1]}
-        stroke='#111e2c' strokeWidth={0.6} />
-    )
+  for (let m = gridSize; m < roomW_mm; m += gridSize) {
+    const x = roomX + m * scale
+    lines.push(<Line key={`rv-${m}`} points={[x, roomY + 1, x, roomY + roomPxH - 1]} stroke='#111e2c' strokeWidth={0.6} />)
   }
-
-  // Horizontal interior lines
-  for (let m = GRID_STEP_MM; m < ROOM_H_MM; m += GRID_STEP_MM) {
-    const y = ROOM_Y + m * SCALE
-    lines.push(
-      <Line key={`rh-${m}`}
-        points={[ROOM_X + 1, y, ROOM_X + ROOM_PX_W - 1, y]}
-        stroke='#111e2c' strokeWidth={0.6} />
-    )
+  for (let m = gridSize; m < roomH_mm; m += gridSize) {
+    const y = roomY + m * scale
+    lines.push(<Line key={`rh-${m}`} points={[roomX + 1, y, roomX + roomPxW - 1, y]} stroke='#111e2c' strokeWidth={0.6} />)
   }
-
   return <Group>{lines}</Group>
 }
 
-/** Room label and metadata text */
-function RoomLabel() {
-  const cx = ROOM_X + ROOM_PX_W / 2
-  const cy = ROOM_Y + ROOM_PX_H / 2
+function RoomLabel({ g }) {
+  const { roomX, roomY, roomPxW, roomPxH, roomW_mm, roomH_mm } = g
+  const cx     = roomX + roomPxW / 2
+  const cy     = roomY + roomPxH / 2
+  const areaM2 = (roomW_mm / 1000 * roomH_mm / 1000).toFixed(2)
+  const dimText = `${(roomW_mm / 1000).toFixed(1)} × ${(roomH_mm / 1000).toFixed(1)} m`
 
   return (
     <Group>
-      {/* Room name */}
-      <Text
-        x={cx - 80} y={cy - 28}
-        text='ROOM 01'
-        width={160} align='center'
-        fontSize={13} fontFamily='IBM Plex Mono'
-        fill='#1e3d56' fontStyle='500'
-        letterSpacing={3}
-      />
-      {/* Area */}
-      <Text
-        x={cx - 60} y={cy - 10}
-        text='24.00 m²'
-        width={120} align='center'
-        fontSize={18} fontFamily='IBM Plex Mono'
-        fill='#1e4868' fontStyle='400'
-      />
-      {/* Dimensions */}
-      <Text
-        x={cx - 60} y={cy + 14}
-        text='6.0 × 4.0 m'
-        width={120} align='center'
-        fontSize={10} fontFamily='IBM Plex Mono'
-        fill='#183548'
-        letterSpacing={1}
-      />
+      <Text x={cx - 80} y={cy - 28} text='ROOM 01' width={160} align='center'
+        fontSize={13} fontFamily='IBM Plex Mono' fill='#1e3d56' fontStyle='500' letterSpacing={3} />
+      <Text x={cx - 60} y={cy - 10} text={`${areaM2} m²`} width={120} align='center'
+        fontSize={18} fontFamily='IBM Plex Mono' fill='#1e4868' />
+      <Text x={cx - 60} y={cy + 14} text={dimText} width={120} align='center'
+        fontSize={10} fontFamily='IBM Plex Mono' fill='#183548' letterSpacing={1} />
     </Group>
   )
 }
 
-// ─────────────────────────────────────────────────────────────
-// MAIN EXPORT
-// ─────────────────────────────────────────────────────────────
-export default function DesignCanvas() {
+// ── FixtureShape — IDENTICAL to current version ───────────────────────────────
+
+function FixtureShape({ fixture, isSelected, isMultiSelected, onFixtureDrag }) {
+  const shape   = fixture.shape || 'circle'
+  const fill    = fixture.wattageColor?.hex || (fixture.daliAddress ? '#6ae5ff' : '#e8a245')
+  const stroke  = isMultiSelected ? '#6ae5ff' : isSelected ? '#d4a843' : 'rgba(255,255,255,0.55)'
+  const sw      = (isSelected || isMultiSelected) ? 3 : 1.5
+
+  const symbol    = fixture.shapeSymbol || ''
+  const colorName = fixture.wattageColor?.name || ''
+  const wattLabel = fixture.wattage ? `${fixture.wattage}W` : ''
+  const catLabel  = fixture.category || fixture.type || ''
+  const label     = [symbol, colorName ? `(${colorName})` : '', wattLabel, catLabel].filter(Boolean).join(' ')
+
+  const common = { fill, stroke, strokeWidth: sw }
+
+  const selRing = isMultiSelected
+    ? <Circle x={0} y={0} radius={20} stroke='#6ae5ff' strokeWidth={1.5} fill='rgba(106,229,255,0.06)' />
+    : isSelected
+      ? <Circle x={0} y={0} radius={20} stroke='#d4a843' strokeWidth={1} fill='transparent' />
+      : null
+
+  let shapeEl
+  switch (shape) {
+    case 'star':         shapeEl = <Star x={0} y={0} numPoints={5} innerRadius={4} outerRadius={9} rotation={-18} {...common} />; break
+    case 'diamond':      shapeEl = <Rect x={0} y={0} width={14} height={14} offsetX={7} offsetY={7} rotation={45} {...common} />; break
+    case 'rectangle':    shapeEl = <Rect x={0} y={0} width={22} height={13} offsetX={11} offsetY={6.5} {...common} />; break
+    case 'circle-dot':
+      shapeEl = <Group><Circle x={0} y={0} radius={9} {...common} /><Circle x={0} y={0} radius={3} fill={stroke} stroke='transparent' strokeWidth={0} /></Group>
+      break
+    case 'line':         shapeEl = <Rect x={0} y={0} width={22} height={4} offsetX={11} offsetY={2} {...common} />; break
+    case 'triangle-left': shapeEl = <RegularPolygon x={0} y={0} sides={3} radius={9} rotation={-90} {...common} />; break
+    case 'double-arrow':
+      shapeEl = <Group><RegularPolygon x={-7} y={0} sides={3} radius={8} rotation={-90} {...common} /><RegularPolygon x={7} y={0} sides={3} radius={8} rotation={90} {...common} /></Group>
+      break
+    case 'triangle-up':  shapeEl = <RegularPolygon x={0} y={0} sides={3} radius={9} rotation={0} {...common} />; break
+    case 'triangle-down': shapeEl = <RegularPolygon x={0} y={0} sides={3} radius={9} rotation={180} {...common} />; break
+    case 'small-square': shapeEl = <Rect x={0} y={0} width={10} height={10} offsetX={5} offsetY={5} {...common} />; break
+    case 'big-circle':   shapeEl = <Circle x={0} y={0} radius={12} {...common} />; break
+    case 'circle-cross':
+      shapeEl = <Group><Circle x={0} y={0} radius={9} fill='transparent' stroke={fill} strokeWidth={sw} /><Line points={[-9, 0, 9, 0]} stroke={fill} strokeWidth={sw} /><Line points={[0, -9, 0, 9]} stroke={fill} strokeWidth={sw} /></Group>
+      break
+    case 'thick-line':   shapeEl = <Rect x={0} y={0} width={26} height={5} offsetX={13} offsetY={2.5} {...common} />; break
+    case 'circle':
+    default:             shapeEl = <Circle x={0} y={0} radius={8} {...common} />; break
+  }
+
+  return (
+    <Group
+      x={fixture.position.x}
+      y={fixture.position.y}
+      draggable={!!onFixtureDrag}
+      onDragEnd={onFixtureDrag ? (e) => onFixtureDrag(fixture.id, { x: e.target.x(), y: e.target.y() }) : undefined}
+    >
+      {selRing}
+      {shapeEl}
+      {label && (
+        <Text x={-50} y={18} width={100} align='center' text={label}
+          fontSize={7} fontFamily='IBM Plex Mono' fill='#8abfd4' />
+      )}
+    </Group>
+  )
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
+export default function DesignCanvas({
+  onCanvasClick,
+  onFixtureDrag,
+  placementMode,
+  fixtures = [],
+  selectedFixtureId,
+  multiSelectedIds = [],
+  showBeams    = false,
+  showHeatMap  = false,
+  ceilingHeight = 2700,
+  roomWidth    = 6000,
+  roomLength   = 4000,
+  gridSize     = 500,
+  cellSize     = 8,
+}) {
   const stageRef = useRef(null)
+
+  // Compute room geometry whenever room dimensions change
+  const g = useMemo(() => computeRoomGeometry(roomWidth, roomLength), [roomWidth, roomLength])
+
+  const handleStageClick = (e) => {
+    const stage = stageRef.current
+    if (!stage) return
+    const pos = stage.getPointerPosition()
+    if (!pos) return
+    const ctrlKey = e.evt.ctrlKey || e.evt.metaKey
+
+    let clickedFixtureId = null
+    for (const fixture of fixtures) {
+      const dx = pos.x - fixture.position.x
+      const dy = pos.y - fixture.position.y
+      if (Math.sqrt(dx * dx + dy * dy) < 10) { clickedFixtureId = fixture.id; break }
+    }
+    if (onCanvasClick) onCanvasClick(pos.x, pos.y, clickedFixtureId, ctrlKey)
+  }
 
   return (
     <div style={{
-      display: 'inline-block',
-      border: '1px solid #1a2b3c',
-      borderRadius: 4,
-      overflow: 'hidden',
+      display: 'inline-block', border: '1px solid #1a2b3c', borderRadius: 4, overflow: 'hidden',
       boxShadow: '0 0 0 1px #0e1a24, 0 20px 60px rgba(0,0,0,0.6)',
+      cursor: placementMode ? 'crosshair' : 'default',
     }}>
-      <Stage
-        ref={stageRef}
-        width={CANVAS_W}
-        height={CANVAS_H}
-        style={{ background: C.bgCanvas, display: 'block' }}
-      >
-        {/* Layer 1 — background grid */}
+      <Stage ref={stageRef} width={CANVAS_W} height={CANVAS_H}
+        style={{ background: C.bgCanvas, display: 'block' }} onClick={handleStageClick}>
+
+        {/* Layer 1 — background + room + heat map */}
         <Layer listening={false}>
-          <BackgroundGrid />
+          <Group name="grid"><BackgroundGrid g={g} gridSize={gridSize} /></Group>
+          <Group name="room">
+            <RoomGeometry g={g} />
+            <RoomGrid g={g} gridSize={gridSize} />
+            <RoomLabel g={g} />
+            <CornerMarks g={g} />
+          </Group>
+          {showHeatMap && (
+            <Group name="heatmap">
+              <LuxHeatMap fixtures={fixtures} ceilingHeight={ceilingHeight} roomGeom={g} cellSize={cellSize} />
+            </Group>
+          )}
         </Layer>
 
-        {/* Layer 2 — room geometry */}
-        <Layer listening={false}>
-          <RoomGeometry />
-          <RoomGrid />
-          <RoomLabel />
-          <CornerMarks />
+        {/* Layer 2 — beams + fixtures */}
+        <Layer listening={true}>
+          {showBeams && (
+            <Group name="beams" listening={false}>
+              <BeamVisualization fixtures={fixtures} ceilingHeight={ceilingHeight} roomGeom={g} />
+            </Group>
+          )}
+          <Group name="fixtures">
+            {fixtures.map((fixture) => (
+              <FixtureShape
+                key={fixture.id}
+                fixture={fixture}
+                isSelected={selectedFixtureId === fixture.id}
+                isMultiSelected={multiSelectedIds.includes(fixture.id)}
+                onFixtureDrag={onFixtureDrag}
+              />
+            ))}
+          </Group>
         </Layer>
 
-        {/* Layer 3 — annotations (on top of room) */}
+        {/* Layer 3 — UI / annotations */}
         <Layer listening={false}>
-          <RulerTicks />
-          <DimensionLines />
+          <Group name="annotations">
+            <RulerTicks g={g} gridSize={gridSize} />
+            <DimensionLines g={g} />
+          </Group>
         </Layer>
+
       </Stage>
     </div>
   )
