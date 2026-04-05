@@ -109,7 +109,7 @@ export default function FixtureLibrarySidebar({ activeFixture, onSelectFixture, 
 
                 {/* Wattage badges */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '2px 12px 4px' }}>
-                  {fix.wattages.map((w) => {
+                  {(fix.wattages || fix.wattagePerMeter || []).map((w) => { 
                     const wc = getWattageColor(w)
                     const active = isActiveWatt(fix, w)
                     const hovered = hoveredId === `${fix.id}-${w}`
