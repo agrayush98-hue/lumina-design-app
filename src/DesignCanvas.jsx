@@ -258,6 +258,7 @@ function FixtureShape({ fixture, isSelected, isMultiSelected, onFixtureDrag }) {
 export default function DesignCanvas({
   onCanvasClick,
   onFixtureDrag,
+  onDelete,
   placementMode,
   fixtures = [],
   selectedFixtureId,
@@ -273,6 +274,7 @@ export default function DesignCanvas({
   const stageRef = useRef(null)
   const [stageScale, setStageScale] = useState(1)
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 })
+  const [contextMenu, setContextMenu] = useState(null)
 
   // Compute room geometry whenever room dimensions change
   const g = useMemo(() => computeRoomGeometry(roomWidth, roomLength), [roomWidth, roomLength])
@@ -312,15 +314,33 @@ export default function DesignCanvas({
     setStagePos(newPos)
   }
 
+  const handleContextMenu = (e) => {
+    e.evt.preventDefault()
+    const stage = stageRef.current
+    if (!stage) return
+    const pointer = stage.getPointerPosition()
+    if (!pointer) return
+    const worldPos = { x: (pointer.x - stagePos.x) / stageScale, y: (pointer.y - stagePos.y) / stageScale }
+    let targetFixtureId = null
+    for (const fixture of fixtures) {
+      const dx = worldPos.x - fixture.position.x
+      const dy = worldPos.y - fixture.position.y
+      if (Math.sqrt(dx * dx + dy * dy) < 12) { targetFixtureId = fixture.id; break }
+    }
+    if (!targetFixtureId) { setContextMenu(null); return }
+    setContextMenu({ x: pointer.x, y: pointer.y, fixtureId: targetFixtureId })
+  }
+
   return (
     <div style={{
       display: 'inline-block', border: '1px solid #1a2b3c', borderRadius: 4, overflow: 'hidden',
       boxShadow: '0 0 0 1px #0e1a24, 0 20px 60px rgba(0,0,0,0.6)',
       cursor: placementMode ? 'crosshair' : 'default',
-    }}>
+      position: 'relative',
+    }} onClick={() => setContextMenu(null)}>
       <Stage ref={stageRef} width={CANVAS_W} height={CANVAS_H}
         scaleX={stageScale} scaleY={stageScale} x={stagePos.x} y={stagePos.y}
-        style={{ background: C.bgCanvas, display: 'block' }} onClick={handleStageClick} onWheel={handleWheel}>
+        style={{ background: C.bgCanvas, display: 'block' }} onClick={handleStageClick} onWheel={handleWheel} onContextMenu={handleContextMenu}>
 
         {/* Layer 1 — background + room + heat map */}
         <Layer listening={false}>
@@ -367,6 +387,28 @@ export default function DesignCanvas({
         </Layer>
 
       </Stage>
+      {contextMenu && (
+        <div style={{
+          position: 'absolute', left: contextMenu.x, top: contextMenu.y,
+          background: '#1a2433', border: '1px solid #2e3d4f', borderRadius: 4,
+          padding: '4px 0', minWidth: 140, zIndex: 999, boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+          fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: '#cdd9e5',
+        }}>
+          <div style={{ padding: '6px 12px', cursor: 'pointer' }}
+            onMouseEnter={(e) => e.target.style.background = '#2a3a4d'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            onClick={() => { onCanvasClick(0, 0, contextMenu.fixtureId, false); setContextMenu(null) }}>
+            Select
+          </div>
+          <div style={{ height: 1, background: '#2e3d4f', margin: '2px 0' }} />
+          <div style={{ padding: '6px 12px', cursor: 'pointer', color: '#ff6b6b' }}
+            onMouseEnter={(e) => e.target.style.background = '#2a3a4d'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            onClick={() => { if (onDelete) onDelete(contextMenu.fixtureId); setContextMenu(null) }}>
+            Delete
+          </div>
+        </div>
+      )}
     </div>
   )
 }

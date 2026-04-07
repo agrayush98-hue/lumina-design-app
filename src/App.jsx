@@ -679,6 +679,7 @@ export default function App() {
               <DesignCanvas
                 onCanvasClick={handleCanvasClick}
                 onFixtureDrag={handleFixtureDrag}
+                onDelete={handleDeleteFixture}
                 placementMode={placementMode}
                 fixtures={fixtures}
                 selectedFixtureId={selectedFixtureId}
