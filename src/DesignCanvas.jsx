@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState } from 'react'
 import { Stage, Layer, Rect, Line, Text, Group, Arrow, Circle, RegularPolygon, Star } from 'react-konva'
 import BeamVisualization from './components/BeamVisualization'
 import LuxHeatMap from './components/LuxHeatMap'
@@ -271,6 +271,8 @@ export default function DesignCanvas({
   cellSize     = 8,
 }) {
   const stageRef = useRef(null)
+  const [stageScale, setStageScale] = useState(1)
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 })
 
   // Compute room geometry whenever room dimensions change
   const g = useMemo(() => computeRoomGeometry(roomWidth, roomLength), [roomWidth, roomLength])
@@ -278,8 +280,9 @@ export default function DesignCanvas({
   const handleStageClick = (e) => {
     const stage = stageRef.current
     if (!stage) return
-    const pos = stage.getPointerPosition()
-    if (!pos) return
+    const pointer = stage.getPointerPosition()
+    if (!pointer) return
+    const pos = { x: (pointer.x - stagePos.x) / stageScale, y: (pointer.y - stagePos.y) / stageScale }
     const ctrlKey = e.evt.ctrlKey || e.evt.metaKey
 
     let clickedFixtureId = null
@@ -294,6 +297,21 @@ export default function DesignCanvas({
     }
   }
 
+  const handleWheel = (e) => {
+    e.evt.preventDefault()
+    const stage = stageRef.current
+    if (!stage) return
+    const oldScale = stageScale
+    const pointer = stage.getPointerPosition()
+    const scaleBy = 1.08
+    const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy
+    const clampedScale = Math.max(0.5, Math.min(3, newScale))
+    const mousePointTo = { x: (pointer.x - stagePos.x) / oldScale, y: (pointer.y - stagePos.y) / oldScale }
+    const newPos = { x: pointer.x - mousePointTo.x * clampedScale, y: pointer.y - mousePointTo.y * clampedScale }
+    setStageScale(clampedScale)
+    setStagePos(newPos)
+  }
+
   return (
     <div style={{
       display: 'inline-block', border: '1px solid #1a2b3c', borderRadius: 4, overflow: 'hidden',
@@ -301,7 +319,8 @@ export default function DesignCanvas({
       cursor: placementMode ? 'crosshair' : 'default',
     }}>
       <Stage ref={stageRef} width={CANVAS_W} height={CANVAS_H}
-        style={{ background: C.bgCanvas, display: 'block' }} onClick={handleStageClick}>
+        scaleX={stageScale} scaleY={stageScale} x={stagePos.x} y={stagePos.y}
+        style={{ background: C.bgCanvas, display: 'block' }} onClick={handleStageClick} onWheel={handleWheel}>
 
         {/* Layer 1 — background + room + heat map */}
         <Layer listening={false}>
