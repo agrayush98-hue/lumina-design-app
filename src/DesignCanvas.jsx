@@ -288,7 +288,10 @@ export default function DesignCanvas({
       const dy = pos.y - fixture.position.y
       if (Math.sqrt(dx * dx + dy * dy) < 10) { clickedFixtureId = fixture.id; break }
     }
-    if (onCanvasClick) onCanvasClick(pos.x, pos.y, clickedFixtureId, ctrlKey)
+    if (onCanvasClick) {
+      if (!clickedFixtureId && (pos.x < g.roomX || pos.x > g.roomX + g.roomPxW || pos.y < g.roomY || pos.y > g.roomY + g.roomPxH)) return
+      onCanvasClick(pos.x, pos.y, clickedFixtureId, ctrlKey)
+    }
   }
 
   return (
