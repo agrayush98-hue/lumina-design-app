@@ -191,7 +191,7 @@ function RoomLabel({ g }) {
 
 // ── FixtureShape — IDENTICAL to current version ───────────────────────────────
 
-function FixtureShape({ fixture, isSelected, isMultiSelected, onFixtureDrag, roomGeom }) {
+function FixtureShape({ fixture, isSelected, isMultiSelected, onFixtureDrag, roomGeom, showBeams }) {
   const shape   = fixture.shape || 'circle'
   const fill    = fixture.wattageColor?.hex || (fixture.daliAddress ? '#6ae5ff' : '#e8a245')
   const stroke  = isMultiSelected ? '#6ae5ff' : isSelected ? '#d4a843' : 'rgba(255,255,255,0.55)'
@@ -247,7 +247,7 @@ function FixtureShape({ fixture, isSelected, isMultiSelected, onFixtureDrag, roo
       draggable={!!onFixtureDrag}
       onDragEnd={onFixtureDrag ? (e) => onFixtureDrag(fixture.id, { x: e.target.x(), y: e.target.y() }) : undefined}
     >
-      <Circle x={0} y={0} radius={beamRadiusPx} fill='rgba(255,165,0,0.08)' stroke='rgba(255,165,0,0.2)' strokeWidth={0.5} dash={[3,3]} listening={false} />
+      {showBeams && <Circle x={0} y={0} radius={beamRadiusPx} fill='rgba(255,165,0,0.08)' stroke='rgba(255,165,0,0.2)' strokeWidth={0.5} dash={[3,3]} listening={false} />}
       {selRing}
       {shapeEl}
       {label && (
@@ -371,7 +371,7 @@ export default function DesignCanvas({
               <BeamVisualization fixtures={fixtures} ceilingHeight={ceilingHeight} roomGeom={g} />
             </Group>
           )}
-          <Group name="fixtures">
+          <Group name="fixtures" clipX={g.roomX} clipY={g.roomY} clipWidth={g.roomPxW} clipHeight={g.roomPxH}>
             {fixtures.map((fixture) => (
               <FixtureShape
                 key={fixture.id}
@@ -380,6 +380,7 @@ export default function DesignCanvas({
                 isMultiSelected={multiSelectedIds.includes(fixture.id)}
                 onFixtureDrag={onFixtureDrag}
                 roomGeom={g}
+                showBeams={showBeams}
               />
             ))}
           </Group>
