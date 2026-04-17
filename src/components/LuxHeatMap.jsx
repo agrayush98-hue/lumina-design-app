@@ -1,158 +1,140 @@
-import { useEffect, useState } from 'react'
-import { Image, Group, Rect, Text, Line } from 'react-konva'
+import { useMemo, useRef, useEffect } from 'react'
+import Konva from 'konva'
+import { Group, Rect, Text, Line, Image } from 'react-konva'
 import { getTotalLuxAtPoint } from '../utils/luxCalculator'
 
-// Vibrant blue → cyan → green → yellow → orange → red scale
-const STOPS = [
-  { lux:    0, r:   0, g:   0, b: 139, a:   0 },  // dark blue  (#00008B)
-  { lux:   50, r:   0, g:   0, b: 255, a: 140 },  // blue       (#0000FF)
-  { lux:  150, r:   0, g: 255, b: 255, a: 170 },  // cyan       (#00FFFF)
-  { lux:  300, r:   0, g: 255, b:   0, a: 190 },  // green      (#00FF00)
-  { lux:  500, r: 255, g: 255, b:   0, a: 200 },  // yellow     (#FFFF00)
-  { lux:  750, r: 255, g: 140, b:   0, a: 210 },  // orange     (#FF8C00)
-  { lux: 1000, r: 255, g:   0, b:   0, a: 220 },  // red        (#FF0000)
-  { lux: 1200, r: 139, g:   0, b:   0, a: 230 },  // deep red   (#8B0000)
+const HEATMAP_STOPS = [
+  [0.00, [0,   0, 170]],
+  [0.25, [0, 170, 255]],
+  [0.50, [0, 204,  68]],
+  [0.75, [255, 238,  0]],
+  [1.00, [255, 136,  0]],
+  [1.50, [255,   0,  0]],
 ]
 
-function luxToRGBA(lux) {
-  if (lux <= 0) return [0, 0, 139, 0]
-  const last = STOPS[STOPS.length - 1]
-  if (lux >= last.lux) return [last.r, last.g, last.b, last.a]
-  let lo = STOPS[0], hi = STOPS[1]
-  for (let i = 0; i < STOPS.length - 1; i++) {
-    if (lux >= STOPS[i].lux && lux < STOPS[i + 1].lux) { lo = STOPS[i]; hi = STOPS[i + 1]; break }
+function luxToColor(lux, targetLux) {
+  if (targetLux <= 0) return 'rgba(0,0,170,0)'
+  const ratio = Math.min(1.5, lux / targetLux)
+  for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
+    const [r0, c0] = HEATMAP_STOPS[i]
+    const [r1, c1] = HEATMAP_STOPS[i + 1]
+    if (ratio <= r1) {
+      const t = (ratio - r0) / (r1 - r0)
+      const r = Math.round(c0[0] + t * (c1[0] - c0[0]))
+      const g = Math.round(c0[1] + t * (c1[1] - c0[1]))
+      const b = Math.round(c0[2] + t * (c1[2] - c0[2]))
+      const alpha = ratio < 0.05 ? 0 : 0.85
+      return `rgba(${r},${g},${b},${alpha})`
+    }
   }
-  const t = (lux - lo.lux) / (hi.lux - lo.lux)
-  return [
-    Math.round(lo.r + t * (hi.r - lo.r)),
-    Math.round(lo.g + t * (hi.g - lo.g)),
-    Math.round(lo.b + t * (hi.b - lo.b)),
-    Math.round(lo.a + t * (hi.a - lo.a)),
-  ]
+  return 'rgba(255,0,0,0.85)'
 }
 
-// Legend tick labels — high to low (top → bottom of bar)
-const LEGEND_TICKS = [1200, 1000, 750, 500, 300, 150, 50, 0]
-
-function LuxLegend({ x, y, height }) {
-  const BAR_W = 12
-  const LABEL_X = x + BAR_W + 4
-  const SEGMENTS = 60
-  const segH = height / SEGMENTS
-
-  const segments = []
-  for (let i = 0; i < SEGMENTS; i++) {
-    const t = 1 - i / SEGMENTS
-    const lux = t * STOPS[STOPS.length - 1].lux
-    const [r, g, b] = luxToRGBA(lux)
-    segments.push(
-      <Rect
-        key={i}
-        x={x} y={y + i * segH}
-        width={BAR_W} height={segH + 0.5}
-        fill={`rgb(${r},${g},${b})`}
-      />
-    )
+function LuxLegend({ x, y, targetLux }) {
+  const W = 18
+  const H = 150
+  const labels = ['150%', '100%', '75%', '50%', '25%', '0%']
+  const ratios = [1.5, 1.0, 0.75, 0.5, 0.25, 0.0]
+  const gradStops = []
+  for (let i = 0; i <= 20; i++) {
+    const t = i / 20
+    const ratio = 1.5 * (1 - t)
+    const color = luxToColor(ratio * targetLux, targetLux)
+    gradStops.push(t, color)
   }
-
-  const ticks = LEGEND_TICKS.map((lux) => {
-    const fraction = lux / STOPS[STOPS.length - 1].lux
-    const ty = y + (1 - fraction) * height
-    const [r, g, b] = luxToRGBA(lux)
-    return (
-      <Group key={lux}>
-        <Line points={[x + BAR_W, ty, x + BAR_W + 3, ty]} stroke={`rgb(${r},${g},${b})`} strokeWidth={1} />
-        <Text
-          x={LABEL_X + 1} y={ty - 4}
-          text={`${lux}`}
-          fontSize={7} fontFamily="IBM Plex Mono"
-          fill={`rgb(${r},${g},${b})`}
-        />
-      </Group>
-    )
-  })
-
   return (
     <Group>
-      <Rect x={x} y={y} width={BAR_W} height={height} stroke="#1a2b3c" strokeWidth={0.5} fill="transparent" />
-      {segments}
-      {ticks}
-      <Text x={x} y={y - 14} text="lx" fontSize={7} fontFamily="IBM Plex Mono" fill="#4a7a96" />
+      <Text x={x} y={y - 18} text="LUX" fontSize={8} fontFamily="IBM Plex Mono" fill="#4a7a96" letterSpacing={1} />
+      <Rect x={x} y={y} width={W} height={H}
+        fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+        fillLinearGradientEndPoint={{ x: 0, y: H }}
+        fillLinearGradientColorStops={gradStops}
+        stroke="#1a2b3c" strokeWidth={0.5}
+      />
+      {labels.map((label, i) => {
+        const ly = y + (i / (labels.length - 1)) * H
+        const lux = Math.round(ratios[i] * targetLux)
+        return (
+          <Group key={i}>
+            <Line points={[x + W, ly, x + W + 4, ly]} stroke="#4a7a96" strokeWidth={0.5} />
+            <Text x={x + W + 6} y={ly - 4} text={`${lux}`} fontSize={7} fontFamily="IBM Plex Mono" fill="#4a7a96" />
+          </Group>
+        )
+      })}
     </Group>
   )
 }
 
-export default function LuxHeatMap({ fixtures = [], ceilingHeight = 2700, roomGeom = null, cellSize = 8, opacity = 0.68 }) {
-  const [heatImage, setHeatImage] = useState(null)
+function SmoothHeatmap({ cells, roomX, roomY, roomPxW, roomPxH, step, opacity }) {
+  const imageRef = useRef(null)
+  const heatImage = useMemo(() => {
+    if (cells.length === 0) return null
+    const cols = Math.ceil(roomPxW / step)
+    const rows = Math.ceil(roomPxH / step)
+    const canvas = document.createElement('canvas')
+    canvas.width = cols
+    canvas.height = rows
+    const ctx = canvas.getContext('2d')
+    for (let i = 0; i < cells.length; i++) {
+      const col = Math.floor((cells[i].x - roomX) / step)
+      const row = Math.floor((cells[i].y - roomY) / step)
+      ctx.fillStyle = cells[i].color
+      ctx.fillRect(col, row, 1, 1)
+    }
+    return canvas
+  }, [cells, roomX, roomY, roomPxW, roomPxH, step])
 
+  useEffect(() => {
+    if (imageRef.current) {
+      imageRef.current.cache()
+    }
+  }, [heatImage])
+
+  if (!heatImage) return null
+  return (
+    <Image
+      ref={imageRef}
+      image={heatImage}
+      x={roomX} y={roomY}
+      width={Math.round(roomPxW)} height={Math.round(roomPxH)}
+      opacity={opacity}
+      listening={false}
+      filters={[Konva.Filters.Blur]}
+      blurRadius={15}
+    />
+  )
+}
+
+export default function LuxHeatMap({ fixtures = [], ceilingHeight = 2700, roomGeom = null, targetLux = 500, cellSize = 8, opacity = 0.4 }) {
   const roomX   = roomGeom ? roomGeom.roomX   : 120
   const roomY   = roomGeom ? roomGeom.roomY   : 120
   const roomPxW = roomGeom ? roomGeom.roomPxW : 720
   const roomPxH = roomGeom ? roomGeom.roomPxH : 480
 
-  useEffect(() => {
-    if (fixtures.length === 0) { setHeatImage(null); return }
+  const STEP = Math.max(4, cellSize > 0 ? cellSize : 8)
 
-    const fullW = Math.round(roomPxW)
-    const fullH = Math.round(roomPxH)
-
-    // Coarse sampling step — at least 4px, use the cellSize prop as a hint
-    const CELL = Math.max(cellSize > 0 ? cellSize : 8, 4)
-
-    // ── Step 1: Sample lux onto a SMALL canvas (1 pixel per sample) ──────────
-    const sw = Math.ceil(fullW / CELL)   // e.g. 400px / 8 = 50 small pixels
-    const sh = Math.ceil(fullH / CELL)
-
-    const smallCanvas = document.createElement('canvas')
-    smallCanvas.width  = sw
-    smallCanvas.height = sh
-    const smallCtx = smallCanvas.getContext('2d')
-    const imgData = smallCtx.createImageData(sw, sh)
-    const data = imgData.data
-
-    for (let sy = 0; sy < sh; sy++) {
-      for (let sx = 0; sx < sw; sx++) {
-        // Map small pixel → centre of corresponding full-res region
-        const samplePx = roomX + (sx + 0.5) * CELL
-        const samplePy = roomY + (sy + 0.5) * CELL
-        const lux = getTotalLuxAtPoint(fixtures, samplePx, samplePy, ceilingHeight, roomGeom)
-        const [r, g, b, a] = luxToRGBA(lux)
-        const idx = (sy * sw + sx) * 4
-        data[idx] = r; data[idx + 1] = g; data[idx + 2] = b; data[idx + 3] = a
+  const cells = useMemo(() => {
+    if (fixtures.length === 0) return []
+    const result = []
+    for (let py = roomY; py < roomY + roomPxH; py += STEP) {
+      for (let px = roomX; px < roomX + roomPxW; px += STEP) {
+        const cx = px + STEP / 2
+        const cy = py + STEP / 2
+        const lux = getTotalLuxAtPoint(fixtures, cx, cy, ceilingHeight, roomGeom)
+        result.push({ x: px, y: py, color: luxToColor(lux, targetLux) })
       }
     }
-    smallCtx.putImageData(imgData, 0, 0)
+    return result
+  }, [fixtures, ceilingHeight, roomX, roomY, roomPxW, roomPxH, STEP, targetLux])
 
-    // ── Step 2: Scale up onto a FULL-RES canvas with bilinear smoothing ──────
-    const largeCanvas = document.createElement('canvas')
-    largeCanvas.width  = fullW
-    largeCanvas.height = fullH
-    const largeCtx = largeCanvas.getContext('2d')
-
-    // Blur is applied as the small image is stretched — produces smooth gradients
-    largeCtx.filter = 'blur(4px)'
-    largeCtx.imageSmoothingEnabled = true
-    largeCtx.imageSmoothingQuality = 'high'
-    largeCtx.drawImage(smallCanvas, 0, 0, fullW, fullH)
-
-    const img = new window.Image()
-    img.src = largeCanvas.toDataURL('image/png')
-    img.onload = () => setHeatImage(img)
-  }, [fixtures, ceilingHeight, roomX, roomY, roomPxW, roomPxH, cellSize])
-
-  if (!heatImage) return null
+  if (cells.length === 0) return null
 
   const legendX = roomX + Math.round(roomPxW) + 10
-  const legendH = Math.round(roomPxH)
 
   return (
     <Group>
-      <Image
-        image={heatImage} x={roomX} y={roomY}
-        width={Math.round(roomPxW)} height={Math.round(roomPxH)}
-        opacity={opacity}
-      />
-      <LuxLegend x={legendX} y={roomY} height={legendH} />
+      <SmoothHeatmap cells={cells} roomX={roomX} roomY={roomY} roomPxW={roomPxW} roomPxH={roomPxH} step={STEP} opacity={opacity} />
+      <LuxLegend x={legendX} y={roomY + 50} targetLux={targetLux} />
     </Group>
   )
 }
