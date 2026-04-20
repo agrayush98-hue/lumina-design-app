@@ -480,10 +480,10 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   // ── Stage-level click — handles fixture/marker placement when floor plan is loaded
   //    (room-fill Rect is hidden when floorPlan is set, so we fall back to the Stage)
   function handleStageClick(e) {
-    if (isPanning.current) return   // ignore click that ended a pan
-    if (isStripMode) return         // strip mode uses mouseDown/mouseUp, not click
+    if (isPanning.current) return
+    if (isStripMode) return
     if (activeTool === "draw-room") return
-    if (e.target?.name?.() !== 'room-fill') return  // ignore clicks on fixtures/other elements
+    if (!floorPlan && e.target?.name?.() !== 'room-fill') return
     handleRoomClick(e)
   }
 

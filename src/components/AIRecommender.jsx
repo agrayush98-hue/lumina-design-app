@@ -188,68 +188,26 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
     setError(null)
     setResult(null)
 
-    const area = (parseFloat(widthM) * parseFloat(heightM)).toFixed(1)
+    const workerUrl = import.meta.env.VITE_AI_WORKER_URL
+    if (!workerUrl) {
+      setError("AI worker not configured. Set VITE_AI_WORKER_URL in .env")
+      setLoading(false)
+      return
+    }
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch(workerUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
-          messages: [{
-            role: "user",
-            content: `You are an expert lighting designer. Recommend fixtures for:
-Room Type: ${roomType}
-Room Size: ${widthM}m x ${heightM}m (Area: ${area}m²)
-Ceiling Height: ${ceilM}m
-Ambiance: ${ambiance}
-Special Requirements: ${requirements || "none"}
-
-Respond in JSON only with this structure:
-{
-  "primary": {
-    "type": "COB_DOWNLIGHT or SPOTLIGHT or PANEL or LINEAR or WALL_WASHER",
-    "watt": number,
-    "lumens": number,
-    "beam": number,
-    "quantity": number,
-    "reason": "brief explanation"
-  },
-  "accent": {
-    "type": "fixture type or null",
-    "watt": number,
-    "lumens": number,
-    "beam": number,
-    "quantity": number,
-    "reason": "brief explanation"
-  },
-  "cct": "2700K or 3000K or 4000K or 6500K",
-  "protocol": "NON-DIM or PHASE-CUT or DALI or ZIGBEE",
-  "totalLoad": number,
-  "luxEstimate": number,
-  "designTip": "one sentence professional tip"
-}`,
-          }],
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomType, widthM, heightM, ceilM, ambiance, requirements }),
       })
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}))
-        throw new Error(err?.error?.message ?? `HTTP ${response.status}`)
+        throw new Error(err?.error ?? `HTTP ${response.status}`)
       }
 
-      const data = await response.json()
-      const text = data.content?.[0]?.text ?? ""
-
-      // Strip markdown code fences if present
-      const jsonText = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
-      const parsed = JSON.parse(jsonText)
+      const parsed = await response.json()
       setResult(parsed)
     } catch (e) {
       setError(e.message ?? "API request failed")
