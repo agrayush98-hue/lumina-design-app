@@ -1,208 +1,211 @@
-/* ── Outer layout ─────────────────────────────────────── */
-.layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: var(--bg-base);
-  overflow: hidden;
-}
+/* ═══════════════════════════════════════════════════════════
+   Lumina Design — App-level CSS
+   Design tokens: #0f0f0f bg / #d4a843 accent / IBM Plex Mono
+   ═══════════════════════════════════════════════════════════ */
 
-/* ── Header ───────────────────────────────────────────── */
-.header {
+/* ── Toolbar ──────────────────────────────────────────────── */
+.toolbar {
   display: flex;
   align-items: center;
-  height: 48px;
-  padding: 0 20px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
   gap: 0;
+  width: auto;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
-.headerLeft {
+.tbGroup {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 200px;
 }
 
-.logo {
-  font-size: 18px;
-  color: var(--accent);
+/* Group labels removed per design spec */
+.tbGroupLabel {
+  display: none;
+}
+
+.tbButtons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tbSeparator {
+  width: 1px;
+  height: 18px;
+  background: #2e2e2e;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.tbBtn {
+  height: 30px;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #888888;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
   line-height: 1;
 }
 
-.appName {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--text-primary);
+.tbBtn:hover {
+  background: #222222;
+  color: #f0f0f0;
 }
 
-.appSub {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 400;
-  letter-spacing: 1.5px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  margin-top: 1px;
+.tbBtnDestructive:hover {
+  background: rgba(224, 82, 82, 0.1) !important;
+  color: #e05252 !important;
 }
 
-.headerCenter {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.breadcrumb {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
-}
-
-.headerRight {
-  display: flex;
-  align-items: center;
-  min-width: 200px;
-  justify-content: flex-end;
-}
-
-.badge {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: var(--accent);
-  border: 1px solid rgba(77,159,255,0.3);
-  padding: 2px 8px;
-  border-radius: 2px;
-  background: var(--accent-dim);
-}
-
-/* ── Workspace row ────────────────────────────────────── */
-.workspace {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ── Left sidebar ─────────────────────────────────────── */
-.sidebar {
-  width: 160px;
-  flex-shrink: 0;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border);
-  padding: 20px 0;
-  overflow-y: auto;
-}
-
-.sideSection {
-  padding: 6px 18px;
-}
-
-.sideLabel {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 1.8px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  margin-bottom: 3px;
-}
-
-.sideValue {
-  font-family: var(--font-mono);
+/* ── Header ghost buttons ─────────────────────────────────── */
+.hdrBtn {
+  height: 30px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid #2e2e2e;
+  border-radius: 4px;
+  color: #888888;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-primary);
-  letter-spacing: 0.3px;
-}
-
-.sideDivider {
-  height: 1px;
-  background: var(--border);
-  margin: 12px 0;
-}
-
-/* ── Canvas wrap ──────────────────────────────────────── */
-.canvasWrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-base);
-  overflow: hidden;
-  position: relative;
-}
-
-.canvasFrame {
-  border: 1px solid var(--border-bright);
-  border-radius: 2px;
-  box-shadow:
-    0 0 0 1px rgba(77,159,255,0.05),
-    0 20px 60px rgba(0,0,0,0.6),
-    0 0 80px rgba(77,159,255,0.03);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Subtle corner accents on canvas frame */
-.canvasFrame::before,
-.canvasFrame::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  z-index: 10;
-  pointer-events: none;
-}
-.canvasFrame::before {
-  top: -1px;
-  left: -1px;
-  border-top: 2px solid var(--accent);
-  border-left: 2px solid var(--accent);
-}
-.canvasFrame::after {
-  bottom: -1px;
-  right: -1px;
-  border-bottom: 2px solid var(--accent);
-  border-right: 2px solid var(--accent);
-}
-
-/* ── Status bar ───────────────────────────────────────── */
-.statusBar {
-  width: 1000px;
-  height: 28px;
-  background: var(--bg-panel);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 24px;
-  margin-top: 8px;
-  border-radius: 0 0 2px 2px;
-}
-
-.statusItem {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-dim);
-  letter-spacing: 0.3px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s, background 0.1s;
   white-space: nowrap;
 }
 
-.statusDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #3dcf82;
-  box-shadow: 0 0 5px rgba(61,207,130,0.5);
+.hdrBtn:hover {
+  border-color: #555555;
+  color: #f0f0f0;
+}
+
+.hdrBtnSave:hover {
+  border-color: #4caf7d;
+  color: #4caf7d;
+}
+
+.hdrBtnDanger:hover {
+  border-color: #e05252;
+  color: #e05252;
+}
+
+/* ── Floor / Room tabs ────────────────────────────────────── */
+.tabBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100%;
+}
+
+.tab {
+  height: 30px;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: #555555;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.1s, border-color 0.1s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.tab:hover {
+  color: #888888;
+}
+
+.tabActive {
+  color: #f0f0f0;
+  border-bottom-color: #d4a843;
+}
+
+.tabAdd {
+  height: 30px;
+  width: 30px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #555555;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s, background 0.1s;
   flex-shrink: 0;
+}
+
+.tabAdd:hover {
+  color: #f0f0f0;
+  background: #222222;
+}
+
+/* ── Welcome modal ────────────────────────────────────────── */
+.welcomeOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcomeModal {
+  background: #1a1a1a;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 40px;
+  max-width: 580px;
+  width: 90%;
+  font-family: "IBM Plex Mono", monospace;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
+}
+
+.welcomeStepCard {
+  background: #222222;
+  border: 1px solid #2e2e2e;
+  border-radius: 6px;
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+
+.welcomeStepCard:hover {
+  border-color: #3e3e3e;
+}
+
+.welcomeGetStarted {
+  height: 36px;
+  padding: 0 28px;
+  background: #d4a843;
+  border: none;
+  border-radius: 4px;
+  color: #0f0f0f;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.welcomeGetStarted:hover {
+  background: #e0b84e;
 }

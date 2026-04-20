@@ -1,43 +1,38 @@
-/* ── Reset ─────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* ── Design tokens ─────────────────────────────────────────── */
-:root {
-  --bg-void:        #090c10;
-  --bg-surface:     #0d1117;
-  --bg-raised:      #131920;
-  --bg-panel:       #161d26;
-
-  --border-subtle:  #1e2a38;
-  --border-default: #263445;
-  --border-active:  #2f4563;
-
-  --text-primary:   #cdd9e5;
-  --text-secondary: #768a9e;
-  --text-muted:     #4a5e70;
-  --text-dim:       #2d3f50;
-
-  --accent-cyan:    #39c5cf;
-  --accent-blue:    #4a8fc4;
-  --accent-amber:   #e8a245;
-  --accent-green:   #3dba74;
-
-  --font-ui:   'IBM Plex Sans',  sans-serif;
-  --font-mono: 'IBM Plex Mono',  monospace;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* ── Base ──────────────────────────────────────────────────── */
+:root {
+  --bg:           #0c0e14;
+  --surface:      #12151e;
+  --surface-2:    #1a1e2a;
+  --border:       #252a38;
+  --border-bright:#2e3547;
+  --accent:       #4f9eff;
+  --accent-dim:   #1e3d6e;
+  --text-primary: #e2e6f0;
+  --text-secondary:#7a849a;
+  --text-muted:   #3d4556;
+  --room-fill:    rgba(30, 61, 110, 0.18);
+  --room-stroke:  #4f9eff;
+  --grid-minor:   rgba(255,255,255,0.024);
+  --grid-major:   rgba(255,255,255,0.055);
+  --dim-line:     rgba(79, 158, 255, 0.5);
+}
+
 html, body, #root {
+  width: 100%;
   height: 100%;
-  width:  100%;
-  background: var(--bg-void);
+  background: var(--bg);
   color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 13px;
+  font-family: 'Syne', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: var(--bg-surface); }
-::-webkit-scrollbar-thumb  { background: var(--border-active); border-radius: 2px; }
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

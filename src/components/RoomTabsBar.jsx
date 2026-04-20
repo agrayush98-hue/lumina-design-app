@@ -1,54 +1,83 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from "react"
+import styles from "../App.module.css"
 
-const mono = { fontFamily: 'IBM Plex Mono, monospace' }
+export default function RoomTabsBar({ rooms, activeRoomId, onSelectRoom, onAddRoom, onRenameRoom, onDeleteRoom }) {
+  const [editingId, setEditingId] = useState(null)
+  const [editValue, setEditValue] = useState("")
+  const [hoveredId, setHoveredId] = useState(null)
+  const inputRef = useRef(null)
 
-export default function RoomTabsBar() {
-  const [active, setActive] = useState(0)
-  const [rooms, setRooms] = useState(['Room 1'])
+  useEffect(() => {
+    if (editingId !== null) inputRef.current?.focus()
+  }, [editingId])
 
-  const addRoom = () => {
-    const next = [...rooms, `Room ${rooms.length + 1}`]
-    setRooms(next)
-    setActive(next.length - 1)
+  function startEdit(room, e) {
+    e.stopPropagation()
+    setEditingId(room.id)
+    setEditValue(room.name)
   }
 
+  function commitEdit() {
+    if (editingId !== null) {
+      const trimmed = editValue.trim()
+      if (trimmed) onRenameRoom(editingId, trimmed)
+      setEditingId(null)
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter") commitEdit()
+    if (e.key === "Escape") setEditingId(null)
+  }
+
+  const canDelete = rooms.length > 1
+
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center',
-      height: 30, minHeight: 30,
-      background: '#060a0e',
-      borderBottom: '1px solid #131d28',
-      flexShrink: 0,
-      paddingLeft: 8,
-    }}>
-      <span style={{ ...mono, fontSize: 8, color: '#2d4f68', letterSpacing: '0.12em', marginRight: 10 }}>
-        ROOM
-      </span>
-      {rooms.map((r, i) => (
-        <button
-          key={i}
-          onClick={() => setActive(i)}
-          style={{
-            ...mono, fontSize: 9, padding: '0 14px', height: '100%',
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            color: active === i ? '#6ae5ff' : '#4a7a96',
-            borderBottom: active === i ? '2px solid #6ae5ff' : '2px solid transparent',
-            letterSpacing: '0.06em', whiteSpace: 'nowrap',
-          }}
-        >
-          {r}
-        </button>
-      ))}
-      <button
-        onClick={addRoom}
-        style={{
-          ...mono, fontSize: 11, padding: '0 10px', height: '100%',
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          color: '#2d4f68', borderBottom: '2px solid transparent',
-        }}
-      >
-        +
-      </button>
+    <div className={styles.tabBar} style={{ borderBottom: "1px solid #2e2e2e" }}>
+      {rooms.map(room => {
+        const isActive  = room.id === activeRoomId
+        const isEditing = room.id === editingId
+        const isHovered = room.id === hoveredId
+        return (
+          <div
+            key={room.id}
+            onClick={() => onSelectRoom(room.id)}
+            onDoubleClick={e => startEdit(room, e)}
+            onMouseEnter={() => setHoveredId(room.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            className={`${styles.tab} ${isActive ? styles.tabActive : ""}`}
+          >
+            {isEditing ? (
+              <input
+                ref={inputRef}
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                onBlur={commitEdit}
+                onKeyDown={handleKeyDown}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  background: "transparent", border: "none", outline: "none",
+                  color: isActive ? "#f0f0f0" : "#888",
+                  fontFamily: "IBM Plex Mono", fontSize: 12,
+                  width: Math.max(editValue.length, 4) + "ch",
+                  padding: 0,
+                }}
+              />
+            ) : (
+              <span>{room.name}</span>
+            )}
+            {isHovered && canDelete && (
+              <span
+                onClick={e => { e.stopPropagation(); onDeleteRoom(room.id) }}
+                style={{ fontSize: 14, lineHeight: 1, color: "#555", cursor: "pointer", userSelect: "none", transition: "color 0.1s" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#e05252" }}
+                onMouseLeave={e => { e.currentTarget.style.color = "#555" }}
+              >×</span>
+            )}
+          </div>
+        )
+      })}
+      <button className={styles.tabAdd} onClick={onAddRoom} title="Add room">+</button>
     </div>
   )
 }
