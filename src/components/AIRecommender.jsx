@@ -3,11 +3,6 @@ import { resolveFixture, CATEGORY_VISUAL } from "../data/fixtureLibrary"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ROOM_TYPES = [
-  "Living Room", "Bedroom", "Kitchen", "Bathroom", "Office",
-  "Hotel Lobby", "Restaurant", "Retail", "Corridor", "Warehouse",
-]
-
 const AMBIANCE_OPTIONS = [
   "Bright & Functional",
   "Warm & Cozy",
@@ -126,67 +121,131 @@ const S = {
   divider: { borderTop: "1px solid #2e2e2e", margin: "10px 0" },
 }
 
-// ── Build a placeable fixture object from API result ──────────────────────────
+// ── Map AI type strings → fixture categories ──────────────────────────────────
+// Handles both the exact types we teach Claude and any aliases it might use
 
-function buildFixture(rec, cct) {
-  // Normalize API type → our category key
-  const categoryMap = {
-    COB_DOWNLIGHT: "COB_DOWNLIGHT",
-    SPOTLIGHT:     "SPOTLIGHT",
-    PANEL:         "PANEL",
-    LINEAR:        "LINEAR",
-    WALL_WASHER:   "WALL_WASHER",
-  }
-  const category = categoryMap[rec.type] ?? "COB_DOWNLIGHT"
-  const id = `ai-${category.toLowerCase()}-${rec.watt}w-${Date.now()}`
+const CATEGORY_MAP = {
+  COB_DOWNLIGHT:    "COB_DOWNLIGHT",
+  SPOTLIGHT:        "SPOTLIGHT",
+  PANEL:            "PANEL",
+  LINEAR:           "LINEAR",
+  WALL_WASHER:      "WALL_WASHER",
+  LED_STRIP:        "LED_STRIP",
+  // Common aliases Claude may use
+  DOWNLIGHT:        "COB_DOWNLIGHT",
+  STRIP:            "LED_STRIP",
+  WASHER:           "WALL_WASHER",
+  TRACK:            "SPOTLIGHT",
+  BATTEN:           "LINEAR",
+  COVE:             "LED_STRIP",
+}
+
+// ── Per-type accent colours ───────────────────────────────────────────────────
+
+const TYPE_COLOR = {
+  COB_DOWNLIGHT: "#d4a843",
+  SPOTLIGHT:     "#f09a3e",
+  PANEL:         "#60b8f0",
+  LINEAR:        "#3dba74",
+  WALL_WASHER:   "#a78bfa",
+  LED_STRIP:     "#e879f9",
+}
+
+// ── Build a placeable fixture object from an AI zone record ──────────────────
+
+function buildFixture(zone) {
+  const category  = CATEGORY_MAP[zone.type] ?? "COB_DOWNLIGHT"
+  const watt      = zone.wattage ?? zone.watt ?? 10
+  const id        = `ai-${category.toLowerCase()}-${watt}w-${Date.now()}-${Math.random().toString(36).slice(2,6)}`
+  // Placement: use AI's decision, fall back to sensible defaults per category
+  const placement = zone.placement
+    ?? (category === "LED_STRIP" || category === "WALL_WASHER" ? "perimeter"
+      : category === "LINEAR" ? "rows" : "grid")
   return resolveFixture({
     id,
     category,
-    name: `${rec.type.replace(/_/g, " ")} ${rec.watt}W (AI)`,
-    watt:      rec.watt,
-    lumens:    rec.lumens,
-    beamAngle: rec.beam,
-    cct:       cct ?? "3000K",
+    name:      zone.name ?? `${zone.type.replace(/_/g, " ")} ${watt}W (AI)`,
+    watt,
+    lumens:    zone.lumens   ?? Math.round(watt * 90),
+    beamAngle: zone.beam     ?? 60,
+    cct:       zone.cct      ?? "3000K",
     tunable:   false,
     voltage:   230,
+    placement,
   })
 }
 
-// ── FixtureResultCard ─────────────────────────────────────────────────────────
+// ── FixtureZoneCard ───────────────────────────────────────────────────────────
 
-function FixtureResultCard({ label, rec }) {
+function FixtureZoneCard({ zone, onApply }) {
+  const cat      = CATEGORY_MAP[zone.type] ?? zone.type
+  const color    = TYPE_COLOR[cat] ?? "#888"
+  const cctDot   = CCT_COLORS[zone.cct] ?? "#fff"
+  const watt     = zone.wattage ?? zone.watt ?? "?"
   return (
-    <div style={S.fixtureCard}>
-      <div style={S.fixtureType}>{label} · {rec.type.replace(/_/g, " ")}</div>
-      <div style={S.fixtureRow}>
-        <span style={S.fixtureVal}>Watt: <span style={S.fixtureValBold}>{rec.watt}W</span></span>
-        <span style={S.fixtureVal}>Lumens: <span style={S.fixtureValBold}>{rec.lumens} lm</span></span>
-        <span style={S.fixtureVal}>Beam: <span style={S.fixtureValBold}>{rec.beam}°</span></span>
-        <span style={S.fixtureVal}>Qty: <span style={S.fixtureValBold}>{rec.quantity}</span></span>
+    <div style={{ ...S.fixtureCard, borderColor: color + "44" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color, fontWeight: 600, marginBottom: 2 }}>
+            {zone.name ?? zone.type.replace(/_/g, " ")}
+          </div>
+          <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            {zone.type.replace(/_/g, " ")} · {watt}W · {zone.placement ?? "grid"}
+          </div>
+        </div>
+        <button
+          style={{ ...S.applyBtnSecondary, width: "auto", padding: "3px 10px",
+            marginTop: 0, fontSize: 10, flexShrink: 0, marginLeft: 8,
+            borderColor: color + "66", color }}
+          onClick={() => onApply(zone)}
+          onMouseEnter={e => { e.currentTarget.style.background = color + "18" }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent" }}
+        >
+          PLACE
+        </button>
       </div>
-      {rec.reason && <div style={S.fixtureReason}>"{rec.reason}"</div>}
+      <div style={S.fixtureRow}>
+        <span style={S.fixtureVal}><span style={S.fixtureValBold}>{zone.quantity}</span> fix</span>
+        <span style={S.fixtureVal}><span style={S.fixtureValBold}>{zone.lumens}</span> lm</span>
+        {zone.beam && <span style={S.fixtureVal}><span style={S.fixtureValBold}>{zone.beam}°</span></span>}
+        <span style={{ ...S.fixtureVal, display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: cctDot, flexShrink: 0 }} />
+          {zone.cct}
+        </span>
+        {zone.protocol && zone.protocol !== "NON-DIM" && (
+          <span style={{ ...S.fixtureVal, color: "#60b8f0" }}>{zone.protocol}</span>
+        )}
+      </div>
+      {zone.reason && <div style={S.fixtureReason}>"{zone.reason}"</div>}
     </div>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
+const ROOM_TYPES = [
+  "Living Room", "Kitchen", "Bedroom", "Bathroom", "Office",
+  "Corridor", "Dining Room", "Conference Room",
+]
+
+export default function AIRecommender({ activeRoom, onApplyFixture, onApplyAll, onClose, panelMode = false }) {
   const widthM  = activeRoom ? (Number(activeRoom.roomWidth)  / 1000).toFixed(1) : "0"
   const heightM = activeRoom ? (Number(activeRoom.roomHeight) / 1000).toFixed(1) : "0"
   const ceilM   = activeRoom ? Number(activeRoom.ceilingHeight).toFixed(1) : "2.8"
 
-  const [roomType,      setRoomType]      = useState(ROOM_TYPES[0])
+  const [roomType,      setRoomType]      = useState(activeRoom?.roomType ?? "Living Room")
   const [ambiance,      setAmbiance]      = useState(AMBIANCE_OPTIONS[0])
   const [requirements,  setRequirements]  = useState("")
   const [loading,       setLoading]       = useState(false)
   const [error,         setError]         = useState(null)
   const [result,        setResult]        = useState(null)
+  const [applied,       setApplied]       = useState(null)  // { count, zones }
 
   async function handleGetRecommendations() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setApplied(null)
 
     const workerUrl = import.meta.env.VITE_AI_WORKER_URL
     if (!workerUrl) {
@@ -216,28 +275,51 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
     }
   }
 
-  function handleApply(rec) {
-    const fixture = buildFixture(rec, result?.cct)
-    onApplyFixture(fixture)
+  function handleApplyZone(zone) {
+    const fixture = buildFixture(zone)
+    const watt    = zone.wattage ?? zone.watt ?? "?"
+    const count   = onApplyFixture(fixture, zone.quantity ?? 1)
+    setApplied({ count: count ?? zone.quantity, zones: 1, label: `${zone.quantity} × ${zone.type.replace(/_/g, " ")} ${watt}W` })
   }
 
-  const hasAccent = result?.accent?.type && result.accent.type !== "null" && result.accent.type !== null
+  function handleApplyAll() {
+    if (!result?.zones?.length) return
+    const count = onApplyAll(result.zones.map(z => ({ fixture: buildFixture(z), quantity: z.quantity ?? 1 })))
+    const total = result.zones.reduce((s, z) => s + (z.quantity ?? 0), 0)
+    setApplied({ count: count ?? total, zones: result.zones.length, label: null })
+  }
+
+  const zones = result?.zones ?? []
+
+  const cardStyle = panelMode
+    ? { width: "100%", flex: 1, background: "transparent", border: "none",
+        borderRadius: 0, fontFamily: "IBM Plex Mono",
+        display: "flex", flexDirection: "column", overflowY: "auto" }
+    : S.card
 
   return (
-    <div style={S.overlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={S.card}>
+    <div
+      style={panelMode ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : S.overlay}
+      onClick={panelMode ? undefined : e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={cardStyle}>
 
-        {/* Header */}
-        <div style={S.header}>
-          <span style={S.title}>AI FIXTURE RECOMMENDER</span>
-          <button style={S.closeBtn} onClick={onClose} title="Close">×</button>
-        </div>
+        {/* Header — hidden in panel mode (tab bar serves as header) */}
+        {!panelMode && (
+          <div style={S.header}>
+            <span style={S.title}>AI FIXTURE RECOMMENDER</span>
+            <button style={S.closeBtn} onClick={onClose} title="Close">×</button>
+          </div>
+        )}
 
         <div style={S.body}>
 
           {/* Form */}
           <div>
-            <div style={S.label}>Room Type</div>
+            <div style={{ ...S.label, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Room Type</span>
+              <span style={{ color: "#444", fontSize: 9 }}>from settings</span>
+            </div>
             <select style={S.select} value={roomType} onChange={e => setRoomType(e.target.value)}>
               {ROOM_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
@@ -298,32 +380,17 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
           )}
 
           {/* Results */}
-          {result && !loading && (
+          {result && !loading && zones.length > 0 && (
             <>
               <div style={S.divider} />
+              <div style={S.sectionTitle}>Lighting Zones ({zones.length})</div>
 
-              <div style={S.sectionTitle}>Recommended Fixtures</div>
-
-              <FixtureResultCard label="Primary" rec={result.primary} />
-              {hasAccent && <FixtureResultCard label="Accent" rec={result.accent} />}
+              {zones.map((zone, i) => (
+                <FixtureZoneCard key={i} zone={zone} onApply={handleApplyZone} />
+              ))}
 
               {/* Meta grid */}
               <div style={S.metaGrid}>
-                <div style={S.metaItem}>
-                  <div style={S.metaLabel}>CCT</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                    <span style={{
-                      width: 10, height: 10, borderRadius: "50%",
-                      background: CCT_COLORS[result.cct] ?? "#fff",
-                      flexShrink: 0,
-                    }} />
-                    <span style={S.metaValue}>{result.cct}</span>
-                  </div>
-                </div>
-                <div style={S.metaItem}>
-                  <div style={S.metaLabel}>Protocol</div>
-                  <div style={S.metaValue}>{result.protocol}</div>
-                </div>
                 <div style={S.metaItem}>
                   <div style={S.metaLabel}>Total Load</div>
                   <div style={S.metaValue}>{result.totalLoad}W</div>
@@ -332,6 +399,14 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
                   <div style={S.metaLabel}>Est. Lux</div>
                   <div style={S.metaValue}>{result.luxEstimate} lx</div>
                 </div>
+                <div style={S.metaItem}>
+                  <div style={S.metaLabel}>Fixtures</div>
+                  <div style={S.metaValue}>{zones.reduce((s, z) => s + (z.quantity ?? 0), 0)} total</div>
+                </div>
+                <div style={S.metaItem}>
+                  <div style={S.metaLabel}>Zones</div>
+                  <div style={S.metaValue}>{zones.length}</div>
+                </div>
               </div>
 
               {/* Design tip */}
@@ -339,25 +414,31 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onClose }) {
                 <div style={S.designTip}>💡 {result.designTip}</div>
               )}
 
-              {/* Apply buttons */}
+              {/* Applied confirmation */}
+              {applied && (
+                <div style={{
+                  background: "#0a1f0a", border: "1px solid #2a5a2a", borderRadius: 4,
+                  padding: "9px 12px", fontSize: 11, color: "#3dba74",
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <span>✓</span>
+                  <span>
+                    {applied.label
+                      ? `Applied ${applied.label} to canvas`
+                      : `Applied ${applied.count} fixtures across ${applied.zones} zones to canvas`}
+                  </span>
+                </div>
+              )}
+
+              {/* Apply all */}
               <button
                 style={S.applyBtn}
-                onClick={() => handleApply(result.primary)}
+                onClick={handleApplyAll}
                 onMouseEnter={e => { e.currentTarget.style.background = "#2a2000" }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#1a1500" }}
               >
-                APPLY PRIMARY FIXTURE
+                APPLY ALL ZONES ({zones.reduce((s, z) => s + (z.quantity ?? 0), 0)} fixtures)
               </button>
-              {hasAccent && (
-                <button
-                  style={S.applyBtnSecondary}
-                  onClick={() => handleApply(result.accent)}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#d0d0d0" }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#2e2e2e"; e.currentTarget.style.color = "#888" }}
-                >
-                  APPLY ACCENT FIXTURE
-                </button>
-              )}
             </>
           )}
 

@@ -60,6 +60,11 @@ const FLOOR_REFLECTANCES = [
   { value: 0.1,  label: "10% — Dark carpet / Stone" },
 ]
 
+const ROOM_TYPES = [
+  "Living Room", "Kitchen", "Bedroom", "Bathroom", "Office",
+  "Corridor", "Dining Room", "Conference Room",
+]
+
 const PROTOCOLS = [
   { value: "NON-DIM",   label: "Non-dim (fixed output)" },
   { value: "PHASE-CUT", label: "Phase-cut (Triac)" },
@@ -139,6 +144,18 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
     }}>
       <div style={{ fontSize: 12, letterSpacing: 2, marginBottom: 16, color: C.accent }}>
         ROOM SETTINGS
+      </div>
+
+      {/* Room Type */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>Room Type</div>
+        <select
+          value={room.roomType ?? "Living Room"}
+          onChange={e => updateField("roomType", e.target.value)}
+          style={selectStyle}
+        >
+          {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
       </div>
 
       {/* Room Width with unit selector */}

@@ -209,6 +209,7 @@ const DEFAULT_ROOM = {
   targetLux: 300, fixtureLumens: 900,
   ceilingReflectance: 0.7, wallReflectance: 0.5, floorReflectance: 0.2,
   roomProtocol: "NON-DIM",
+  roomType: "Living Room",
 }
 
 const PROTOCOL_DIMMING = {
@@ -274,6 +275,7 @@ export default function App() {
   const [saving,             setSaving]             = useState(false)
   const [showSettings,       setShowSettings]       = useState(false)
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
+  const [leftTab,            setLeftTab]            = useState('fixture')
   const [settingsPos,        setSettingsPos]        = useState({ x: 10, y: 50 })
   const [showVisualEditor,   setShowVisualEditor]   = useState(false)
   const [visualEditorPos,    setVisualEditorPos]    = useState({ x: 400, y: 50 })
@@ -903,12 +905,165 @@ export default function App() {
     setActiveTool("fixture")
   }
 
-  function handleAIApply(fixture) {
+  // ── Shared room geometry for AI placement ────────────────────────────────────
+
+  function aiRoomGeom() {
+    const SCALE    = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
+    const useDrawn = roomOffsetX != null && drawnWidthPx != null
+    const pxPerMm  = useDrawn ? drawnWidthPx / roomWidth : SCALE
+    return {
+      RX:       roomOffsetX != null ? roomOffsetX : 20,
+      RY:       roomOffsetY != null ? roomOffsetY : 30,
+      RPX_W:    useDrawn ? drawnWidthPx  : roomWidth  * SCALE,
+      RPX_H:    useDrawn ? drawnHeightPx : roomHeight * SCALE,
+      wallOff:  600 * pxPerMm,
+      pxPerMm,
+    }
+  }
+
+  // ── Place a fixture group using strategy derived from fixture category ────────
+
+  function placeFixtureGroup(fixture, quantity, startId, existingLights = []) {
+    const { RX, RY, RPX_W, RPX_H, pxPerMm } = aiRoomGeom()
+    // Cap wall offset to 20% of smaller room dimension
+    const rawWallOff = aiRoomGeom().wallOff
+    const wallOff    = Math.min(rawWallOff, RPX_W * 0.2, RPX_H * 0.2)
+    const n   = Math.max(1, quantity)
+    let   id  = startId ?? Date.now()
+    const out = []
+
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+    const minX = RX + wallOff, maxX = RX + RPX_W - wallOff
+    const minY = RY + wallOff, maxY = RY + RPX_H - wallOff
+
+    // Overlap check: 0.5m minimum spacing between any two fixtures
+    const minSpacingPx = 500 * pxPerMm  // 500mm = 0.5m
+    const overlapR2    = minSpacingPx > 0 ? minSpacingPx ** 2 : -1  // -1 disables check if pxPerMm=0
+    const allSoFar     = [...existingLights]  // reference; out grows as we place
+
+    function tooClose(x, y) {
+      let minDist2 = Infinity
+      for (const l of [...allSoFar, ...out]) {
+        const dx = (l.x ?? 0) - x, dy = (l.y ?? 0) - y
+        const d2 = dx * dx + dy * dy
+        if (d2 < minDist2) minDist2 = d2
+        if (d2 < overlapR2) return true
+      }
+      if (process.env.NODE_ENV !== "production") {
+        const minDist = minDist2 === Infinity ? Infinity : Math.sqrt(minDist2) / Math.max(pxPerMm, 0.001) / 1000
+        console.log(`Checking (${Math.round(x)}, ${Math.round(y)}) — nearest ${minDist === Infinity ? "none" : minDist.toFixed(2) + "m"} against ${allSoFar.length + out.length} fixtures — ${minDist2 < overlapR2 ? "SKIP" : "PLACE"}`)
+      }
+      return false
+    }
+
+    function tryPush(x, y) {
+      if (tooClose(x, y)) {
+        console.log(`Skipped (${Math.round(x)}, ${Math.round(y)}) — too close to existing fixture`)
+        return false
+      }
+      out.push(makeLight(id++, x, y, fixture, fixture.lumens))
+      return true
+    }
+
+    const isPerimeter = fixture.category === "WALL_WASHER"
+      || fixture.category === "LED_STRIP"
+      || fixture.placement === "perimeter"
+      || fixture.placement === "corners"
+
+    const isSideWalls = fixture.placement === "side-walls"
+    const isCorners   = fixture.placement === "corners"
+
+    if (isCorners) {
+      // Place one in each corner (at wallOff inset)
+      const corners = [
+        [minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY],
+      ]
+      for (let i = 0; i < Math.min(n, corners.length); i++) {
+        tryPush(Math.round(corners[i][0]), Math.round(corners[i][1]))
+      }
+    } else if (isPerimeter || isSideWalls) {
+      // Distribute n fixtures along walls
+      const walls = isSideWalls
+        ? [
+            { isH: false, fixed: minX, from: minY, to: maxY },
+            { isH: false, fixed: maxX, from: minY, to: maxY },
+          ]
+        : [
+            { isH: true,  fixed: minY, from: minX, to: maxX },
+            { isH: true,  fixed: maxY, from: minX, to: maxX },
+            { isH: false, fixed: minX, from: minY, to: maxY },
+            { isH: false, fixed: maxX, from: minY, to: maxY },
+          ]
+      const wallCount = walls.length
+      const perWall = Math.max(1, Math.round(n / wallCount))
+      for (const w of walls) {
+        if (out.length >= n) break
+        const cnt = Math.min(perWall, n - out.length)
+        for (let i = 0; i < cnt; i++) {
+          const coord = cnt > 1 ? w.from + i * (w.to - w.from) / (cnt - 1) : (w.from + w.to) / 2
+          const px = clamp(Math.round(w.isH ? coord    : w.fixed), minX, maxX)
+          const py = clamp(Math.round(w.isH ? w.fixed  : coord),   minY, maxY)
+          tryPush(px, py)
+        }
+      }
+    } else if (fixture.category === "LINEAR") {
+      // Horizontal rows distributed vertically
+      const cx  = Math.round(RX + RPX_W / 2)
+      const spY = n > 1 ? (maxY - minY) / (n - 1) : 0
+      for (let i = 0; i < n; i++) {
+        tryPush(cx, clamp(Math.round(minY + i * spY), minY, maxY))
+      }
+    } else {
+      // Grid: aspect-correct cols/rows
+      const cols = Math.max(1, Math.round(Math.sqrt(n * (RPX_W / Math.max(1, RPX_H)))))
+      const rows = Math.ceil(n / cols)
+      const spX  = cols > 1 ? (maxX - minX) / (cols - 1) : 0
+      const spY  = rows > 1 ? (maxY - minY) / (rows - 1) : 0
+      for (let r = 0; r < rows; r++) {
+        const rowCount = r < rows - 1 ? cols : n - (rows - 1) * cols
+        const rowOffX  = rowCount < cols && spX > 0 ? ((cols - rowCount) * spX) / 2 : 0
+        for (let c = 0; c < rowCount; c++) {
+          tryPush(
+            clamp(Math.round(minX + rowOffX + c * spX), minX, maxX),
+            clamp(Math.round(minY + r * spY), minY, maxY),
+          )
+        }
+      }
+    }
+    return out
+  }
+
+  // ── Single-zone apply (PLACE button per zone) ─────────────────────────────────
+
+  function handleAIApply(fixture, quantity = 1) {
+    const existing  = lights ?? []   // lights = activeRoomObj.lights (room settings has no .lights)
+    const generated = placeFixtureGroup(fixture, quantity, undefined, existing)
     setRecentCustom(prev => [fixture, ...prev].slice(0, 8))
     setActiveFixtureId(fixture.id)
     setActiveTool("fixture")
-    setShowAIRecommender(false)
-    showToast("AI fixture applied — click canvas to place")
+    patchActiveRoom(r => ({ lights: [...r.lights, ...generated] }))
+    return generated.length
+  }
+
+  // ── All-zones apply (APPLY ALL button) ────────────────────────────────────────
+
+  function handleAIApplyAll(zones) {
+    if (!zones?.length) return 0
+    let id = Date.now()
+    const allLights = []
+    const newCustom  = []
+    const existing   = lights ?? []  // lights = activeRoomObj.lights (room settings has no .lights)
+    for (const { fixture, quantity } of zones) {
+      // Pass existing room lights + lights placed by earlier zones in this batch
+      allLights.push(...placeFixtureGroup(fixture, quantity, id, [...existing, ...allLights]))
+      id += quantity + 1
+      newCustom.push(fixture)
+    }
+    setRecentCustom(prev => [...newCustom, ...prev].slice(0, 8))
+    setActiveFixtureId(zones[0].fixture.id)
+    setActiveTool("fixture")
+    patchActiveRoom(r => ({ lights: [...r.lights, ...allLights] }))
+    return allLights.length
   }
 
   // ── Floating settings drag ────────────────────────────────────
@@ -1621,12 +1776,41 @@ export default function App() {
       {/* ── Main layout ─────────────────────────────────────────────────────── */}
       <main style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
-        {/* ── Left: Fixture Library 220px ─────────────────────────────────── */}
-        <FixturePanel
-          activeFixtureId={activeFixtureId}
-          onSelect={handleLibrarySelect}
-          userId={user?.uid ?? null}
-        />
+        {/* ── Left: Fixture Library / AI Recommender tabs ─────────────────── */}
+        <div style={{ display: "flex", flexDirection: "column", width: 260, minWidth: 260, height: "100%", background: "#141414", borderRight: "1px solid #2e2e2e", overflow: "hidden" }}>
+          {/* Tab bar */}
+          <div style={{ display: "flex", borderBottom: "1px solid #2e2e2e", flexShrink: 0 }}>
+            {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI SUGGEST' }].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setLeftTab(tab.id)}
+                style={{
+                  flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#1a1a1a" : "transparent",
+                  border: "none", borderBottom: leftTab === tab.id ? "2px solid #39c5cf" : "2px solid transparent",
+                  color: leftTab === tab.id ? "#39c5cf" : "#555", fontSize: 10, letterSpacing: "0.1em",
+                  fontFamily: "IBM Plex Mono", cursor: "pointer",
+                }}
+              >{tab.label}</button>
+            ))}
+          </div>
+          {/* Tab content */}
+          <div style={{ flex: 1, overflow: "hidden", display: leftTab === 'fixture' ? "flex" : "none", flexDirection: "column" }}>
+            <FixturePanel
+              activeFixtureId={activeFixtureId}
+              onSelect={handleLibrarySelect}
+              userId={user?.uid ?? null}
+            />
+          </div>
+          <div style={{ flex: 1, overflow: "auto", display: leftTab === 'ai' ? "flex" : "none", flexDirection: "column" }}>
+            <AIRecommender
+              activeRoom={room}
+              onApplyFixture={handleAIApply}
+              onApplyAll={handleAIApplyAll}
+              onClose={() => setLeftTab('fixture')}
+              panelMode
+            />
+          </div>
+        </div>
 
         {/* ── Center: Canvas Area 1fr ──────────────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -1684,7 +1868,7 @@ export default function App() {
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")} style={activeTool === "ctr" ? tbActive : {}} title="Place Contactor / Controller marker">CTR</button>
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}  style={activeTool === "jb"  ? tbActive : {}} title="Place Junction Box marker">JB</button>
               <button className={styles.tbBtn} onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }} style={showEmergency || activeTool === "emergency" ? tbActive : {}} title="Toggle emergency lighting mode">Emergency</button>
-              <button className={styles.tbBtn} onClick={() => setShowAIRecommender(p => !p)} style={showAIRecommender ? tbActive : {}} title="AI Fixture Recommender — get AI-powered lighting suggestions">AI RECOMMEND</button>
+              <button className={styles.tbBtn} onClick={() => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai')} style={leftTab === 'ai' ? tbActive : {}} title="AI Fixture Recommender — get AI-powered lighting suggestions">AI RECOMMEND</button>
               <div className={styles.tbSeparator} />
               {floorPlan && (
                 <button
@@ -2337,14 +2521,6 @@ export default function App() {
       )}
 
 
-      {/* ── AI Recommender modal ─────────────────────────────────────────────── */}
-      {showAIRecommender && (
-        <AIRecommender
-          activeRoom={room}
-          onApplyFixture={handleAIApply}
-          onClose={() => setShowAIRecommender(false)}
-        />
-      )}
 
       {/* ── Load Project modal ───────────────────────────────────────────────── */}
       {showLoadModal && (
