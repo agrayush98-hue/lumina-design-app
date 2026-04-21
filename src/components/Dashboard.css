@@ -492,6 +492,193 @@
   padding: 8px 0;
 }
 
+/* ── Stats bar ───────────────────────────────────────────────────────────────── */
+.dash-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #0d1520;
+  border: 1px solid #1a2b3c;
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+}
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 20px;
+}
+.dash-stat:first-child { padding-left: 0; }
+.dash-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #cdd9e5;
+  letter-spacing: -0.02em;
+}
+.dash-stat-label {
+  font-size: 9px;
+  color: #4a7a96;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.dash-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: #1a2b3c;
+  flex-shrink: 0;
+}
+
+/* ── Enhanced project cards ──────────────────────────────────────────────────── */
+.project-card-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-radius: 5px 5px 0 0;
+  margin: -16px -16px 0;
+}
+.project-card-initial {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.3);
+}
+.project-card-badge {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: #2d4f68;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #1a2b3c;
+  border-radius: 3px;
+  padding: 2px 7px;
+}
+.project-card-body {
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.project-card-name {
+  font-size: 12px;
+  color: #cdd9e5;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.project-card-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.project-card-meta span {
+  font-size: 9px;
+  color: #2d4f68;
+  letter-spacing: 0.06em;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+.empty-state-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 0 40px;
+  gap: 10px;
+}
+.empty-state-icon {
+  font-size: 36px;
+  color: #1a2b3c;
+  margin-bottom: 4px;
+}
+.empty-state-title {
+  font-size: 14px;
+  color: #cdd9e5;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.empty-state-desc {
+  font-size: 10px;
+  color: #4a7a96;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.empty-quickstart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 520px;
+}
+.empty-tpl-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #0d1520;
+  border: 1px solid #1a2b3c;
+  border-radius: 6px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  color: #cdd9e5;
+  letter-spacing: 0.04em;
+  transition: border-color 0.15s, background 0.15s;
+}
+.empty-tpl-btn:hover { border-color: #2d4f68; background: #0f1e2e; }
+.empty-tpl-blank { border-style: dashed; color: #4a7a96; }
+
+/* ── Template quick-start section ────────────────────────────────────────────── */
+.dash-template-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #1a2b3c;
+}
+.dash-template-header {
+  margin-bottom: 12px;
+}
+.dash-template-title {
+  font-size: 9px;
+  color: #2d4f68;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.dash-template-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dash-tpl-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0d1520;
+  border: 1px solid #1a2b3c;
+  border-radius: 20px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  color: #cdd9e5;
+  letter-spacing: 0.04em;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dash-tpl-pill:hover { border-color: #2d4f68; background: #0f1e2e; }
+.dash-tpl-cat {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .dash-sidebar {

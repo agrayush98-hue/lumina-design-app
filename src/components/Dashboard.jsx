@@ -9,6 +9,8 @@ import {
   cancelSubscription,
   isTrialActive, getTrialDaysRemaining, checkProjectLimit,
 } from "../firebase"
+import NewProjectWizard        from "./NewProjectWizard"
+import { PROJECT_TEMPLATES }   from "../templates/projectTemplates"
 import "./Dashboard.css"
 
 const TABS = [
@@ -59,21 +61,40 @@ function fmt(date) {
     + " " + date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const CARD_COLORS = ["#39c5cf", "#d4a843", "#ff7c00", "#4da6ff", "#cc60ff", "#20c0f0"]
+
+function cardColor(name = "") {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
+  return CARD_COLORS[Math.abs(h) % CARD_COLORS.length]
+}
+
+function timeAgo(date) {
+  if (!date) return "—"
+  const diff = Date.now() - date.getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins  < 1)   return "just now"
+  if (mins  < 60)  return `${mins}m ago`
+  if (hours < 24)  return `${hours}h ago`
+  if (days  < 30)  return `${days}d ago`
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })
+}
+
 // ── Projects tab ──────────────────────────────────────────────────────────────
 
 function ProjectsTab({ user }) {
-  const navigate    = useNavigate()
-  const [projects,  setProjects]  = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [error,     setError]     = useState(null)
+  const navigate     = useNavigate()
+  const [projects,   setProjects]   = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState(null)
   const [deletingId, setDeletingId] = useState(null)
-  const [showNew,   setShowNew]   = useState(false)
-  const [newName,   setNewName]   = useState("")
-  const [creating,  setCreating]  = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
 
-  useEffect(() => {
-    fetchProjects()
-  }, [])
+  useEffect(() => { fetchProjects() }, [])
 
   async function fetchProjects() {
     setLoading(true); setError(null)
@@ -82,9 +103,7 @@ function ProjectsTab({ user }) {
     finally { setLoading(false) }
   }
 
-  async function handleOpen(proj) {
-    navigate(`/app?projectId=${proj.id}`)
-  }
+  function handleOpen(proj) { navigate(`/app?projectId=${proj.id}`) }
 
   async function handleDelete(e, projId) {
     e.stopPropagation()
@@ -100,96 +119,158 @@ function ProjectsTab({ user }) {
     }
   }
 
-  async function handleCreate() {
-    const name = newName.trim() || "Untitled Project"
-    setCreating(true)
+  async function handleNewProject() {
     try {
       const canCreate = await checkProjectLimit(user.uid)
       if (!canCreate) {
         setError("Project limit reached for your plan. Upgrade to create more projects.")
-        setCreating(false)
         return
       }
-      navigate(`/app?new=${encodeURIComponent(name)}`)
+      setShowWizard(true)
     } catch (e) {
       setError(e.message)
-      setCreating(false)
     }
   }
 
+  // Stats
+  const totalRooms    = projects.reduce((s, p) => s + (p.roomCount  ?? 0), 0)
+  const totalFloors   = projects.reduce((s, p) => s + (p.floorCount ?? 0), 0)
+  const lastUpdated   = projects.reduce((latest, p) => {
+    const t = p.updatedAt?.getTime?.() ?? 0
+    return t > latest ? t : latest
+  }, 0)
+
   return (
     <>
-      <div className="dash-section-header">
-        <div>
-          <div className="dash-section-title">PROJECTS</div>
-          <div className="dash-section-sub">{projects.length} project{projects.length !== 1 ? "s" : ""}</div>
+      {/* Stats bar */}
+      {!loading && projects.length > 0 && (
+        <div className="dash-stats-bar">
+          <div className="dash-stat">
+            <div className="dash-stat-value">{projects.length}</div>
+            <div className="dash-stat-label">Projects</div>
+          </div>
+          <div className="dash-stat-divider" />
+          <div className="dash-stat">
+            <div className="dash-stat-value">{totalFloors}</div>
+            <div className="dash-stat-label">Floors</div>
+          </div>
+          <div className="dash-stat-divider" />
+          <div className="dash-stat">
+            <div className="dash-stat-value">{totalRooms}</div>
+            <div className="dash-stat-label">Rooms</div>
+          </div>
+          <div className="dash-stat-divider" />
+          <div className="dash-stat">
+            <div className="dash-stat-value">{lastUpdated ? timeAgo(new Date(lastUpdated)) : "—"}</div>
+            <div className="dash-stat-label">Last active</div>
+          </div>
+          <div style={{ flex: 1 }} />
+          <button className="btn-primary" onClick={handleNewProject}>+ NEW PROJECT</button>
         </div>
-        <button className="btn-primary" onClick={() => setShowNew(true)}>+ NEW PROJECT</button>
-      </div>
+      )}
+
+      {/* Section header (no projects state hides stats bar) */}
+      {(loading || projects.length === 0) && (
+        <div className="dash-section-header">
+          <div>
+            <div className="dash-section-title">PROJECTS</div>
+            {!loading && <div className="dash-section-sub">No projects yet</div>}
+          </div>
+          {!loading && <button className="btn-primary" onClick={handleNewProject}>+ NEW PROJECT</button>}
+        </div>
+      )}
 
       {error && <div className="inline-error">{error}</div>}
-
       {loading && <div className="loading-state">Loading projects…</div>}
 
+      {/* Empty state */}
       {!loading && projects.length === 0 && (
-        <div className="empty-state">
-          <p>No projects yet.</p>
-          <button className="btn-secondary" onClick={() => setShowNew(true)}>Create your first project</button>
-        </div>
-      )}
-
-      {!loading && projects.length > 0 && (
-        <div className="projects-grid">
-          {projects.map(proj => (
-            <div key={proj.id} className="project-card" onClick={() => handleOpen(proj)}>
-              <div className="project-card-name">{proj.name}</div>
-              <div className="project-card-meta">
-                {proj.updatedAt && <span>{fmt(proj.updatedAt)}</span>}
-                {proj.floorCount != null && <span>{proj.floorCount} floor{proj.floorCount !== 1 ? "s" : ""}</span>}
-                {proj.roomCount  != null && <span>{proj.roomCount}  room{proj.roomCount  !== 1 ? "s" : ""}</span>}
-              </div>
-              <div className="project-card-actions" onClick={e => e.stopPropagation()}>
-                <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 10px" }} onClick={() => handleOpen(proj)}>
-                  OPEN
-                </button>
-                <button
-                  className="btn-danger"
-                  style={{ fontSize: 9, padding: "5px 10px" }}
-                  disabled={deletingId === proj.id}
-                  onClick={e => handleDelete(e, proj.id)}
-                >
-                  {deletingId === proj.id ? "…" : "DELETE"}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showNew && (
-        <div className="modal-overlay" onClick={() => setShowNew(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-title">NEW PROJECT</div>
-            <div className="form-group">
-              <label className="form-label">Project Name</label>
-              <input
-                className="form-input"
-                autoFocus
-                placeholder="e.g. Office Floor 3"
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") handleCreate() }}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowNew(false)}>CANCEL</button>
-              <button className="btn-primary" disabled={creating} onClick={handleCreate}>
-                {creating ? "…" : "CREATE"}
+        <div className="empty-state-enhanced">
+          <div className="empty-state-icon">◫</div>
+          <div className="empty-state-title">Start your first project</div>
+          <div className="empty-state-desc">Choose a template or start from scratch</div>
+          <div className="empty-quickstart">
+            {PROJECT_TEMPLATES.map(tpl => (
+              <button key={tpl.id} className="empty-tpl-btn" onClick={() => {
+                try { sessionStorage.setItem("lumina_pending_template", JSON.stringify(tpl)) } catch {}
+                navigate(`/app?new=${encodeURIComponent(tpl.name)}`)
+              }}>
+                <span style={{ color: tpl.accentColor }}>{tpl.icon}</span>
+                <span>{tpl.name}</span>
               </button>
-            </div>
+            ))}
+            <button className="empty-tpl-btn empty-tpl-blank" onClick={handleNewProject}>
+              <span style={{ color: "#555" }}>◻</span>
+              <span>Blank Canvas</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Project grid */}
+      {!loading && projects.length > 0 && (
+        <div className="projects-grid">
+          {projects.map(proj => {
+            const color = cardColor(proj.name)
+            return (
+              <div key={proj.id} className="project-card" onClick={() => handleOpen(proj)}>
+                <div className="project-card-header" style={{ background: `${color}14`, borderBottom: `1px solid ${color}30` }}>
+                  <div className="project-card-initial" style={{ color, border: `1px solid ${color}50` }}>
+                    {(proj.name?.[0] ?? "?").toUpperCase()}
+                  </div>
+                  <div className="project-card-badge">
+                    {proj.roomCount > 0 ? "ACTIVE" : "EMPTY"}
+                  </div>
+                </div>
+                <div className="project-card-body">
+                  <div className="project-card-name">{proj.name}</div>
+                  <div className="project-card-meta">
+                    {proj.floorCount != null && <span>{proj.floorCount} floor{proj.floorCount !== 1 ? "s" : ""}</span>}
+                    {proj.roomCount  != null && <span>{proj.roomCount} room{proj.roomCount !== 1 ? "s" : ""}</span>}
+                    {proj.updatedAt  && <span style={{ marginLeft: "auto" }}>{timeAgo(proj.updatedAt)}</span>}
+                  </div>
+                </div>
+                <div className="project-card-actions" onClick={e => e.stopPropagation()}>
+                  <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px", flex: 1 }} onClick={() => handleOpen(proj)}>
+                    OPEN →
+                  </button>
+                  <button
+                    className="btn-danger"
+                    style={{ fontSize: 9, padding: "5px 10px" }}
+                    disabled={deletingId === proj.id}
+                    onClick={e => handleDelete(e, proj.id)}
+                  >
+                    {deletingId === proj.id ? "…" : "✕"}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Template quick-start (when user has projects) */}
+      {!loading && projects.length > 0 && (
+        <div className="dash-template-section">
+          <div className="dash-template-header">
+            <div className="dash-template-title">QUICK START FROM TEMPLATE</div>
+          </div>
+          <div className="dash-template-row">
+            {PROJECT_TEMPLATES.map(tpl => (
+              <button key={tpl.id} className="dash-tpl-pill" onClick={() => {
+                try { sessionStorage.setItem("lumina_pending_template", JSON.stringify(tpl)) } catch {}
+                navigate(`/app?new=${encodeURIComponent(tpl.name)}`)
+              }}>
+                <span style={{ color: tpl.accentColor }}>{tpl.icon}</span>
+                <span>{tpl.name}</span>
+                <span className="dash-tpl-cat" style={{ color: tpl.accentColor }}>{tpl.category}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showWizard && <NewProjectWizard onClose={() => setShowWizard(false)} />}
     </>
   )
 }

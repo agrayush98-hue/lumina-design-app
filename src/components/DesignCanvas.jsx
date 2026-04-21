@@ -103,6 +103,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   onHoverLight,
   daliAddresses,
   onSelectLights,
+  selectedLightIds,
 }, ref) {
   const stageRef = useRef(null)
   useImperativeHandle(ref, () => ({ getStage: () => stageRef.current }))
@@ -933,15 +934,31 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
     const hasBoth = protoBadge && cctBadge
 
+    const isSelected = selectedLightIds?.includes(light.id) ?? false
+
     return (
       <Group x={light.x} y={light.y} draggable onDragEnd={handleDragEnd} onContextMenu={handleContextMenu}>
         <Circle radius={Math.max(1, Math.abs(r + 8))} fill={light.fixtureColor ? light.fixtureColor + '33' : glow} listening={false} />
+        {/* Selection ring — rendered beneath the fixture shape */}
+        {isSelected && (
+          <Circle
+            radius={Math.max(1, Math.abs(r + 6))}
+            fill="transparent"
+            stroke="#39c5cf"
+            strokeWidth={2}
+            opacity={0.9}
+            shadowColor="#39c5cf"
+            shadowBlur={8}
+            shadowOpacity={0.6}
+            listening={false}
+          />
+        )}
         <Circle
           radius={Math.max(1, Math.abs(r + 4))}
           fill="transparent"
           onMouseEnter={() => { setHoveredLightId(light.id); onHoverLight?.(light) }}
           onMouseLeave={() => { setHoveredLightId(null);     onHoverLight?.(null)  }}
-          onClick={(e) => { e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); }}
+          onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); }}
           onContextMenu={handleContextMenu}
         />
         {(() => {
@@ -950,10 +967,10 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           const shapeRadius = Math.max(1, Math.abs(r))
           const shapeProps = {
             fill: shapeColor,
-            stroke: stroke,
-            strokeWidth: 1.5,
-            onClick: (e) => { e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); },
-            onDblClick: (e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id); }
+            stroke: isSelected ? "#39c5cf" : stroke,
+            strokeWidth: isSelected ? 2.5 : 1.5,
+            onClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); },
+            onDblClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id); }
           }
 
           if (shape === 'circle') return <Circle radius={shapeRadius} {...shapeProps} />
@@ -1342,13 +1359,14 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     />
                   )}
 
-                  {/* Room border — bright cyan for active, faint for inactive */}
+                  {/* Room border — bright cyan for active, faint dashed gray for inactive */}
                   <Rect
                     x={rX} y={rY} width={rpxW} height={rpxH}
-                    stroke={isActive ? "#00d4ff" : "#1a3a4a"}
-                    strokeWidth={isActive ? 2.5 : 1.5}
-                    fill={isActive ? "transparent" : "rgba(0,100,150,0.05)"}
-                    opacity={isActive ? 1 : 0.3}
+                    stroke={isActive ? "#39c5cf" : "#2e2e2e"}
+                    strokeWidth={isActive ? 2 : 1}
+                    dash={isActive ? undefined : [5, 5]}
+                    fill="transparent"
+                    opacity={isActive ? 1 : 0.15}
                     cornerRadius={3}
                     listening={!isActive}
                     onClick={() => {
@@ -1380,8 +1398,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     text={r.name ?? `Room ${r.id}`}
                     fontSize={isActive ? 11 : 9}
                     fontFamily="IBM Plex Mono"
-                    fill={isActive ? "#00d4ff" : "#39c5cf"}
-                    opacity={isActive ? 1 : 0.45}
+                    fill={isActive ? "#39c5cf" : "#555"}
+                    opacity={isActive ? 1 : 0.6}
                     fontStyle={isActive ? "bold" : "normal"}
                     listening={false}
                   />

@@ -18,6 +18,7 @@ import AIRecommender from "./components/AIRecommender"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
+import { getTemplate } from "./templates/projectTemplates"
 
 const CANVAS_W        = 1400
 const CANVAS_H        = 750
@@ -286,6 +287,7 @@ export default function App() {
   const [showWelcome,        setShowWelcome]        = useState(() => {
     try { return !localStorage.getItem("lumina_welcome_dismissed") } catch { return true }
   })
+  const [showShortcuts,      setShowShortcuts]      = useState(false)
   const [hoveredLight,       setHoveredLight]       = useState(null)
   const [selectedLights,     setSelectedLights]     = useState([])
 
@@ -872,6 +874,7 @@ export default function App() {
   }
 
   // Auto-load project or set name from URL params (?projectId=xxx or ?new=Name)
+  // Also checks sessionStorage for a pending template from NewProjectWizard
   useEffect(() => {
     if (!user) return
     const pid  = searchParams.get("projectId")
@@ -882,6 +885,19 @@ export default function App() {
       }).catch(e => showToast(`Failed to load project: ${e.message}`))
     } else if (name) {
       setProjectName(decodeURIComponent(name))
+      // Check if a template was queued by NewProjectWizard
+      try {
+        const raw = sessionStorage.getItem("lumina_pending_template")
+        if (raw) {
+          sessionStorage.removeItem("lumina_pending_template")
+          const tpl = JSON.parse(raw)
+          if (tpl?.floors) {
+            setFloors(tpl.floors)
+            setActiveFloorId(tpl.floors[0]?.id ?? 1)
+            showToast(`Template loaded: ${tpl.name}`)
+          }
+        }
+      } catch {}
     }
   }, [user])
 
@@ -1619,27 +1635,50 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+      const inInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable
+      const ctrl    = e.ctrlKey || e.metaKey
+
+      // ── Always-active (work even in inputs) ──
+      if (e.key === 'Escape') {
+        setSelectedLights([])
+        setShowShortcuts(false)
+        return
+      }
+
+      // ── Project ──
+      if (ctrl && e.key === 's') { e.preventDefault(); handleSave(); return }
+      if (ctrl && e.key === 'h') { e.preventDefault(); navigate('/dashboard'); return }
+
+      if (inInput) return
+
+      // ── Show shortcuts ──
+      if (e.key === '?') { e.preventDefault(); setShowShortcuts(p => !p); return }
+
+      // ── Selection / editing ──
+      if (ctrl && e.key === 'a') {
         e.preventDefault()
         if (activeRoomObj?.lights) setSelectedLights(activeRoomObj.lights)
+        return
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedLights.length > 0) {
         e.preventDefault()
         patchActiveRoom(r => ({ lights: r.lights.filter(l => !selectedLights.some(s => s.id === l.id)) }))
         setSelectedLights([])
+        return
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedLights.length > 0) {
+      if (ctrl && e.key === 'd' && selectedLights.length > 0) {
         e.preventDefault()
         const duplicated = selectedLights.map(f => ({ ...f, id: Math.random().toString(36).substr(2, 9), x: f.x + 50, y: f.y + 50 }))
         patchActiveRoom(r => ({ lights: [...r.lights, ...duplicated] }))
         setSelectedLights(duplicated)
+        return
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedLights.length > 0) {
+      if (ctrl && e.key === 'c' && selectedLights.length > 0) {
         e.preventDefault()
         localStorage.setItem('copiedFixtures', JSON.stringify(selectedLights))
+        return
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      if (ctrl && e.key === 'v') {
         e.preventDefault()
         const copied = JSON.parse(localStorage.getItem('copiedFixtures') || '[]')
         if (copied.length > 0) {
@@ -1647,8 +1686,30 @@ export default function App() {
           patchActiveRoom(r => ({ lights: [...r.lights, ...pasted] }))
           setSelectedLights(pasted)
         }
+        return
       }
-      if (e.key === 'Escape') setSelectedLights([])
+
+      // ── Tools ──
+      if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault()
+        setActiveTool(t => t === 'draw-room' ? 'fixture' : 'draw-room')
+        return
+      }
+      if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault()
+        autoPlaceLights()
+        return
+      }
+      if (ctrl && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault()
+        setLeftTab(t => t === 'ai' ? 'fixture' : 'ai')
+        return
+      }
+
+      // ── Visualization ──
+      if (e.key === 'b' || e.key === 'B') { e.preventDefault(); setShowBeam(p => !p); return }
+      if (e.key === 'h' || e.key === 'H') { e.preventDefault(); setShowHeatmap(p => !p); return }
+      if (e.key === 'g' || e.key === 'G') { e.preventDefault(); setSnapToGrid(p => !p); return }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -1675,6 +1736,12 @@ export default function App() {
             <span style={{ fontSize: 15, fontWeight: 700, color: "#f0f0f0", letterSpacing: "0.06em" }}>LUMINA</span>
             <span style={{ fontSize: 15, fontWeight: 400, color: "#555", letterSpacing: "0.06em" }}>DESIGN</span>
           </div>
+          <button
+            onClick={() => navigate("/dashboard")}
+            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: 4, color: "#d4a843", fontFamily: "IBM Plex Mono", fontSize: 11, fontWeight: 500, padding: "3px 10px", cursor: "pointer", letterSpacing: "0.04em", transition: "border-color 0.1s, color 0.1s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#f0d080" }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#2e2e2e"; e.currentTarget.style.color = "#d4a843" }}
+          >← Projects</button>
           <div style={{ width: 1, height: 16, background: "#2e2e2e" }} />
           {editingName ? (
             <input
@@ -1715,6 +1782,13 @@ export default function App() {
           <button className={styles.hdrBtn} onClick={handleShare}>Share</button>
           <button className={styles.hdrBtn} onClick={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}>Export</button>
           <div style={{ width: 1, height: 16, background: "#2e2e2e", margin: "0 4px" }} />
+          <button
+            onClick={() => setShowShortcuts(true)}
+            title="Keyboard shortcuts (?)"
+            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.1s, color 0.1s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#d4a843" }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#2e2e2e"; e.currentTarget.style.color = "#555" }}
+          >?</button>
           <span style={{ fontSize: 11, color: "#555", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
           <button className={`${styles.hdrBtn} ${styles.hdrBtnDanger}`} onClick={() => signOut(auth)}>Sign Out</button>
         </div>
@@ -1818,14 +1892,15 @@ export default function App() {
           {/* Centered floating toolbar */}
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "#111111", borderBottom: "1px solid #1e1e1e", height: 44, flexShrink: 0 }}>
             <div className={styles.toolbar} style={{ height: 44, padding: "0 4px" }}>
-              <button className={styles.tbBtn} onClick={autoPlaceLights} title="Auto-place fixtures in an optimal grid">Auto Place</button>
-              <button className={styles.tbBtn} onClick={() => setSnapToGrid(p => !p)} style={snapToGrid ? tbActive : {}} title={snapToGrid ? "Snap to grid ON" : "Snap to grid OFF"}>Snap {snapToGrid ? "On" : "Off"}</button>
-              <button className={`${styles.tbBtn} ${styles.tbBtnDestructive}`} onClick={() => patchActiveRoom(() => ({ lights: [] }))} title="Remove all fixtures from this room">Clear</button>
+              <button className={styles.tbBtn} onClick={autoPlaceLights} title="Auto Place — Automatically distribute fixtures in an optimal grid based on target lux and room size">Auto Place</button>
+              <button className={styles.tbBtn} onClick={() => setSnapToGrid(p => !p)} style={snapToGrid ? tbActive : {}} title={snapToGrid ? "Snap to grid: ON — fixtures align to grid points" : "Snap to grid: OFF — free placement"}>Snap {snapToGrid ? "On" : "Off"}</button>
+              <button className={`${styles.tbBtn} ${styles.tbBtnDestructive}`} onClick={() => patchActiveRoom(() => ({ lights: [] }))} title="Clear all fixtures from this room">Clear</button>
               <div className={styles.tbSeparator} />
-              <button className={styles.tbBtn} onClick={() => setShowBeam(p => !p)} style={showBeam ? tbActive : {}} title="Toggle beam spread cones">Beam</button>
-              <button className={styles.tbBtn} onClick={() => setShowHeatmap(p => !p)} style={showHeatmap ? tbActive : {}} title="Toggle lux heatmap overlay">Heatmap</button>
+              <button className={styles.tbBtn} onClick={() => setShowBeam(p => !p)} style={showBeam ? tbActive : {}} title="Beam — Visualize beam spread cones for each fixture on the canvas">Beam</button>
+              <button className={styles.tbBtn} onClick={() => setShowHeatmap(p => !p)} style={showHeatmap ? tbActive : {}} title="Heatmap — Show false-colour lux intensity map across the room floor">Heatmap</button>
               <div className={styles.tbSeparator} />
               <button
+                title="DALI — Enable DALI 2.0 addressable lighting system. Each fixture gets a unique bus address for individual dimming control."
                 onClick={() => {
   setDaliEnabled(prev => !prev)
   // When enabling DALI, assign DALI protocol to all fixtures without a protocol
@@ -1868,7 +1943,7 @@ export default function App() {
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")} style={activeTool === "ctr" ? tbActive : {}} title="Place Contactor / Controller marker">CTR</button>
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}  style={activeTool === "jb"  ? tbActive : {}} title="Place Junction Box marker">JB</button>
               <button className={styles.tbBtn} onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }} style={showEmergency || activeTool === "emergency" ? tbActive : {}} title="Toggle emergency lighting mode">Emergency</button>
-              <button className={styles.tbBtn} onClick={() => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai')} style={leftTab === 'ai' ? tbActive : {}} title="AI Fixture Recommender — get AI-powered lighting suggestions">AI RECOMMEND</button>
+              <button className={styles.tbBtn} onClick={() => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai')} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
               <div className={styles.tbSeparator} />
               {floorPlan && (
                 <button
@@ -2101,6 +2176,7 @@ export default function App() {
               onHoverLight={setHoveredLight}
               daliAddresses={daliAddresses}
               onSelectLights={setSelectedLights}
+              selectedLightIds={selectedLights.map(l => l.id)}
             />
 
             <ElectricalPanel
@@ -2225,10 +2301,24 @@ export default function App() {
                 <div style={{ fontSize: 10, color: "#444", marginTop: 6 }}>Target: {tgtLux} lux</div>
               </div>
 
-              {/* FIXTURE INSPECTOR — shows hover-selected stats when a fixture is hovered */}
-              <Sect title={selectedLights.length > 0 && selectedLights[0].category !== "LED_STRIP" ? `FIXTURE — SELECTED${selectedLights.length > 1 ? ` (${selectedLights.length})` : ''}` : "FIXTURE"}>
+              {/* FIXTURE INSPECTOR — shows selected fixture stats; batch-updates all selected */}
+              <Sect title={selectedLights.length > 0 && selectedLights[0].category !== "LED_STRIP" ? `FIXTURE${selectedLights.length > 1 ? ` (${selectedLights.length})` : ''}` : "FIXTURE"}>
                 {selectedLights.length > 0 && selectedLights[0].category !== "LED_STRIP" ? (() => {
-                  const hl = selectedLights[0]
+                  const hl  = selectedLights[0]
+                  const sel = selectedLights          // full selection for batch ops
+                  const multi = sel.length > 1
+
+                  // Batch updater — applies to all selected fixtures
+                  const batchUpdate = (updates) => sel.forEach(l => updateLight(l.id, updates))
+
+                  // Mixed-value helpers
+                  const sizes   = sel.map(l => l.fixtureSize  ?? 8)
+                  const colors  = sel.map(l => l.fixtureColor ?? '#ffffff')
+                  const shapes  = sel.map(l => l.fixtureShape ?? 'circle')
+                  const allSameSize  = sizes.every(v => v === sizes[0])
+                  const allSameColor = colors.every(v => v === colors[0])
+                  const allSameShape = shapes.every(v => v === shapes[0])
+
                   const hx = hl.x ?? 0, hy = hl.y ?? 0
                   const inspUnit  = getStoredUnit()
                   const xDisp     = fromMM((hx - hRoomX) / hPxPerMm, inspUnit)
@@ -2247,71 +2337,79 @@ export default function App() {
                   const nearFixDisp = nearFixDist < Infinity ? fromMM(nearFixDist / hPxPerMm, inspUnit) : null
                   return (
                     <>
-                      <div style={{ fontSize: 10, color: "#39c5cf", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {hl.label ?? hl.name ?? "Fixture"}
-                      </div>
-                      <Row label={`X (${inspUnit})`} value={xDisp !== '' ? String(xDisp) : '—'} />
-                      <Row label={`Y (${inspUnit})`} value={yDisp !== '' ? String(yDisp) : '—'} />
-                      <Row label="→ wall"     value={wallDisp !== '' ? `${wallDisp}${inspUnit}` : '—'} />
-                      {nearFixDisp !== null && (
-                        <Row label="↔ nearest" value={`${nearFixDisp}${inspUnit}`} color="#d4a843" />
+                      {/* Multi-select banner */}
+                      {multi && (
+                        <div style={{ fontSize: 9, color: "#d4a843", background: "#1a1500", border: "1px solid #3a2e00", borderRadius: 3, padding: "5px 8px", marginBottom: 8, letterSpacing: "0.08em" }}>
+                          ✓ {sel.length} fixtures — edits apply to all
+                        </div>
                       )}
+
+                      {/* Name / label (first selected) */}
+                      <div style={{ fontSize: 10, color: "#39c5cf", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {multi ? `${hl.label ?? "Fixture"} +${sel.length - 1} more` : (hl.label ?? hl.name ?? "Fixture")}
+                      </div>
+
+                      {/* Position (first selected only) */}
+                      {!multi && <>
+                        <Row label={`X (${inspUnit})`} value={xDisp !== '' ? String(xDisp) : '—'} />
+                        <Row label={`Y (${inspUnit})`} value={yDisp !== '' ? String(yDisp) : '—'} />
+                        <Row label="→ wall"     value={wallDisp !== '' ? `${wallDisp}${inspUnit}` : '—'} />
+                        {nearFixDisp !== null && (
+                          <Row label="↔ nearest" value={`${nearFixDisp}${inspUnit}`} color="#d4a843" />
+                        )}
+                      </>}
+                      {multi && (
+                        <Row label="Watt"  value={sel.map(l => l.watt ?? 0).every((v,_,a) => v === a[0]) ? `${sel[0].watt ?? 0}W` : "Mixed"} />
+                      )}
+
+                      {/* Delete — batch when multi */}
                       <button
-                        onClick={() => deleteLight(hl.id)}
-                        style={{
-                          marginTop: 8,
-                          padding: '4px 8px',
-                          background: '#8b0000',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 3,
-                          cursor: 'pointer',
-                          fontSize: 10,
-                          fontFamily: 'IBM Plex Mono',
-                          width: '100%'
+                        onClick={() => {
+                          const msg = multi ? `Delete ${sel.length} fixtures?` : `Delete fixture?`
+                          if (!window.confirm(msg)) return
+                          sel.forEach(l => deleteLight(l.id))
+                          setSelectedLights([])
                         }}
+                        style={{ marginTop: 8, padding: '4px 8px', background: '#8b0000', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer', fontSize: 10, fontFamily: 'IBM Plex Mono', width: '100%' }}
                       >
-                        DELETE
+                        {multi ? `DELETE ALL ${sel.length}` : "DELETE"}
                       </button>
+
+                      {/* Visual options — all controls batch-update */}
                       <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #2a2a2a' }}>
-                        <div style={{ fontSize: 9, color: '#888', marginBottom: 6 }}>VISUAL OPTIONS</div>
+                        <div style={{ fontSize: 9, color: '#888', marginBottom: 6 }}>VISUAL OPTIONS{multi ? ` · all ${sel.length}` : ''}</div>
                         <div style={{ marginBottom: 8 }}>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>Size: {hl.fixtureSize ?? 8}</label>
+                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
+                            Size: {allSameSize ? sizes[0] : "Mixed"}
+                          </label>
                           <input
-                            type="range"
-                            min="5"
-                            max="20"
-                            value={hl.fixtureSize ?? 8}
-                            onChange={(e) => updateLight(hl.id, { fixtureSize: Number(e.target.value) })}
+                            type="range" min="5" max="20"
+                            value={allSameSize ? sizes[0] : 8}
+                            onChange={(e) => batchUpdate({ fixtureSize: Number(e.target.value) })}
                             style={{ width: '100%', cursor: 'pointer' }}
                           />
                         </div>
                         <div style={{ marginBottom: 8 }}>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>Color</label>
+                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
+                            Color{!allSameColor ? " (mixed)" : ""}
+                          </label>
                           <input
                             type="color"
-                            value={hl.fixtureColor ?? '#ffffff'}
-                            onChange={(e) => updateLight(hl.id, { fixtureColor: e.target.value })}
+                            value={allSameColor ? colors[0] : '#ffffff'}
+                            onChange={(e) => batchUpdate({ fixtureColor: e.target.value })}
                             style={{ width: '100%', height: 28, cursor: 'pointer', border: 'none', borderRadius: 3 }}
                           />
                         </div>
                         <div>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>Shape</label>
+                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
+                            Shape{!allSameShape ? " (mixed)" : ""}
+                          </label>
                           <select
-                            value={hl.fixtureShape ?? 'circle'}
-                            onChange={(e) => updateLight(hl.id, { fixtureShape: e.target.value })}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              background: '#1a1a1a',
-                              color: '#e0e0e0',
-                              border: '1px solid #2a2a2a',
-                              borderRadius: 3,
-                              fontSize: 10,
-                              fontFamily: 'IBM Plex Mono',
-                              cursor: 'pointer'
-                            }}
+                            value={allSameShape ? shapes[0] : ''}
+                            onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
+                            style={{ width: '100%', padding: '4px 6px', background: '#1a1a1a', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
                           >
+                            {!allSameShape && <option value="">— Mixed —</option>}
                             <option value="circle">Circle</option>
                             <option value="square">Square</option>
                             <option value="diamond">Diamond</option>
@@ -2543,6 +2641,67 @@ export default function App() {
           pointerEvents: "none",
         }}>
           {toast}
+        </div>
+      )}
+
+      {/* ── Keyboard shortcuts modal ─────────────────────────────────────────── */}
+      {showShortcuts && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 900, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            style={{ background: "#0f0f0f", border: "1px solid #2e2e2e", borderRadius: 10, padding: "24px 28px", width: 520, maxWidth: "calc(100vw - 32px)", fontFamily: "IBM Plex Mono", boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#f0f0f0", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
+              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
+            </div>
+            {[
+              { group: "NAVIGATION", rows: [
+                ["Ctrl + H",       "Dashboard"],
+                ["Space + Drag",   "Pan canvas"],
+                ["Ctrl + Scroll",  "Zoom in / out"],
+              ]},
+              { group: "EDITING", rows: [
+                ["Delete",         "Delete selected"],
+                ["Ctrl + A",       "Select all"],
+                ["Ctrl + D",       "Duplicate selected"],
+                ["Ctrl + C / V",   "Copy / Paste"],
+                ["Escape",         "Cancel / Deselect"],
+              ]},
+              { group: "TOOLS", rows: [
+                ["D",              "Draw Room (toggle)"],
+                ["A",              "Auto Place fixtures"],
+                ["Ctrl + I",       "AI Recommend (toggle)"],
+              ]},
+              { group: "VISUALIZATION", rows: [
+                ["B",              "Toggle Beam overlay"],
+                ["H",              "Toggle Heatmap overlay"],
+                ["G",              "Toggle Snap / Grid"],
+              ]},
+              { group: "PROJECT", rows: [
+                ["Ctrl + S",       "Save project"],
+                ["?",              "Show this help"],
+              ]},
+            ].map(({ group, rows }) => (
+              <div key={group} style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 8, color: "#555", letterSpacing: "0.18em", marginBottom: 8 }}>{group}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "6px 0" }}>
+                  {rows.map(([key, desc]) => (
+                    <>
+                      <span key={key + "-k"} style={{ fontSize: 10, color: "#d4a843", letterSpacing: "0.04em", background: "#1a1500", border: "1px solid #2a2000", borderRadius: 3, padding: "2px 8px", display: "inline-block", width: "fit-content" }}>{key}</span>
+                      <span key={key + "-d"} style={{ fontSize: 10, color: "#888", letterSpacing: "0.04em", alignSelf: "center", paddingLeft: 12 }}>{desc}</span>
+                    </>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 8, paddingTop: 12, fontSize: 9, color: "#444", letterSpacing: "0.06em" }}>
+              Press <span style={{ color: "#d4a843" }}>?</span> or <span style={{ color: "#d4a843" }}>Escape</span> to dismiss
+            </div>
+          </div>
         </div>
       )}
 
