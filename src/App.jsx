@@ -240,7 +240,7 @@ export default function App() {
       if (u) {
         const hasProjectId = searchParams.get("projectId")
         const hasNew       = searchParams.get("new")
-        if (!hasProjectId && !hasNew && window.location.pathname !== "/app") {
+        if (!hasProjectId && !hasNew) {
           navigate("/dashboard", { replace: true })
         }
       }
