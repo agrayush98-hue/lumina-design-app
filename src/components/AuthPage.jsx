@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth"
+import { useState } from "react"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { auth } from "../firebase"
 
 export default function AuthPage() {
@@ -39,22 +39,14 @@ export default function AuthPage() {
     }
   }
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        // Firebase auth state listener handles navigation if result exists
-      })
-      .catch((error) => {
-        setError(error.message)
-      })
-  }, [])
-
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider()
     try {
-      await signInWithRedirect(auth, provider)
+      await signInWithPopup(auth, provider)
     } catch (error) {
-      setError(error.message)
+      if (error.code !== 'auth/popup-closed-by-user') {
+        setError(error.message)
+      }
     }
   }
 
