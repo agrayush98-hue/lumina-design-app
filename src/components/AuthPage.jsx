@@ -97,7 +97,7 @@ export default function AuthPage() {
       {/* Card */}
       <div style={{
         width: 360,
-        background: "#0d1117",
+        background: "#0d1520",
         border: "1px solid #1a2b3c",
         borderRadius: 8,
         overflow: "hidden",
