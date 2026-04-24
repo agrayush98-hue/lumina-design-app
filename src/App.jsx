@@ -1573,62 +1573,62 @@ export default function App() {
     a.click()
   }
 
-  function handleExportBOQ() {
-    import("xlsx").then(({ utils, writeFile }) => {
-      const allR = _allRoomsForExport
-      const wb = utils.book_new()
+  async function handleExportBOQ() {
+    const ExcelJS = (await import("exceljs")).default
+    const allR = _allRoomsForExport
+    const wb = new ExcelJS.Workbook()
 
-      // Sheet 1: Fixture BOQ
-      const boqHeader = ["SR", "FLOOR", "ROOM", "FIXTURE TYPE", "LUMENS", "BEAM", "WATT", "QTY", "UNIT", "PROTOCOL"]
-      const boqData = [boqHeader]
-      let sr = 1, totalQty = 0, totalW = 0
-      for (const r of allR) {
-        for (const g of _fixtureGroupsExport(r)) {
-          boqData.push([sr++, r.floorName, r.name, g.label, g.lumens, g.beamAngle + "°", g.watt, g.qty, "No.", PROTOCOL_LBL[g.protocol] ?? g.protocol])
-          totalQty += g.qty; totalW += g.totalWatt
-        }
+    // Sheet 1: Fixture BOQ
+    const ws1 = wb.addWorksheet("Fixture BOQ")
+    ws1.columns = [8, 22, 22, 32, 14, 12, 12, 10, 10, 24].map(w => ({ width: w }))
+    ws1.addRow(["SR", "FLOOR", "ROOM", "FIXTURE TYPE", "LUMENS", "BEAM", "WATT", "QTY", "UNIT", "PROTOCOL"])
+    let sr = 1, totalQty = 0, totalW = 0
+    for (const r of allR) {
+      for (const g of _fixtureGroupsExport(r)) {
+        ws1.addRow([sr++, r.floorName, r.name, g.label, g.lumens, g.beamAngle + "°", g.watt, g.qty, "No.", PROTOCOL_LBL[g.protocol] ?? g.protocol])
+        totalQty += g.qty; totalW += g.totalWatt
       }
-      boqData.push(["", "", "", "TOTAL", "", "", "", totalQty, "", totalW + " W"])
-      const ws1 = utils.aoa_to_sheet(boqData)
-      ws1["!cols"] = [8, 22, 22, 32, 14, 12, 12, 10, 10, 24].map(w => ({ wch: w }))
-      utils.book_append_sheet(wb, ws1, "Fixture BOQ")
+    }
+    ws1.addRow(["", "", "", "TOTAL", "", "", "", totalQty, "", totalW + " W"])
 
-      // Sheet 2: Electrical
-      const elHeader = ["FLOOR", "ROOM", "LOAD (W)", "CIRCUITS", "MCB", "WIRE SIZE"]
-      const elData = [elHeader]
-      for (const r of allR) {
-        const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-        let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mm²"
-        for (const l of r.lights) {
-          const w = l.watt ?? 0
-          if (cur + w > MAX_CIRCUIT_WATT) { circuits++; cur = 0 }
-          cur += w; circuits = Math.max(circuits, 1)
-          mcb = cur <= 1380 ? "6A" : cur <= 2300 ? "10A" : "16A"
-          wire = cur <= 2944 ? "1.5mm²" : "2.5mm²"
-        }
-        if (r.lights.length === 0) circuits = 0
-        elData.push([r.floorName, r.name, load + " W", circuits, mcb, wire + " FR"])
+    // Sheet 2: Electrical
+    const ws2 = wb.addWorksheet("Electrical")
+    ws2.columns = [22, 22, 16, 14, 14, 18].map(w => ({ width: w }))
+    ws2.addRow(["FLOOR", "ROOM", "LOAD (W)", "CIRCUITS", "MCB", "WIRE SIZE"])
+    for (const r of allR) {
+      const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
+      let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mm²"
+      for (const l of r.lights) {
+        const w = l.watt ?? 0
+        if (cur + w > MAX_CIRCUIT_WATT) { circuits++; cur = 0 }
+        cur += w; circuits = Math.max(circuits, 1)
+        mcb = cur <= 1380 ? "6A" : cur <= 2300 ? "10A" : "16A"
+        wire = cur <= 2944 ? "1.5mm²" : "2.5mm²"
       }
-      const ws2 = utils.aoa_to_sheet(elData)
-      ws2["!cols"] = [22, 22, 16, 14, 14, 18].map(w => ({ wch: w }))
-      utils.book_append_sheet(wb, ws2, "Electrical")
+      if (r.lights.length === 0) circuits = 0
+      ws2.addRow([r.floorName, r.name, load + " W", circuits, mcb, wire + " FR"])
+    }
 
-      // Sheet 3: Room Summary
-      const rmHeader = ["FLOOR", "ROOM", "AREA (m²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"]
-      const rmData = [rmHeader]
-      for (const r of allR) {
-        const { areaM2, lux } = _calcRoomExport(r)
-        const target = Number(r.room?.targetLux ?? 0)
-        const status = lux === 0 || target === 0 ? "—" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
-        const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-        rmData.push([r.floorName, r.name, areaM2.toFixed(1), target || "—", r.lights.length === 0 ? "—" : Math.round(lux), status, r.lights.length, load + " W"])
-      }
-      const ws3 = utils.aoa_to_sheet(rmData)
-      ws3["!cols"] = [22, 22, 14, 14, 14, 14, 12, 14].map(w => ({ wch: w }))
-      utils.book_append_sheet(wb, ws3, "Room Summary")
+    // Sheet 3: Room Summary
+    const ws3 = wb.addWorksheet("Room Summary")
+    ws3.columns = [22, 22, 14, 14, 14, 14, 12, 14].map(w => ({ width: w }))
+    ws3.addRow(["FLOOR", "ROOM", "AREA (m²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"])
+    for (const r of allR) {
+      const { areaM2, lux } = _calcRoomExport(r)
+      const target = Number(r.room?.targetLux ?? 0)
+      const status = lux === 0 || target === 0 ? "—" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
+      const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
+      ws3.addRow([r.floorName, r.name, areaM2.toFixed(1), target || "—", r.lights.length === 0 ? "—" : Math.round(lux), status, r.lights.length, load + " W"])
+    }
 
-      writeFile(wb, `${projectName.replace(/[^a-z0-9_\-]/gi, "_")}-BOQ.xlsx`)
-    })
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${projectName.replace(/[^a-z0-9_\-]/gi, "_")}-BOQ.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────

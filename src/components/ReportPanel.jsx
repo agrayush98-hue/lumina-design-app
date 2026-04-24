@@ -1,5 +1,5 @@
 import React, { useRef } from "react"
-import * as XLSX from "xlsx"
+import ExcelJS from "exceljs"
 import { FIXTURE_MAP } from "../data/fixtureLibrary"
 import { fromMM, getStoredUnit } from "../utils/units"
 
@@ -284,34 +284,30 @@ export default function ReportPanel({ floors, projectName, onClose, daliEnabled,
     : []
 
   // ── BOQ Excel export ─────────────────────────────────────────
-  function exportBOQ() {
-    const wb = XLSX.utils.book_new()
+  async function exportBOQ() {
+    const wb = new ExcelJS.Workbook()
 
     // ── Sheet 1: Fixture BOQ ──────────────────────────────────
-    const fixtureHeader = ["SR", "FLOOR", "ROOM", "FIXTURE TYPE", "LUMENS", "BEAM", "WATT", "QTY", "UNIT", "REMARKS"]
-    const fixtureData   = [fixtureHeader]
+    const ws1 = wb.addWorksheet("Fixture BOQ")
+    ws1.columns = [20, 22, 22, 32, 14, 12, 12, 10, 10, 24].map(w => ({ width: w }))
+
+    ws1.addRow(["SR", "FLOOR", "ROOM", "FIXTURE TYPE", "LUMENS", "BEAM", "WATT", "QTY", "UNIT", "REMARKS"])
     let sr = 1, totalQty = 0, totalWatt = 0
 
     for (const r of allRooms) {
       for (const g of fixtureGroups(r)) {
-        fixtureData.push([
-          sr++, r.floorName, r.name, g.label,
-          g.lumens, g.beamAngle + "°", g.watt,
-          g.qty, "No.", "",
-        ])
+        ws1.addRow([sr++, r.floorName, r.name, g.label, g.lumens, g.beamAngle + "°", g.watt, g.qty, "No.", ""])
         totalQty  += g.qty
         totalWatt += g.totalWatt
       }
     }
-    fixtureData.push(["", "", "", "TOTAL", "", "", "", totalQty, "", totalWatt + " W"])
-
-    const ws1 = XLSX.utils.aoa_to_sheet(fixtureData)
-    ws1["!cols"] = [20, 22, 22, 32, 14, 12, 12, 10, 10, 24].map(w => ({ wch: w }))
-    XLSX.utils.book_append_sheet(wb, ws1, "Fixture BOQ")
+    ws1.addRow(["", "", "", "TOTAL", "", "", "", totalQty, "", totalWatt + " W"])
 
     // ── Sheet 2: Electrical BOQ ───────────────────────────────
-    const elecHeader = ["SR", "ITEM", "SPECIFICATION", "QTY", "UNIT", "REMARKS"]
-    const elecData   = [elecHeader]
+    const ws2 = wb.addWorksheet("Electrical BOQ")
+    ws2.columns = [8, 28, 28, 10, 10, 40].map(w => ({ width: w }))
+
+    ws2.addRow(["SR", "ITEM", "SPECIFICATION", "QTY", "UNIT", "REMARKS"])
     let esr = 1
 
     const mcbCount  = {}
@@ -342,21 +338,19 @@ export default function ReportPanel({ floors, projectName, onClose, daliEnabled,
     }
 
     for (const [spec, qty] of Object.entries(mcbCount)) {
-      elecData.push([esr++, "MCB Single Pole", spec, qty, "No.", ""])
+      ws2.addRow([esr++, "MCB Single Pole", spec, qty, "No.", ""])
     }
     for (const [spec, qty] of Object.entries(wireCount)) {
-      elecData.push([esr++, "FR Cable", spec, qty, "m", "Estimated 2× room perimeter per circuit"])
+      ws2.addRow([esr++, "FR Cable", spec, qty, "m", "Estimated 2× room perimeter per circuit"])
     }
-    elecData.push([esr++, "Distribution Board", "DB (surface/flush)", floors.length, "No.", "1 per floor"])
-
-    const ws2 = XLSX.utils.aoa_to_sheet(elecData)
-    ws2["!cols"] = [8, 28, 28, 10, 10, 40].map(w => ({ wch: w }))
-    XLSX.utils.book_append_sheet(wb, ws2, "Electrical BOQ")
+    ws2.addRow([esr++, "Distribution Board", "DB (surface/flush)", floors.length, "No.", "1 per floor"])
 
     // ── Sheet 3: DALI BOQ (only if enabled) ──────────────────
     if (daliEnabled && daliAddresses) {
-      const daliHeader = ["SR", "ITEM", "SPECIFICATION", "QTY", "UNIT", "REMARKS"]
-      const daliData   = [daliHeader]
+      const ws3 = wb.addWorksheet("DALI BOQ")
+      ws3.columns = [8, 28, 30, 10, 10, 30].map(w => ({ width: w }))
+
+      ws3.addRow(["SR", "ITEM", "SPECIFICATION", "QTY", "UNIT", "REMARKS"])
       let dsr = 1
 
       const totalBuses  = daliAddresses.buses.length
@@ -367,17 +361,20 @@ export default function ReportPanel({ floors, projectName, onClose, daliEnabled,
         r.lights.some(l => daliAddresses.byId[l.id])
       ).length
 
-      daliData.push([dsr++, "DALI Controller",        "DALI-2 DT8 Controller",          totalBuses,    "No.", "1 per DALI bus"])
-      daliData.push([dsr++, "DALI Cable 2-core",      "DALI Bus Cable 2×1.5mm²",        totalCableM,   "m",   "Incl. 20% bends"])
-      daliData.push([dsr++, "DALI Pushbutton/Sensor", "DALI-2 Multi-sensor/Pushbutton", roomsWithDali, "No.", "1 per room"])
-
-      const ws3 = XLSX.utils.aoa_to_sheet(daliData)
-      ws3["!cols"] = [8, 28, 30, 10, 10, 30].map(w => ({ wch: w }))
-      XLSX.utils.book_append_sheet(wb, ws3, "DALI BOQ")
+      ws3.addRow([dsr++, "DALI Controller",        "DALI-2 DT8 Controller",          totalBuses,    "No.", "1 per DALI bus"])
+      ws3.addRow([dsr++, "DALI Cable 2-core",      "DALI Bus Cable 2×1.5mm²",        totalCableM,   "m",   "Incl. 20% bends"])
+      ws3.addRow([dsr++, "DALI Pushbutton/Sensor", "DALI-2 Multi-sensor/Pushbutton", roomsWithDali, "No.", "1 per room"])
     }
 
     const safeName = projectName.replace(/[^a-z0-9_\-]/gi, "_")
-    XLSX.writeFile(wb, `${safeName}_BOQ.xlsx`)
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement("a")
+    a.href     = url
+    a.download = `${safeName}_BOQ.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
