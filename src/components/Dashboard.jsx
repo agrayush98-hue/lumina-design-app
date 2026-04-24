@@ -441,20 +441,29 @@ function ProjectsTab({ user }) {
 function ProfileTab({ user }) {
   const [displayName, setDisplayName] = useState(user.displayName ?? "")
   const [org,         setOrg]         = useState("")
+  const [phone,       setPhone]       = useState("")
+  const [jobTitle,    setJobTitle]    = useState("")
   const [saving,      setSaving]      = useState(false)
   const [msg,         setMsg]         = useState(null)
 
   useEffect(() => {
     getUserProfile(user.uid).then(p => {
-      if (p?.org)         setOrg(p.org)
       if (p?.displayName) setDisplayName(p.displayName)
+      if (p?.org)         setOrg(p.org)
+      if (p?.phone)       setPhone(p.phone)
+      if (p?.jobTitle)    setJobTitle(p.jobTitle)
     }).catch(() => {})
   }, [])
 
   async function handleSave() {
     setSaving(true); setMsg(null)
     try {
-      await updateUserProfile(user.uid, { displayName: displayName.trim(), org: org.trim() })
+      await updateUserProfile(user.uid, {
+        displayName: displayName.trim(),
+        org:         org.trim(),
+        phone:       phone.trim(),
+        jobTitle:    jobTitle.trim(),
+      })
       await updateProfile(user, { displayName: displayName.trim() })
       setMsg({ type: "success", text: "Profile saved." })
     } catch (e) {
@@ -464,27 +473,89 @@ function ProfileTab({ user }) {
     }
   }
 
+  const initials  = (displayName || user.email || "?").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()
+  const createdAt = user.metadata?.creationTime  ? new Date(user.metadata.creationTime)  : null
+  const lastLogin = user.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime) : null
+
   return (
     <>
-      <div className="dash-section-header">
-        <div className="dash-section-title">PROFILE</div>
+      {/* Avatar header */}
+      <div className="profile-header">
+        <div className="profile-avatar">
+          <span className="profile-initials">{initials || "?"}</span>
+        </div>
+        <div className="profile-header-info">
+          <div className="profile-display-name">{displayName || user.email?.split("@")[0] || "—"}</div>
+          <div className="profile-email-line">{user.email}</div>
+          {jobTitle && <div className="profile-job-tag">{jobTitle}</div>}
+        </div>
+      </div>
+
+      <div className="dash-section-header" style={{ marginTop: 28 }}>
+        <div className="dash-section-title">PERSONAL INFO</div>
       </div>
       <div className="form-section">
-        <div className="form-group">
-          <label className="form-label">Display Name</label>
-          <input className="form-input" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" />
+        <div className="form-row-2">
+          <div className="form-group">
+            <label className="form-label">Display Name</label>
+            <input className="form-input" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Job Title</label>
+            <select className="form-input form-select" value={jobTitle} onChange={e => setJobTitle(e.target.value)}>
+              <option value="">— Select role —</option>
+              <option value="Lighting Designer">Lighting Designer</option>
+              <option value="Architect">Architect</option>
+              <option value="Electrical Engineer">Electrical Engineer</option>
+              <option value="Interior Designer">Interior Designer</option>
+              <option value="Consultant">Consultant</option>
+              <option value="Student">Student</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
         <div className="form-group">
           <label className="form-label">Email</label>
           <input className="form-input" value={user.email ?? ""} disabled />
         </div>
-        <div className="form-group">
-          <label className="form-label">Organization</label>
-          <input className="form-input" value={org} onChange={e => setOrg(e.target.value)} placeholder="Company or firm name" />
+        <div className="form-row-2">
+          <div className="form-group">
+            <label className="form-label">Organization</label>
+            <input className="form-input" value={org} onChange={e => setOrg(e.target.value)} placeholder="Company or firm name" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Phone Number</label>
+            <input className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 00000 00000" />
+          </div>
         </div>
         {msg && <div className={msg.type === "success" ? "inline-success" : "inline-error"}>{msg.text}</div>}
         <div className="form-actions">
-          <button className="btn-primary" disabled={saving} onClick={handleSave}>{saving ? "SAVING…" : "SAVE CHANGES"}</button>
+          <button className="btn-gold" disabled={saving} onClick={handleSave}>
+            {saving ? "SAVING…" : "SAVE CHANGES"}
+          </button>
+        </div>
+      </div>
+
+      {/* Account info */}
+      <div className="profile-account-card">
+        <div className="profile-account-title">ACCOUNT INFO</div>
+        <div className="profile-account-grid">
+          <div className="profile-account-item">
+            <div className="profile-account-label">Account Created</div>
+            <div className="profile-account-value">{createdAt ? fmt(createdAt) : "—"}</div>
+          </div>
+          <div className="profile-account-item">
+            <div className="profile-account-label">Last Login</div>
+            <div className="profile-account-value">{lastLogin ? `${timeAgo(lastLogin)} · ${fmt(lastLogin)}` : "—"}</div>
+          </div>
+          <div className="profile-account-item">
+            <div className="profile-account-label">Auth Provider</div>
+            <div className="profile-account-value">{user.providerData?.[0]?.providerId ?? "email"}</div>
+          </div>
+          <div className="profile-account-item">
+            <div className="profile-account-label">User ID</div>
+            <div className="profile-account-value profile-account-uid">{user.uid}</div>
+          </div>
         </div>
       </div>
     </>
@@ -498,6 +569,11 @@ function SettingsTab({ user }) {
   const [notifications, setNotifications] = useState(true)
   const [twoFA,         setTwoFA]         = useState(false)
   const [darkTheme,     setDarkTheme]     = useState(true)
+  const [autoSave,      setAutoSave]      = useState(true)
+  const [showGrid,      setShowGrid]      = useState(true)
+  const [snapDefault,   setSnapDefault]   = useState(true)
+  const [defaultUnit,   setDefaultUnit]   = useState("mm")
+  const [defaultProto,  setDefaultProto]  = useState("NON-DIM")
   const [deleting,      setDeleting]      = useState(false)
 
   async function handleDeleteAccount() {
@@ -512,56 +588,95 @@ function SettingsTab({ user }) {
     }
   }
 
-  const toggles = [
-    {
-      id: "notifications", label: "Email Notifications",
-      desc: "Receive updates about your projects and account",
-      value: notifications, set: setNotifications,
-    },
-    {
-      id: "twofa", label: "Two-Factor Authentication",
-      desc: "Extra layer of security on sign in",
-      value: twoFA, set: setTwoFA,
-    },
-    {
-      id: "darkTheme", label: "Dark Theme",
-      desc: "Always use dark interface (current default)",
-      value: darkTheme, set: setDarkTheme,
-    },
-  ]
-
   return (
     <>
       <div className="dash-section-header">
         <div className="dash-section-title">SETTINGS</div>
       </div>
-      <div style={{ maxWidth: 480 }}>
-        <div className="toggle-list">
-          {toggles.map(t => (
-            <div key={t.id} className="toggle-row">
-              <div className="toggle-info">
-                <div className="toggle-label">{t.label}</div>
-                <div className="toggle-desc">{t.desc}</div>
-              </div>
-              <label className="toggle-switch">
-                <input type="checkbox" checked={t.value} onChange={e => t.set(e.target.checked)} />
-                <span className="toggle-slider" />
-              </label>
+
+      <div className="settings-layout">
+
+        {/* Left column */}
+        <div className="settings-col">
+
+          <div className="settings-group-title">CANVAS DEFAULTS</div>
+          <div className="form-row-2" style={{ marginBottom: 16 }}>
+            <div className="form-group">
+              <label className="form-label">Default Unit</label>
+              <select className="form-input form-select" value={defaultUnit} onChange={e => setDefaultUnit(e.target.value)}>
+                <option value="mm">Millimetres (mm)</option>
+                <option value="cm">Centimetres (cm)</option>
+                <option value="m">Metres (m)</option>
+                <option value="ft">Feet (ft)</option>
+              </select>
             </div>
-          ))}
-        </div>
+            <div className="form-group">
+              <label className="form-label">Default Protocol</label>
+              <select className="form-input form-select" value={defaultProto} onChange={e => setDefaultProto(e.target.value)}>
+                <option value="NON-DIM">Non-dim</option>
+                <option value="PHASE-CUT">Phase-cut (Triac)</option>
+                <option value="0-10V">0-10V Analog</option>
+                <option value="DALI">DALI</option>
+                <option value="ZIGBEE">Zigbee</option>
+              </select>
+            </div>
+          </div>
 
-        <hr className="form-divider" style={{ margin: "24px 0" }} />
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div className="form-label" style={{ marginBottom: 8 }}>DANGER ZONE</div>
-          <button className="btn-danger" style={{ alignSelf: "flex-start" }} disabled={deleting} onClick={handleDeleteAccount}>
-            {deleting ? "DELETING…" : "DELETE ACCOUNT"}
-          </button>
-          <div style={{ fontSize: 9, color: "#4a7a96", letterSpacing: "0.04em" }}>
-            Permanently deletes your account and all associated data.
+          <div className="settings-group-title" style={{ marginTop: 8 }}>BEHAVIOUR</div>
+          <div className="toggle-list">
+            {[
+              { id: "autoSave",    label: "Auto-save",               desc: "Save projects automatically every 30 seconds", value: autoSave,    set: setAutoSave },
+              { id: "snapDefault", label: "Snap to Grid by Default", desc: "Enable grid snap when opening a new room",     value: snapDefault,  set: setSnapDefault },
+              { id: "showGrid",    label: "Show Grid Lines",         desc: "Display grid lines on the canvas",            value: showGrid,     set: setShowGrid },
+            ].map(t => (
+              <div key={t.id} className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">{t.label}</div>
+                  <div className="toggle-desc">{t.desc}</div>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={t.value} onChange={e => t.set(e.target.checked)} />
+                  <span className="toggle-slider" />
+                </label>
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* Right column */}
+        <div className="settings-col">
+
+          <div className="settings-group-title">NOTIFICATIONS</div>
+          <div className="toggle-list">
+            {[
+              { id: "notifications", label: "Email Notifications", desc: "Receive updates about your projects and account", value: notifications, set: setNotifications },
+              { id: "darkTheme",     label: "Dark Theme",          desc: "Always use dark interface (current default)",     value: darkTheme,     set: setDarkTheme },
+              { id: "twofa",         label: "Two-Factor Auth",     desc: "Extra security layer on sign in (coming soon)",   value: twoFA,         set: setTwoFA },
+            ].map(t => (
+              <div key={t.id} className="toggle-row">
+                <div className="toggle-info">
+                  <div className="toggle-label">{t.label}</div>
+                  <div className="toggle-desc">{t.desc}</div>
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={t.value} onChange={e => t.set(e.target.checked)} />
+                  <span className="toggle-slider" />
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="settings-group-title" style={{ marginTop: 24 }}>DANGER ZONE</div>
+          <div className="settings-danger-box">
+            <div className="settings-danger-desc">
+              Permanently delete your account and all projects. This cannot be undone.
+            </div>
+            <button className="btn-danger" style={{ alignSelf: "flex-start", fontSize: 9 }} disabled={deleting} onClick={handleDeleteAccount}>
+              {deleting ? "DELETING…" : "DELETE ACCOUNT"}
+            </button>
+          </div>
+        </div>
+
       </div>
     </>
   )
@@ -817,10 +932,14 @@ export default function Dashboard({ user }) {
 
         {/* Content */}
         <main className="dash-content">
-          {tab === "projects"     && <ProjectsTab     user={user} />}
-          {tab === "profile"      && <ProfileTab      user={user} />}
-          {tab === "settings"     && <SettingsTab      user={user} />}
-          {tab === "subscription" && <SubscriptionTab user={user} />}
+          {tab === "projects" && <ProjectsTab user={user} />}
+          {tab !== "projects" && (
+            <div className="dash-tab-scroll">
+              {tab === "profile"      && <ProfileTab      user={user} />}
+              {tab === "settings"     && <SettingsTab      user={user} />}
+              {tab === "subscription" && <SubscriptionTab user={user} />}
+            </div>
+          )}
         </main>
       </div>
     </div>
