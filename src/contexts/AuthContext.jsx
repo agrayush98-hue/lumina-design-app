@@ -105,6 +105,29 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
+        const ref  = doc(db, 'users', firebaseUser.uid)
+        const snap = await getDoc(ref)
+        if (!snap.exists()) {
+          const trialEnd = new Date()
+          trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS)
+          await setDoc(ref, {
+            email:       firebaseUser.email ?? '',
+            name:        firebaseUser.displayName ?? '',
+            createdAt:   serverTimestamp(),
+            trialEndsAt: Timestamp.fromDate(trialEnd),
+            subscription: {
+              status:             'trial',
+              plan:               null,
+              razorpayCustomerId: null,
+              razorpaySubId:      null,
+            },
+            aiUsage: {
+              totalCalls: 0,
+              thisMonth:  0,
+              lastReset:  serverTimestamp(),
+            },
+          })
+        }
         await fetchUserDoc(firebaseUser.uid)
       } else {
         setUserDoc(null)
