@@ -204,7 +204,7 @@ function ProjectsTab({ user }) {
           </div>
           <div className="dash-stat-divider" />
           <div className="dash-stat">
-            <div className="dash-stat-value" style={{ color: trialDays != null && trialDays <= 3 ? "#ef4444" : trialDays != null && trialDays <= 7 ? "#f97316" : "#22c55e" }}>
+            <div className="dash-stat-value" style={{ color: trialDays == null ? "#cccccc" : trialDays < 0 ? "#ef4444" : "#d4a843" }}>
               {trialDays != null ? trialDays : "—"}
             </div>
             <div className="dash-stat-label">Trial Days Left</div>
@@ -238,16 +238,6 @@ function ProjectsTab({ user }) {
                 <button className="btn-continue" onClick={() => handleOpen(lastProject)}>
                   Continue →
                 </button>
-              </div>
-            )}
-
-            {/* Empty state */}
-            {projects.length === 0 && (
-              <div className="empty-state-enhanced">
-                <div className="empty-state-icon">◫</div>
-                <div className="empty-state-title">Start your first project</div>
-                <div className="empty-state-desc">Choose a template or start from scratch</div>
-                <TemplateCards onNewProject={handleNewProject} navigate={navigate} />
               </div>
             )}
 
@@ -299,6 +289,14 @@ function ProjectsTab({ user }) {
               </>
             )}
 
+            {/* Templates — single section, always visible */}
+            <div className="dash-template-section">
+              <div className="dash-template-header">
+                <div className="dash-template-title">START FROM TEMPLATE</div>
+              </div>
+              <TemplateCards onNewProject={handleNewProject} navigate={navigate} />
+            </div>
+
             {/* Recent Projects — horizontal strip */}
             <div className="dash-template-section">
               <div className="dash-template-header">
@@ -327,14 +325,6 @@ function ProjectsTab({ user }) {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Templates */}
-            <div className="dash-template-section">
-              <div className="dash-template-header">
-                <div className="dash-template-title">START FROM TEMPLATE</div>
-              </div>
-              <TemplateCards onNewProject={handleNewProject} navigate={navigate} />
             </div>
 
           </div>
