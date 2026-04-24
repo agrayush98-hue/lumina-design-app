@@ -2,22 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read/write their own data
-    match /users/{userId} {
+    // User doc + all subcollections (profile, fixtures, subscription, billingHistory)
+    match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Projects — only owner can read/write/delete
+    // Projects — create requires auth + userId matches; read/update/delete requires ownership
     match /projects/{projectId} {
-      allow read, write, delete: if request.auth != null && 
-        request.auth.uid == resource.data.ownerId;
-      allow create: if request.auth != null;
-    }
-
-    // Subscriptions — only owner can read, no client writes
-    match /subscriptions/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false; // server-side only
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      // Shared projects readable by any authenticated user
+      allow read: if request.auth != null && resource.data.isShared == true;
     }
 
     // Deny everything else
