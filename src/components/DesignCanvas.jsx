@@ -879,16 +879,16 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const lines = []
     for (let mm = GRID_MM; mm < roomWidth; mm += GRID_MM) {
       const x = ROOM_X + mm * SCALE
-      lines.push(<Line key={`v-${mm}`} points={[x, ROOM_Y + 1, x, ROOM_Y + ROOM_PX_H - 1]} stroke="#0d2030" strokeWidth={0.8} dash={[3, 5]} listening={false} />)
+      lines.push(<Line key={`v-${mm}`} points={[x, ROOM_Y + 1, x, ROOM_Y + ROOM_PX_H - 1]} stroke="#1a1a1a" strokeWidth={0.8} dash={[3, 5]} listening={false} />)
     }
     for (let mm = GRID_MM; mm < roomHeight; mm += GRID_MM) {
       const y = ROOM_Y + mm * SCALE
-      lines.push(<Line key={`h-${mm}`} points={[ROOM_X + 1, y, ROOM_X + ROOM_PX_W - 1, y]} stroke="#0d2030" strokeWidth={0.8} dash={[3, 5]} listening={false} />)
+      lines.push(<Line key={`h-${mm}`} points={[ROOM_X + 1, y, ROOM_X + ROOM_PX_W - 1, y]} stroke="#1a1a1a" strokeWidth={0.8} dash={[3, 5]} listening={false} />)
     }
     if (snapToGrid) {
       for (let mmX = 0; mmX <= roomWidth; mmX += GRID_MM) {
         for (let mmY = 0; mmY <= roomHeight; mmY += GRID_MM) {
-          lines.push(<Circle key={`dot-${mmX}-${mmY}`} x={ROOM_X + mmX * SCALE} y={ROOM_Y + mmY * SCALE} radius={1.2} fill="#1a3a4a" listening={false} />)
+          lines.push(<Circle key={`dot-${mmX}-${mmY}`} x={ROOM_X + mmX * SCALE} y={ROOM_Y + mmY * SCALE} radius={1.2} fill="#333333" listening={false} />)
         }
       }
     }
@@ -1303,7 +1303,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       )}
 
       {/* Canvas + zoom controls wrapper */}
-      <div style={{ position: "relative", width: CANVAS_W, height: CANVAS_H }}>
+      <div style={{ position: "relative", width: CANVAS_W, height: CANVAS_H, background: "#000000", backgroundImage: "radial-gradient(circle, #111111 1px, transparent 1px)", backgroundSize: "24px 24px", borderRadius: isStripMode ? "0 0 6px 6px" : 6 }}>
         <Stage
           ref={stageRef}
           width={CANVAS_W}
@@ -1312,7 +1312,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           scaleY={transform.zoom}
           x={transform.x}
           y={transform.y}
-          style={{ background: "#0b1220", borderRadius: isStripMode ? "0 0 6px 6px" : 6, cursor: stageCursor, display: "block" }}
+          style={{ background: "transparent", borderRadius: isStripMode ? "0 0 6px 6px" : 6, cursor: stageCursor, display: "block" }}
           onWheel={handleWheel}
           onClick={handleStageClick}
           onMouseDown={handleStageMouseDown}
@@ -1353,7 +1353,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     <Rect
                       name="room-fill"
                       x={rX} y={rY} width={rpxW} height={rpxH}
-                      fill="rgba(15,28,43,0.1)"
+                      fill="rgba(255,255,255,0.025)"
                       onClick={isStripMode ? undefined : handleRoomClick}
                       listening={true}
                     />

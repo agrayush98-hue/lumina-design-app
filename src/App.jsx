@@ -1856,7 +1856,7 @@ export default function App() {
       <main style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
         {/* ── Left: Fixture Library / AI Recommender tabs ─────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", width: leftSidebarCollapsed ? 40 : 180, minWidth: leftSidebarCollapsed ? 40 : 180, height: "100%", background: "#0a0a0a", borderRight: "1px solid #222222", overflow: "hidden", transition: "width 0.2s, min-width 0.2s", flexShrink: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", width: leftSidebarCollapsed ? 40 : 260, minWidth: leftSidebarCollapsed ? 40 : 260, height: "100%", background: "#0a0a0a", borderRight: "1px solid #222222", overflow: "hidden", transition: "width 0.2s, min-width 0.2s", flexShrink: 0 }}>
           {leftSidebarCollapsed ? (
             /* Collapsed: icon-only mode */
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8, gap: 4 }}>
