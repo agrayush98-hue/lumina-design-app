@@ -159,7 +159,28 @@ export default function RoomSettingsFloating({
   pos, onStartDrag, onClose,
   floorPlan, onUploadFloorPlan, onRemoveFloorPlan,
   activeTool, onSetActiveTool,
+  embedded,
 }) {
+  const inner = (
+    <div style={{ overflowY: "auto", flex: 1 }}>
+      <FloorPlanSection
+        floorPlan={floorPlan}
+        onUpload={onUploadFloorPlan}
+        onRemove={onRemoveFloorPlan}
+        activeTool={activeTool}
+        onSetActiveTool={onSetActiveTool}
+      />
+      <RoomSettingsPanel
+        room={room}
+        setRoom={setRoom}
+        calculations={calculations}
+        style={{ width: "100%", border: "none", borderRadius: 0, background: "transparent", boxSizing: "border-box" }}
+      />
+    </div>
+  )
+
+  if (embedded) return inner
+
   return (
     <div style={{
       position: "absolute",
@@ -208,25 +229,7 @@ export default function RoomSettingsFloating({
         >✕</button>
       </div>
 
-      {/* Scrollable content */}
-      <div style={{ overflowY: "auto", flex: 1 }}>
-        {/* Floor plan section at top */}
-        <FloorPlanSection
-          floorPlan={floorPlan}
-          onUpload={onUploadFloorPlan}
-          onRemove={onRemoveFloorPlan}
-          activeTool={activeTool}
-          onSetActiveTool={onSetActiveTool}
-        />
-
-        {/* Room settings fields */}
-        <RoomSettingsPanel
-          room={room}
-          setRoom={setRoom}
-          calculations={calculations}
-          style={{ width: "100%", border: "none", borderRadius: 0, background: "transparent", boxSizing: "border-box" }}
-        />
-      </div>
+      {inner}
     </div>
   )
 }

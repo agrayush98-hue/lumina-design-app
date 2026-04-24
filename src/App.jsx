@@ -277,6 +277,7 @@ export default function App() {
   const [showSettings,       setShowSettings]       = useState(false)
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
   const [leftTab,            setLeftTab]            = useState('fixture')
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
   const [settingsPos,        setSettingsPos]        = useState({ x: 10, y: 50 })
   const [showVisualEditor,   setShowVisualEditor]   = useState(false)
   const [visualEditorPos,    setVisualEditorPos]    = useState({ x: 400, y: 50 })
@@ -1718,7 +1719,7 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (authLoading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#090c10", fontFamily: "IBM Plex Mono", fontSize: 13, color: "#2d4f68" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "IBM Plex Mono", fontSize: 13, color: "#555555" }}>
       Authenticating…
     </div>
   )
@@ -1726,23 +1727,23 @@ export default function App() {
   if (!user) return <AuthPage />
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#090c10", overflow: "hidden", fontFamily: "IBM Plex Mono" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#000000", overflow: "hidden", fontFamily: "IBM Plex Mono" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header style={{ height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#090c10", borderBottom: "1px solid #2e2e2e", flexShrink: 0 }}>
+      <header style={{ height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#000000", borderBottom: "1px solid #2e2e2e", flexShrink: 0 }}>
         {/* Left: logo + project name */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#cdd9e5", letterSpacing: "0.06em" }}>LUMINA</span>
-            <span style={{ fontSize: 15, fontWeight: 400, color: "#2d4f68", letterSpacing: "0.06em" }}>DESIGN</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#ffffff", letterSpacing: "0.06em" }}>LUMINA</span>
+            <span style={{ fontSize: 15, fontWeight: 400, color: "#555555", letterSpacing: "0.06em" }}>DESIGN</span>
           </div>
           <button
             onClick={() => navigate("/dashboard")}
             style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: 4, color: "#d4a843", fontFamily: "IBM Plex Mono", fontSize: 11, fontWeight: 500, padding: "3px 10px", cursor: "pointer", letterSpacing: "0.04em", transition: "border-color 0.1s, color 0.1s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#f0d080" }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a2b3c"; e.currentTarget.style.color = "#d4a843" }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222222"; e.currentTarget.style.color = "#d4a843" }}
           >← Projects</button>
-          <div style={{ width: 1, height: 16, background: "#1a2b3c" }} />
+          <div style={{ width: 1, height: 16, background: "#222222" }} />
           {editingName ? (
             <input
               autoFocus
@@ -1750,29 +1751,33 @@ export default function App() {
               onChange={e => setProjectName(e.target.value)}
               onBlur={() => setEditingName(false)}
               onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") setEditingName(false) }}
-              style={{ background: "transparent", border: "none", borderBottom: "1px solid #d4a843", outline: "none", color: "#cdd9e5", fontFamily: "IBM Plex Mono", fontSize: 16, fontWeight: 600, width: 200, padding: "1px 2px" }}
+              style={{ background: "transparent", border: "none", borderBottom: "1px solid #d4a843", outline: "none", color: "#ffffff", fontFamily: "IBM Plex Mono", fontSize: 16, fontWeight: 600, width: 200, padding: "1px 2px" }}
             />
           ) : (
             <span
               onClick={() => setEditingName(true)}
               title="Click to rename project"
-              style={{ fontSize: 16, fontWeight: 600, color: "#cdd9e5", cursor: "text", letterSpacing: "0.01em", transition: "color 0.1s" }}
+              style={{ fontSize: 16, fontWeight: 600, color: "#ffffff", cursor: "text", letterSpacing: "0.01em", transition: "color 0.1s" }}
               onMouseEnter={e => { e.currentTarget.style.color = "#d4a843" }}
               onMouseLeave={e => { e.currentTarget.style.color = "#f0f0f0" }}
             >{projectName}</span>
           )}
-          <span style={{ fontSize: 11, color: "#2d4f68" }}>{projectId ? `${projectId.slice(0, 8)}…` : "unsaved"}</span>
+          <span style={{ fontSize: 11, color: "#555555" }}>{projectId ? `${projectId.slice(0, 8)}…` : "unsaved"}</span>
         </div>
 
-        {/* Center: active fixture info */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px", height: 32, borderRadius: 4, background: "#0f1e2e", border: "1px solid #2e2e2e", fontSize: 12 }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: activeFixture.fill ?? "#d4a843", flexShrink: 0 }} />
-          <span style={{ color: "#cdd9e5" }}>{activeLabel}</span>
-          <span style={{ color: "#1a2b3c" }}>·</span>
-          <span style={{ color: "#4a7a96" }}>{activeFixture.lumens ?? 0} lm</span>
-          <span style={{ color: "#1a2b3c" }}>·</span>
-          <span style={{ color: "#4a7a96" }}>{activeFixture.beamAngle ?? 0}°</span>
-          {daliActive && <span style={{ fontSize: 10, color: "#d4a843", border: "1px solid #d4a84344", borderRadius: 3, padding: "1px 7px" }}>DALI</span>}
+        {/* Center: quick stat chips */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {[
+            { label: "FIXTURES", value: projectTotalFixtures },
+            { label: "LOAD",     value: `${projectTotalWatt}W` },
+            { label: "LUX",      value: lights.length ? Math.round(totalLux) : "—" },
+            { label: "SIZE",     value: (() => { const u = getStoredUnit(); const w = fromMM(roomWidth, u); const h = fromMM(roomHeight, u); return w && h ? `${w}×${h}${u}` : "—" })() },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 10px", height: 28, borderRadius: 4, background: "#0a0a0a", border: "1px solid #222222" }}>
+              <span style={{ fontSize: 9, color: "#888888", letterSpacing: "0.08em" }}>{label}</span>
+              <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 500 }}>{value}</span>
+            </div>
+          ))}
         </div>
 
         {/* Right: actions + user */}
@@ -1781,15 +1786,15 @@ export default function App() {
           <button className={styles.hdrBtn} onClick={() => setShowLoadModal(true)}>Load</button>
           <button className={styles.hdrBtn} onClick={handleShare}>Share</button>
           <button className={styles.hdrBtn} onClick={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}>Export</button>
-          <div style={{ width: 1, height: 16, background: "#1a2b3c", margin: "0 4px" }} />
+          <div style={{ width: 1, height: 16, background: "#222222", margin: "0 4px" }} />
           <button
             onClick={() => setShowShortcuts(true)}
             title="Keyboard shortcuts (?)"
-            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.1s, color 0.1s" }}
+            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "#555555", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.1s, color 0.1s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#d4a843" }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a2b3c"; e.currentTarget.style.color = "#555" }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222222"; e.currentTarget.style.color = "#555" }}
           >?</button>
-          <span style={{ fontSize: 11, color: "#2d4f68", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
+          <span style={{ fontSize: 11, color: "#555555", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
           <button className={`${styles.hdrBtn} ${styles.hdrBtnDanger}`} onClick={() => signOut(auth)}>Sign Out</button>
         </div>
       </header>
@@ -1802,21 +1807,21 @@ export default function App() {
           : luxVal > tgtLux * 1.25 ? "OVERLIT"
           : luxVal >= tgtLux * 0.9  ? "GOOD"
           : "DIM"
-        const sc  = { GOOD: "#4caf7d", OVERLIT: "#e07b2a", DIM: "#4a7a96" }[luxStatus] ?? "#888"
-        const sb  = { GOOD: "#0d2018", OVERLIT: "#1f1200", DIM: "#0f1e2e" }[luxStatus] ?? "#0f1e2e"
+        const sc  = { GOOD: "#4caf7d", OVERLIT: "#e07b2a", DIM: "#888888" }[luxStatus] ?? "#888"
+        const sb  = { GOOD: "#0a1a0f", OVERLIT: "#1a0f00", DIM: "#0a0a0a" }[luxStatus] ?? "#0a0a0a"
         const dimUnit = getStoredUnit()
         const wDisp   = fromMM(roomWidth,  dimUnit)
         const hDisp   = fromMM(roomHeight, dimUnit)
         const sizeStr = wDisp && hDisp ? `${wDisp}×${hDisp}${dimUnit}` : "—"
-        const div = <div style={{ width: 1, height: 16, background: "#1a2b3c", flexShrink: 0 }} />
+        const div = <div style={{ width: 1, height: 16, background: "#222222", flexShrink: 0 }} />
         const S = (label, val) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
-            <span style={{ fontSize: 11, color: "#2d4f68", letterSpacing: "0.05em" }}>{label}</span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#cdd9e5" }}>{val}</span>
+            <span style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>{label}</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "#ffffff" }}>{val}</span>
           </div>
         )
         return (
-          <div style={{ height: 36, display: "flex", alignItems: "center", background: "#0d1520", borderBottom: "1px solid #2e2e2e", fontFamily: "IBM Plex Mono", flexShrink: 0, overflow: "hidden" }}>
+          <div style={{ height: 36, display: "flex", alignItems: "center", background: "#0a0a0a", borderBottom: "1px solid #2e2e2e", fontFamily: "IBM Plex Mono", flexShrink: 0, overflow: "hidden" }}>
             {S("FLOORS",   floors.length)}
             {div}
             {S("ROOMS",    allRooms.length)}
@@ -1835,8 +1840,8 @@ export default function App() {
               {S("UF",  uf.toFixed(2))}
               {div}
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
-                <span style={{ fontSize: 11, color: "#2d4f68", letterSpacing: "0.05em" }}>LUX</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: "#cdd9e5" }}>{luxVal ?? "—"}</span>
+                <span style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>LUX</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: "#ffffff" }}>{luxVal ?? "—"}</span>
                 {luxStatus && (
                   <span style={{ padding: "1px 7px", borderRadius: 3, fontSize: 10, fontWeight: 500, background: sb, color: sc, letterSpacing: "0.04em" }}>{luxStatus}</span>
                 )}
@@ -1851,46 +1856,74 @@ export default function App() {
       <main style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
         {/* ── Left: Fixture Library / AI Recommender tabs ─────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", width: 260, minWidth: 260, height: "100%", background: "#0d1520", borderRight: "1px solid #2e2e2e", overflow: "hidden" }}>
-          {/* Tab bar */}
-          <div style={{ display: "flex", borderBottom: "1px solid #2e2e2e", flexShrink: 0 }}>
-            {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI SUGGEST' }].map(tab => (
+        <div style={{ display: "flex", flexDirection: "column", width: leftSidebarCollapsed ? 40 : 180, minWidth: leftSidebarCollapsed ? 40 : 180, height: "100%", background: "#0a0a0a", borderRight: "1px solid #222222", overflow: "hidden", transition: "width 0.2s, min-width 0.2s", flexShrink: 0 }}>
+          {leftSidebarCollapsed ? (
+            /* Collapsed: icon-only mode */
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8, gap: 4 }}>
               <button
-                key={tab.id}
-                onClick={() => setLeftTab(tab.id)}
-                style={{
-                  flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#0f1e2e" : "transparent",
-                  border: "none", borderBottom: leftTab === tab.id ? "2px solid #39c5cf" : "2px solid transparent",
-                  color: leftTab === tab.id ? "#39c5cf" : "#2d4f68", fontSize: 10, letterSpacing: "0.1em",
-                  fontFamily: "IBM Plex Mono", cursor: "pointer",
-                }}
-              >{tab.label}</button>
-            ))}
-          </div>
-          {/* Tab content */}
-          <div style={{ flex: 1, overflow: "hidden", display: leftTab === 'fixture' ? "flex" : "none", flexDirection: "column" }}>
-            <FixturePanel
-              activeFixtureId={activeFixtureId}
-              onSelect={handleLibrarySelect}
-              userId={user?.uid ?? null}
-            />
-          </div>
-          <div style={{ flex: 1, overflow: "auto", display: leftTab === 'ai' ? "flex" : "none", flexDirection: "column" }}>
-            <AIRecommender
-              activeRoom={room}
-              onApplyFixture={handleAIApply}
-              onApplyAll={handleAIApplyAll}
-              onClose={() => setLeftTab('fixture')}
-              panelMode
-            />
-          </div>
+                onClick={() => setLeftSidebarCollapsed(false)}
+                title="Expand sidebar"
+                style={{ width: 32, height: 32, background: "transparent", border: "1px solid #222222", borderRadius: 4, color: "#888888", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              >›</button>
+              <button
+                onClick={() => { setLeftSidebarCollapsed(false); setLeftTab('fixture') }}
+                title="Fixtures"
+                style={{ width: 32, height: 32, background: leftTab === 'fixture' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'fixture' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              >▤</button>
+              <button
+                onClick={() => { setLeftSidebarCollapsed(false); setLeftTab('ai') }}
+                title="AI Suggest"
+                style={{ width: 32, height: 32, background: leftTab === 'ai' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'ai' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              >✦</button>
+            </div>
+          ) : (
+            <>
+              {/* Tab bar with collapse toggle */}
+              <div style={{ display: "flex", borderBottom: "1px solid #222222", flexShrink: 0 }}>
+                {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setLeftTab(tab.id)}
+                    style={{
+                      flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#111111" : "transparent",
+                      border: "none", borderBottom: leftTab === tab.id ? "2px solid #d4a843" : "2px solid transparent",
+                      color: leftTab === tab.id ? "#d4a843" : "#888888", fontSize: 10, letterSpacing: "0.1em",
+                      fontFamily: "IBM Plex Mono", cursor: "pointer",
+                    }}
+                  >{tab.label}</button>
+                ))}
+                <button
+                  onClick={() => setLeftSidebarCollapsed(true)}
+                  title="Collapse sidebar"
+                  style={{ width: 30, background: "transparent", border: "none", borderBottom: "2px solid transparent", color: "#555555", cursor: "pointer", fontSize: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >‹</button>
+              </div>
+              {/* Tab content */}
+              <div style={{ flex: 1, overflow: "hidden", display: leftTab === 'fixture' ? "flex" : "none", flexDirection: "column" }}>
+                <FixturePanel
+                  activeFixtureId={activeFixtureId}
+                  onSelect={handleLibrarySelect}
+                  userId={user?.uid ?? null}
+                />
+              </div>
+              <div style={{ flex: 1, overflow: "auto", display: leftTab === 'ai' ? "flex" : "none", flexDirection: "column" }}>
+                <AIRecommender
+                  activeRoom={room}
+                  onApplyFixture={handleAIApply}
+                  onApplyAll={handleAIApplyAll}
+                  onClose={() => setLeftTab('fixture')}
+                  panelMode
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Center: Canvas Area 1fr ──────────────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
           {/* Centered floating toolbar */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "#0a1018", borderBottom: "1px solid #1e1e1e", height: 44, flexShrink: 0 }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "#000000", borderBottom: "1px solid #1e1e1e", height: 44, flexShrink: 0 }}>
             <div className={styles.toolbar} style={{ height: 44, padding: "0 4px" }}>
               <button className={styles.tbBtn} onClick={autoPlaceLights} title="Auto Place — Automatically distribute fixtures in an optimal grid based on target lux and room size">Auto Place</button>
               <button className={styles.tbBtn} onClick={() => setSnapToGrid(p => !p)} style={snapToGrid ? tbActive : {}} title={snapToGrid ? "Snap to grid: ON — fixtures align to grid points" : "Snap to grid: OFF — free placement"}>Snap {snapToGrid ? "On" : "Off"}</button>
@@ -1903,7 +1936,6 @@ export default function App() {
                 title="DALI — Enable DALI 2.0 addressable lighting system. Each fixture gets a unique bus address for individual dimming control."
                 onClick={() => {
   setDaliEnabled(prev => !prev)
-  // When enabling DALI, assign DALI protocol to all fixtures without a protocol
   if (!daliEnabled) {
     setFloors(prevFloors => prevFloors.map(f => ({
       ...f,
@@ -1919,21 +1951,28 @@ export default function App() {
   }
 }}
                 style={{
-                  background: daliEnabled ? '#d4a843' : 'transparent',
-                  color: daliEnabled ? '#0c0c0c' : '#888',
-                  border: daliEnabled ? 'none' : '1px solid #2a2a2a',
-                  padding: '4px 12px',
-                  borderRadius: 3,
+                  background: daliEnabled ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
+                  color: daliEnabled ? '#22c55e' : '#ef4444',
+                  border: `1px solid ${daliEnabled ? '#22c55e55' : '#ef444455'}`,
+                  padding: '3px 10px',
+                  borderRadius: 20,
                   cursor: 'pointer',
-                  fontSize: 12,
-                  fontFamily: 'IBM Plex Mono'
+                  fontSize: 11,
+                  fontFamily: 'IBM Plex Mono',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  transition: 'background 0.2s, color 0.2s, border-color 0.2s',
+                  display: 'flex', alignItems: 'center', gap: 5,
                 }}
-              >DALI {daliEnabled ? 'ON' : 'OFF'}</button>
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: daliEnabled ? '#22c55e' : '#ef4444', flexShrink: 0, transition: 'background 0.2s' }} />
+                DALI {daliEnabled ? 'ON' : 'OFF'}
+              </button>
               {daliActive && (
                 <select
                   value={daliNodeLimit}
                   onChange={e => setDaliNodeLimit(Number(e.target.value))}
-                  style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#d4a843', fontSize: 11, padding: '3px 6px', borderRadius: 3 }}
+                  style={{ background: '#111111', border: '1px solid #2a2a2a', color: '#d4a843', fontSize: 11, padding: '3px 6px', borderRadius: 3 }}
                 >
                   <option value={64}>64 nodes</option>
                   <option value={128}>128 nodes</option>
@@ -1973,7 +2012,7 @@ export default function App() {
                     }}
                     style={{
                       padding: '4px 8px',
-                      background: '#1a1a1a',
+                      background: '#111111',
                       color: '#d4a843',
                       border: '1px solid #2a2a2a',
                       borderRadius: 3,
@@ -2016,27 +2055,9 @@ export default function App() {
           />
 
           {/* Scrollable canvas + detail panels */}
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#090c10" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#000000" }}>
 
-            {/* Floating Room Settings Panel */}
-            {showSettings && (
-              <RoomSettingsFloating
-                room={room}
-                setRoom={updateRoom}
-                calculations={(() => {
-                  const g = calcGrid(Number(room.targetLux), areaM2, uf, Number(room.fixtureLumens), roomWidth, roomHeight)
-                  return { mountingHeight: mh, requiredLumens: g.requiredLumens, suggestedFixtures: g.total }
-                })()}
-                pos={settingsPos}
-                onStartDrag={startSettingsDrag}
-                onClose={() => setShowSettings(false)}
-                floorPlan={floorPlan}
-                onUploadFloorPlan={updateFloorPlan}
-                onRemoveFloorPlan={removeFloorPlan}
-                activeTool={activeTool}
-                onSetActiveTool={setActiveTool}
-              />
-            )}
+            {/* Settings panel moved to fixed right slide-in below */}
 
             {/* ── Visual Editor Floating Panel ── */}
             {showVisualEditor && selectedLights.length > 0 && (
@@ -2110,7 +2131,7 @@ export default function App() {
                       value={commonShape ?? 'circle'}
                       onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureShape: e.target.value }))}
                       style={{
-                        width: '100%', padding: '8px 6px', background: '#1a1a1a',
+                        width: '100%', padding: '8px 6px', background: '#111111',
                         color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3,
                         fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer'
                       }}
@@ -2220,24 +2241,24 @@ export default function App() {
               : maxVDrop <= 5 ? "#e07b2a"
               : "#e05252"
             const Col = ({ label, children, last }) => (
-              <div style={{ flex: 1, borderRight: last ? "none" : "1px solid #1e1e1e", padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div style={{ fontSize: 9, color: "#444", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
+              <div style={{ flex: 1, borderRight: last ? "none" : "1px solid #222222", padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
                 {children}
               </div>
             )
             return (
-              <div style={{ height: 60, background: "#0e0e0e", borderTop: "1px solid #1e1e1e", display: "flex", alignItems: "stretch", flexShrink: 0, fontFamily: "IBM Plex Mono" }}>
+              <div style={{ height: 60, background: "#0a0a0a", borderTop: "1px solid #222222", display: "flex", alignItems: "stretch", flexShrink: 0, fontFamily: "IBM Plex Mono" }}>
                 <Col label="CIRCUITS">
-                  <span style={{ fontSize: 13, color: "#cdd9e5" }}>{circuits.length} circuit{circuits.length !== 1 ? "s" : ""}</span>
-                  <span style={{ fontSize: 10, color: "#2d4f68" }}>{totalWatt}W total</span>
+                  <span style={{ fontSize: 13, color: "#ffffff" }}>{circuits.length} circuit{circuits.length !== 1 ? "s" : ""}</span>
+                  <span style={{ fontSize: 10, color: "#888888" }}>{totalWatt}W total</span>
                 </Col>
                 <Col label="VOLTAGE DROP">
                   <span style={{ fontSize: 13, color: vDropCol }}>{maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}</span>
-                  <span style={{ fontSize: 10, color: "#2d4f68" }}>max across circuits</span>
+                  <span style={{ fontSize: 10, color: "#888888" }}>max across circuits</span>
                 </Col>
                 <Col label="DRIVER SCHEDULE">
-                  <span style={{ fontSize: 13, color: "#cdd9e5" }}>{driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}</span>
-                  <span style={{ fontSize: 10, color: "#2d4f68" }}>{lights.length} fixture{lights.length !== 1 ? "s" : ""}</span>
+                  <span style={{ fontSize: 13, color: "#ffffff" }}>{driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}</span>
+                  <span style={{ fontSize: 10, color: "#888888" }}>{lights.length} fixture{lights.length !== 1 ? "s" : ""}</span>
                 </Col>
                 <Col label="PHASE BALANCE" last>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -2247,7 +2268,7 @@ export default function App() {
                       </span>
                     ))}
                   </div>
-                  <span style={{ fontSize: 10, color: "#2d4f68" }}>3-phase distribution</span>
+                  <span style={{ fontSize: 10, color: "#888888" }}>3-phase distribution</span>
                 </Col>
               </div>
             )
@@ -2284,7 +2305,7 @@ export default function App() {
             </div>
           )
           return (
-            <div style={{ width: 200, background: "#090c10", borderLeft: "1px solid #1e1e1e", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto", fontFamily: "IBM Plex Mono" }}>
+            <div style={{ width: 200, background: "#000000", borderLeft: "1px solid #1e1e1e", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto", fontFamily: "IBM Plex Mono" }}>
 
               {/* LUX HERO */}
               <div style={{ padding: "16px 12px", borderBottom: "1px solid #141414" }}>
@@ -2294,7 +2315,7 @@ export default function App() {
                   <div style={{
                     display: "inline-block", padding: "2px 8px", borderRadius: 3,
                     fontSize: 10, fontWeight: 500, letterSpacing: "0.05em",
-                    background: { GOOD: "#0d2018", OVERLIT: "#1f1200", DIM: "#1a0a0a" }[luxStatus],
+                    background: { GOOD: "#0a1a0f", OVERLIT: "#1a0f00", DIM: "#1a0808" }[luxStatus],
                     color: luxCol,
                   }}>{luxStatus}</div>
                 )}
@@ -2407,7 +2428,7 @@ export default function App() {
                           <select
                             value={allSameShape ? shapes[0] : ''}
                             onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
-                            style={{ width: '100%', padding: '4px 6px', background: '#1a1a1a', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
+                            style={{ width: '100%', padding: '4px 6px', background: '#111111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
                           >
                             {!allSameShape && <option value="">— Mixed —</option>}
                             <option value="circle">Circle</option>
@@ -2425,7 +2446,7 @@ export default function App() {
                   )
                 })() : (
                   <>
-                    <div style={{ fontSize: 11, color: "#cdd9e5", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontSize: 11, color: "#ffffff", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {activeFixture.label ?? activeFixture.name ?? "—"}
                     </div>
                     <Row label="Watt"   value={`${activeFixture.watt ?? 0}W`} />
@@ -2458,15 +2479,15 @@ export default function App() {
                   return (
                     <svg width={svgW} height={yBot + 14} style={{ display: "block", marginTop: 10, overflow: "visible" }}>
                       {/* Ceiling slab */}
-                      <rect x={0} y={0} width={svgW} height={yTop} fill="#0f1e2e" />
-                      <line x1={0} y1={yTop} x2={svgW} y2={yTop} stroke="#1a2b3c" strokeWidth={2} />
+                      <rect x={0} y={0} width={svgW} height={yTop} fill="#0a0a0a" />
+                      <line x1={0} y1={yTop} x2={svgW} y2={yTop} stroke="#222222" strokeWidth={2} />
                       {/* False ceiling drop */}
-                      {falseC > 0 && <line x1={0} y1={yFix} x2={svgW} y2={yFix} stroke="#1a2b3c" strokeWidth={1} strokeDasharray="4 3" />}
+                      {falseC > 0 && <line x1={0} y1={yFix} x2={svgW} y2={yFix} stroke="#222222" strokeWidth={1} strokeDasharray="4 3" />}
                       {/* Working plane */}
                       <line x1={0} y1={yWork} x2={svgW} y2={yWork} stroke="#1e3020" strokeWidth={1} strokeDasharray="4 3" />
                       {/* Floor slab */}
-                      <rect x={0} y={yBot} width={svgW} height={14} fill="#0f1e2e" />
-                      <line x1={0} y1={yBot} x2={svgW} y2={yBot} stroke="#0f1e2e" strokeWidth={2} />
+                      <rect x={0} y={yBot} width={svgW} height={14} fill="#0a0a0a" />
+                      <line x1={0} y1={yBot} x2={svgW} y2={yBot} stroke="#0a0a0a" strokeWidth={2} />
                       {/* Light cone */}
                       <polygon points={`${svgW/2},${yFix} ${svgW/2-coneW},${yWork} ${svgW/2+coneW},${yWork}`} fill="#d4a84320" />
                       {/* Fixture dot */}
@@ -2502,6 +2523,41 @@ export default function App() {
 
       </main>
 
+      {/* ── Settings slide-in panel ──────────────────────────────────────────── */}
+      {showSettings && (
+        <div style={{
+          position: "fixed", top: 84, right: 0, bottom: 0, width: 320,
+          background: "#0a0a0a", borderLeft: "1px solid #222222",
+          display: "flex", flexDirection: "column",
+          zIndex: 500, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
+          fontFamily: "IBM Plex Mono",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
+            <span style={{ fontSize: 10, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>ROOM SETTINGS</span>
+            <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            <RoomSettingsFloating
+              room={room}
+              setRoom={updateRoom}
+              calculations={(() => {
+                const g = calcGrid(Number(room.targetLux), areaM2, uf, Number(room.fixtureLumens), roomWidth, roomHeight)
+                return { mountingHeight: mh, requiredLumens: g.requiredLumens, suggestedFixtures: g.total }
+              })()}
+              pos={settingsPos}
+              onStartDrag={startSettingsDrag}
+              onClose={() => setShowSettings(false)}
+              floorPlan={floorPlan}
+              onUploadFloorPlan={updateFloorPlan}
+              onRemoveFloorPlan={removeFloorPlan}
+              activeTool={activeTool}
+              onSetActiveTool={setActiveTool}
+              embedded
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── Export modal ─────────────────────────────────────────────────────── */}
       {showExportModal && (() => {
         const allExportRooms = floors.flatMap(f => f.rooms.map(r => ({ id: r.id, label: `${f.name} — ${r.name}` })))
@@ -2517,12 +2573,12 @@ export default function App() {
         })
         return (
           <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ background: "#0d1520", border: "1px solid #2e2e2e", borderRadius: 6, width: 480, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+            <div style={{ background: "#0a0a0a", border: "1px solid #2e2e2e", borderRadius: 6, width: 480, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
 
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 14px", borderBottom: "1px solid #222", flexShrink: 0 }}>
                 <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#39c5cf", letterSpacing: "0.14em" }}>EXPORT</span>
-                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 13, cursor: "pointer" }}>✕</button>
+                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "IBM Plex Mono", fontSize: 13, cursor: "pointer" }}>✕</button>
               </div>
 
               {/* Scrollable body */}
@@ -2531,7 +2587,7 @@ export default function App() {
                 {/* Room selector */}
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#4a7a96", letterSpacing: "0.12em" }}>SELECT ROOMS TO EXPORT</span>
+                    <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>SELECT ROOMS TO EXPORT</span>
                     <button
                       onClick={() => setExportRoomIds(allSelected ? [] : allExportRooms.map(r => r.id))}
                       style={{ background: "transparent", border: "none", fontFamily: "IBM Plex Mono", fontSize: 9, color: "#39c5cf", cursor: "pointer", letterSpacing: "0.06em", padding: 0 }}
@@ -2562,7 +2618,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, transition: "background 0.1s, border-color 0.1s",
                           }}>
-                            {checked && <span style={{ fontSize: 9, color: "#090c10", fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                            {checked && <span style={{ fontSize: 9, color: "#000000", fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked} onChange={() => toggleRoom(r.id)} style={{ display: "none" }} />
                           <span>{r.label}</span>
@@ -2581,19 +2637,19 @@ export default function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF() }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#d4a843", letterSpacing: "0.08em" }}>Export PDF Report</span>
-                    <span style={{ fontSize: 9, color: "#4a7a96", marginTop: 3 }}>
+                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>
                       Summary + {exportRoomIds.length} room detail page{exportRoomIds.length !== 1 ? "s" : ""} + layout snapshot
                     </span>
                   </button>
                   <button style={btnStyle("#3dba74", "#0e1a0e", "#1a4020")} onClick={() => { setShowExportModal(false); handleExportBOQ() }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#3dba74", letterSpacing: "0.08em" }}>Export Excel BOQ</span>
-                    <span style={{ fontSize: 9, color: "#4a7a96", marginTop: 3 }}>3 sheets — Fixture BOQ, Electrical, Room Summary</span>
+                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>3 sheets — Fixture BOQ, Electrical, Room Summary</span>
                   </button>
                   <button style={btnStyle("#39c5cf", "#0a1a1e", "#1a3a40")} onClick={() => { setShowExportModal(false); handleExportPNG() }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#39c5cf", letterSpacing: "0.08em" }}>Export Canvas PNG</span>
-                    <span style={{ fontSize: 9, color: "#4a7a96", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
+                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
                   </button>
-                  <button style={btnStyle("#888", "#181818", "#1a2b3c")} onClick={() => { setShowExportModal(false); setShowReport(true) }}>
+                  <button style={btnStyle("#888", "#181818", "#222222")} onClick={() => { setShowExportModal(false); setShowReport(true) }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: "0.08em" }}>View Full Report</span>
                     <span style={{ fontSize: 9, color: "#666", marginTop: 3 }}>Interactive report with print option</span>
                   </button>
@@ -2633,9 +2689,9 @@ export default function App() {
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "#0f1e2e", border: "1px solid #2e2e2e",
+          background: "#0a0a0a", border: "1px solid #2e2e2e",
           borderRadius: 6, padding: "10px 20px",
-          fontFamily: "IBM Plex Mono", fontSize: 12, color: "#cdd9e5",
+          fontFamily: "IBM Plex Mono", fontSize: 12, color: "#ffffff",
           letterSpacing: "0.04em", zIndex: 600,
           boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
           pointerEvents: "none",
@@ -2651,12 +2707,12 @@ export default function App() {
           onClick={() => setShowShortcuts(false)}
         >
           <div
-            style={{ background: "#090c10", border: "1px solid #2e2e2e", borderRadius: 10, padding: "24px 28px", width: 520, maxWidth: "calc(100vw - 32px)", fontFamily: "IBM Plex Mono", boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}
+            style={{ background: "#000000", border: "1px solid #2e2e2e", borderRadius: 10, padding: "24px 28px", width: 520, maxWidth: "calc(100vw - 32px)", fontFamily: "IBM Plex Mono", boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#cdd9e5", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
-              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#2d4f68", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#ffffff", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
+              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
             </div>
             {[
               { group: "NAVIGATION", rows: [
@@ -2687,12 +2743,12 @@ export default function App() {
               ]},
             ].map(({ group, rows }) => (
               <div key={group} style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 8, color: "#2d4f68", letterSpacing: "0.18em", marginBottom: 8 }}>{group}</div>
+                <div style={{ fontSize: 8, color: "#555555", letterSpacing: "0.18em", marginBottom: 8 }}>{group}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "6px 0" }}>
                   {rows.map(([key, desc]) => (
                     <>
                       <span key={key + "-k"} style={{ fontSize: 10, color: "#d4a843", letterSpacing: "0.04em", background: "#1a1500", border: "1px solid #2a2000", borderRadius: 3, padding: "2px 8px", display: "inline-block", width: "fit-content" }}>{key}</span>
-                      <span key={key + "-d"} style={{ fontSize: 10, color: "#4a7a96", letterSpacing: "0.04em", alignSelf: "center", paddingLeft: 12 }}>{desc}</span>
+                      <span key={key + "-d"} style={{ fontSize: 10, color: "#888888", letterSpacing: "0.04em", alignSelf: "center", paddingLeft: 12 }}>{desc}</span>
                     </>
                   ))}
                 </div>
@@ -2711,10 +2767,10 @@ export default function App() {
           <div className={styles.welcomeModal}>
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#cdd9e5", letterSpacing: "0.04em", marginBottom: 6 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em", marginBottom: 6 }}>
                 Welcome to Lumina Design
               </div>
-              <div style={{ fontSize: 11, color: "#2d4f68", letterSpacing: "0.05em" }}>
+              <div style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>
                 Professional lighting design &amp; calculation tool
               </div>
             </div>
@@ -2730,16 +2786,16 @@ export default function App() {
                 <div key={num} className={styles.welcomeStepCard}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                     <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#1a1500", border: "1px solid #d4a843", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#d4a843", flexShrink: 0 }}>{num}</div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#cdd9e5", letterSpacing: "0.02em" }}>{title}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#ffffff", letterSpacing: "0.02em" }}>{title}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: "#4a7a96", lineHeight: 1.6, letterSpacing: "0.02em", paddingLeft: 32 }}>{desc}</div>
+                  <div style={{ fontSize: 11, color: "#888888", lineHeight: 1.6, letterSpacing: "0.02em", paddingLeft: 32 }}>{desc}</div>
                 </div>
               ))}
             </div>
 
             {/* Footer */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 20, borderTop: "1px solid #2e2e2e" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#2d4f68", cursor: "pointer", userSelect: "none" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#555555", cursor: "pointer", userSelect: "none" }}>
                 <input
                   type="checkbox"
                   onChange={e => { if (e.target.checked) { try { localStorage.setItem("lumina_welcome_dismissed", "1") } catch {} } }}
