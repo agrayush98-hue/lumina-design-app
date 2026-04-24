@@ -227,11 +227,11 @@
   min-width: 0;
 }
 .dash-right-col {
-  width: 260px;
+  width: 280px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* ── Widgets ─────────────────────────────────────────────────────────────────── */
@@ -299,30 +299,122 @@
 .dash-tips-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 .dash-tip-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+.dash-tip-icon {
+  font-size: 12px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
 }
 .dash-tip-key {
-  font-size: 9px;
+  font-size: 8px;
   color: #d4a843;
   background: rgba(212, 168, 67, 0.08);
   border: 1px solid rgba(212, 168, 67, 0.2);
   border-radius: 3px;
-  padding: 2px 6px;
+  padding: 2px 5px;
   white-space: nowrap;
-  min-width: 56px;
+  min-width: 60px;
   text-align: center;
   letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 .dash-tip-text {
   font-size: 9px;
   color: #666666;
   letter-spacing: 0.04em;
 }
+
+/* ── Smart suggestions ───────────────────────────────────────────────────────── */
+.dash-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dash-suggestion-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #0a0a0a;
+  border: 1px solid #111111;
+}
+.dash-suggestion-icon {
+  font-size: 12px;
+  color: #d4a843;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.dash-suggestion-text {
+  font-size: 9px;
+  color: #666666;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+/* ── Upgrade block ───────────────────────────────────────────────────────────── */
+.dash-upgrade-block {
+  background: linear-gradient(135deg, #0d0800 0%, #100a00 100%);
+  border: 1px solid rgba(212, 168, 67, 0.25);
+  border-radius: 8px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dash-upgrade-title {
+  font-size: 10px;
+  color: #d4a843;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+}
+.dash-upgrade-desc {
+  font-size: 9px;
+  color: #666666;
+  letter-spacing: 0.06em;
+}
+.dash-upgrade-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dash-upgrade-list li {
+  font-size: 9px;
+  color: #888888;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-upgrade-list li::before {
+  content: '✓';
+  color: #d4a843;
+  font-size: 9px;
+}
+.btn-upgrade {
+  background: #d4a843;
+  border: none;
+  border-radius: 5px;
+  color: #000000;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 10px 0;
+  cursor: pointer;
+  width: 100%;
+  transition: opacity 0.15s;
+  margin-top: 4px;
+}
+.btn-upgrade:hover { opacity: 0.85; }
 
 /* ── New project button in right col ─────────────────────────────────────────── */
 .dash-new-btn {
@@ -411,6 +503,118 @@
   margin-top: 4px;
 }
 
+/* ── Continue banner ─────────────────────────────────────────────────────────── */
+.dash-continue-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0d0d00 0%, #100e00 100%);
+  border: 1px solid rgba(212, 168, 67, 0.35);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.dash-continue-left { display: flex; flex-direction: column; gap: 4px; }
+.dash-continue-label {
+  font-size: 8px;
+  color: #d4a843;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.dash-continue-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f0f0f0;
+  letter-spacing: 0.02em;
+}
+.dash-continue-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 9px;
+  color: #666666;
+  letter-spacing: 0.06em;
+}
+.btn-continue {
+  background: #d4a843;
+  border: none;
+  border-radius: 5px;
+  color: #000000;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 10px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.btn-continue:hover { opacity: 0.85; }
+
+/* ── Recent projects row ─────────────────────────────────────────────────────── */
+.dash-recent-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dash-recent-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #080808;
+  border: 1px solid #1a1a1a;
+  border-radius: 7px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.12s;
+  flex: 1;
+  min-width: 180px;
+}
+.dash-recent-card:hover { border-color: #333333; background: #0d0d0d; }
+.dash-recent-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dash-recent-info { flex: 1; min-width: 0; }
+.dash-recent-name {
+  font-size: 11px;
+  color: #cccccc;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.dash-recent-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+  color: #555555;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+.dash-recent-time {
+  font-size: 9px;
+  color: #444444;
+  letter-spacing: 0.04em;
+  margin-top: 3px;
+}
+.dash-recent-arrow {
+  font-size: 11px;
+  color: #333333;
+  flex-shrink: 0;
+}
+.dash-recent-empty {
+  font-size: 10px;
+  color: #333333;
+  letter-spacing: 0.06em;
+  padding: 12px 0;
+}
+
 /* ── Template cards ──────────────────────────────────────────────────────────── */
 .tpl-cards-row {
   display: flex;
@@ -421,17 +625,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: #080808;
   border: 1px solid #1a1a1a;
   border-radius: 8px;
-  padding: 18px 16px 14px;
+  padding: 18px 14px 14px;
   cursor: pointer;
   font-family: inherit;
   color: #cccccc;
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
-  width: 100px;
-  min-width: 100px;
+  width: 152px;
+  min-width: 152px;
+  text-align: center;
 }
 .tpl-card-btn:hover {
   border-color: #d4a843;
@@ -444,22 +649,36 @@
 }
 .tpl-card-blank:hover { border-color: #555555; color: #888888; }
 .tpl-card-icon {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
 }
 .tpl-card-name {
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.05em;
   color: #cccccc;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .tpl-card-cat {
   font-size: 8px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.7;
-  text-align: center;
+}
+.tpl-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 6px;
+  width: 100%;
+}
+.tpl-card-meta span {
+  font-size: 8px;
+  color: #555555;
+  letter-spacing: 0.06em;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────────── */
