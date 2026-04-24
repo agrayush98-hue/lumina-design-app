@@ -130,7 +130,13 @@ function ProjectsTab({ user }) {
 
   useEffect(() => {
     fetchProjects()
-    getTrialDaysRemaining(user.uid).then(setTrialDays).catch(() => {})
+    // Compute unclamped days so negative values indicate expired trial
+    getUserProfile(user.uid).then(profile => {
+      if (!profile?.createdAt) { setTrialDays(-1); return }
+      const created = profile.createdAt?.toDate?.() ?? new Date(profile.createdAt)
+      const remaining = Math.ceil(14 - (Date.now() - created.getTime()) / 86400000)
+      setTrialDays(remaining)
+    }).catch(() => setTrialDays(-1))
   }, [])
 
   async function fetchProjects() {
@@ -178,219 +184,252 @@ function ProjectsTab({ user }) {
   const lastProject  = sorted[0] ?? null
   const recentThree  = sorted.slice(0, 3)
 
+  const trialColor = trialDays == null ? "#cccccc" : trialDays <= 0 ? "#ef4444" : "#d4a843"
+
   return (
     <>
-      {/* Stats bar */}
-      {!loading && (
-        <div className="dash-stats-bar">
-          <div className="dash-stat">
-            <div className="dash-stat-value">{projects.length}</div>
-            <div className="dash-stat-label">Total Projects</div>
-          </div>
-          <div className="dash-stat-divider" />
-          <div className="dash-stat">
-            <div className="dash-stat-value">{totalRooms || "—"}</div>
-            <div className="dash-stat-label">Rooms Designed</div>
-          </div>
-          <div className="dash-stat-divider" />
-          <div className="dash-stat">
-            <div className="dash-stat-value" style={{ color: "#d4a843" }}>{totalLights || "—"}</div>
-            <div className="dash-stat-label">Fixtures Placed</div>
-          </div>
-          <div className="dash-stat-divider" />
-          <div className="dash-stat">
-            <div className="dash-stat-value">{totalWatts ? `${totalWatts}W` : "—"}</div>
-            <div className="dash-stat-label">Total Load</div>
-          </div>
-          <div className="dash-stat-divider" />
-          <div className="dash-stat">
-            <div className="dash-stat-value" style={{ color: trialDays == null ? "#cccccc" : trialDays < 0 ? "#ef4444" : "#d4a843" }}>
-              {trialDays != null ? trialDays : "—"}
+      {/* Stats bar — pinned above scroll area, never clips */}
+      <div className="dash-stats-bar">
+        {loading ? (
+          <div className="dash-stat-loading">Loading…</div>
+        ) : (
+          <>
+            <div className="dash-stat">
+              <div className="dash-stat-value">{projects.length}</div>
+              <div className="dash-stat-label">Total Projects</div>
             </div>
-            <div className="dash-stat-label">Trial Days Left</div>
-          </div>
-          <div style={{ flex: 1 }} />
-          <button className="btn-primary" onClick={handleNewProject}>+ NEW PROJECT</button>
-        </div>
-      )}
+            <div className="dash-stat-divider" />
+            <div className="dash-stat">
+              <div className="dash-stat-value">{totalRooms || "—"}</div>
+              <div className="dash-stat-label">Rooms Designed</div>
+            </div>
+            <div className="dash-stat-divider" />
+            <div className="dash-stat">
+              <div className="dash-stat-value" style={{ color: "#d4a843" }}>{totalLights || "—"}</div>
+              <div className="dash-stat-label">Fixtures Placed</div>
+            </div>
+            <div className="dash-stat-divider" />
+            <div className="dash-stat">
+              <div className="dash-stat-value">{totalWatts ? `${totalWatts}W` : "—"}</div>
+              <div className="dash-stat-label">Total Load</div>
+            </div>
+            <div className="dash-stat-divider" />
+            <div className="dash-stat">
+              <div className="dash-stat-value" style={{ color: trialColor }}>
+                {trialDays != null ? Math.max(0, trialDays) : "—"}
+              </div>
+              <div className="dash-stat-label">Trial Days Left</div>
+            </div>
+            <div style={{ flex: 1 }} />
+            <button className="btn-primary" onClick={handleNewProject}>+ NEW PROJECT</button>
+          </>
+        )}
+      </div>
 
-      {error && <div className="inline-error">{error}</div>}
-      {loading && <div className="loading-state">Loading projects…</div>}
+      {/* Scrollable body — two independent columns */}
+      <div className="dash-body-scroll">
+        {error && <div className="inline-error" style={{ padding: "0 0 12px" }}>{error}</div>}
+        {loading && <div className="loading-state">Loading projects…</div>}
 
-      {!loading && (
-        <div className="dash-main-layout">
+        {!loading && (
+          <div className="dash-main-layout">
 
-          {/* ── Center column ── */}
-          <div className="dash-projects-col">
+            {/* ── Center column ── */}
+            <div className="dash-projects-col">
 
-            {/* Continue where you left off */}
-            {lastProject && (
-              <div className="dash-continue-banner">
-                <div className="dash-continue-left">
-                  <div className="dash-continue-label">CONTINUE WHERE YOU LEFT OFF</div>
-                  <div className="dash-continue-name">{lastProject.name}</div>
-                  <div className="dash-continue-meta">
-                    {lastProject.roomCount != null && <span>{lastProject.roomCount} room{lastProject.roomCount !== 1 ? "s" : ""}</span>}
-                    {lastProject.floorCount != null && <span>{lastProject.floorCount} floor{lastProject.floorCount !== 1 ? "s" : ""}</span>}
-                    <span>Last edited {timeAgo(lastProject.updatedAt)}</span>
+              {/* Continue where you left off */}
+              {lastProject && (
+                <div className="dash-continue-banner">
+                  <div className="dash-continue-left">
+                    <div className="dash-continue-label">CONTINUE WHERE YOU LEFT OFF</div>
+                    <div className="dash-continue-name">{lastProject.name}</div>
+                    <div className="dash-continue-meta">
+                      {lastProject.roomCount != null && <span>{lastProject.roomCount} room{lastProject.roomCount !== 1 ? "s" : ""}</span>}
+                      {lastProject.floorCount != null && <span>{lastProject.floorCount} floor{lastProject.floorCount !== 1 ? "s" : ""}</span>}
+                      <span>Last edited {timeAgo(lastProject.updatedAt)}</span>
+                    </div>
                   </div>
-                </div>
-                <button className="btn-continue" onClick={() => handleOpen(lastProject)}>
-                  Continue →
-                </button>
-              </div>
-            )}
-
-            {/* Project grid */}
-            {projects.length > 0 && (
-              <>
-                <div className="dash-section-header">
-                  <div className="dash-section-title">ALL PROJECTS</div>
-                  <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px" }} onClick={handleNewProject}>+ NEW</button>
-                </div>
-                <div className="projects-grid">
-                  {projects.map(proj => {
-                    const color = cardColor(proj.name)
-                    return (
-                      <div key={proj.id} className="project-card" onClick={() => handleOpen(proj)}>
-                        <div className="project-card-header" style={{ background: `${color}14`, borderBottom: `1px solid ${color}30` }}>
-                          <div className="project-card-initial" style={{ color, border: `1px solid ${color}50` }}>
-                            {(proj.name?.[0] ?? "?").toUpperCase()}
-                          </div>
-                          <div className="project-card-badge">
-                            {proj.roomCount > 0 ? "ACTIVE" : "EMPTY"}
-                          </div>
-                        </div>
-                        <div className="project-card-body">
-                          <div className="project-card-name">{proj.name}</div>
-                          <div className="project-card-meta">
-                            {proj.floorCount != null && <span>{proj.floorCount} floor{proj.floorCount !== 1 ? "s" : ""}</span>}
-                            {proj.roomCount  != null && <span>{proj.roomCount} room{proj.roomCount !== 1 ? "s" : ""}</span>}
-                            {proj.updatedAt  && <span style={{ marginLeft: "auto" }}>{timeAgo(proj.updatedAt)}</span>}
-                          </div>
-                        </div>
-                        <div className="project-card-actions" onClick={e => e.stopPropagation()}>
-                          <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px", flex: 1 }} onClick={() => handleOpen(proj)}>
-                            OPEN →
-                          </button>
-                          <button
-                            className="btn-danger"
-                            style={{ fontSize: 9, padding: "5px 10px" }}
-                            disabled={deletingId === proj.id}
-                            onClick={e => handleDelete(e, proj.id)}
-                          >
-                            {deletingId === proj.id ? "…" : "✕"}
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Templates — single section, always visible */}
-            <div className="dash-template-section">
-              <div className="dash-template-header">
-                <div className="dash-template-title">START FROM TEMPLATE</div>
-              </div>
-              <TemplateCards onNewProject={handleNewProject} navigate={navigate} />
-            </div>
-
-            {/* Recent Projects — horizontal strip */}
-            <div className="dash-template-section">
-              <div className="dash-template-header">
-                <div className="dash-template-title">RECENT PROJECTS</div>
-              </div>
-              {recentThree.length === 0 ? (
-                <div className="dash-recent-empty">No recent projects yet.</div>
-              ) : (
-                <div className="dash-recent-row">
-                  {recentThree.map(proj => {
-                    const color = cardColor(proj.name)
-                    return (
-                      <div key={proj.id} className="dash-recent-card" onClick={() => handleOpen(proj)}>
-                        <div className="dash-recent-dot" style={{ background: color }} />
-                        <div className="dash-recent-info">
-                          <div className="dash-recent-name">{proj.name}</div>
-                          <div className="dash-recent-meta">
-                            {proj.roomCount != null && <span>{proj.roomCount} rooms</span>}
-                            {proj.lightCount != null && proj.lightCount > 0 && <span>{proj.lightCount} fixtures</span>}
-                          </div>
-                          <div className="dash-recent-time">{timeAgo(proj.updatedAt)}</div>
-                        </div>
-                        <div className="dash-recent-arrow">→</div>
-                      </div>
-                    )
-                  })}
+                  <button className="btn-continue" onClick={() => handleOpen(lastProject)}>
+                    Continue →
+                  </button>
                 </div>
               )}
-            </div>
 
-          </div>
-
-          {/* ── Right panel ── */}
-          <div className="dash-right-col">
-
-            {/* Keyboard shortcuts */}
-            <div className="dash-widget">
-              <div className="dash-widget-title">KEYBOARD SHORTCUTS</div>
-              <div className="dash-tips-list">
-                {[
-                  { icon: "⚡", key: "A",          tip: "Auto-place fixtures" },
-                  { icon: "⌫", key: "Del",         tip: "Delete selected" },
-                  { icon: "💾", key: "Ctrl+S",      tip: "Save project" },
-                  { icon: "🔍", key: "Scroll",      tip: "Zoom in / out" },
-                  { icon: "✋", key: "Space+drag",  tip: "Pan canvas" },
-                  { icon: "⬚", key: "Click+drag",  tip: "Multi-select" },
-                ].map(({ icon, key, tip }) => (
-                  <div key={key} className="dash-tip-row">
-                    <span className="dash-tip-icon">{icon}</span>
-                    <span className="dash-tip-key">{key}</span>
-                    <span className="dash-tip-text">{tip}</span>
+              {/* Project grid */}
+              {projects.length > 0 && (
+                <>
+                  <div className="dash-section-header">
+                    <div className="dash-section-title">ALL PROJECTS</div>
+                    <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px" }} onClick={handleNewProject}>+ NEW</button>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Smart Suggestions */}
-            <div className="dash-widget">
-              <div className="dash-widget-title">SMART SUGGESTIONS</div>
-              <div className="dash-suggestions-list">
-                {[
-                  { icon: "◎", text: "Recommended lux for offices: 500 lux" },
-                  { icon: "◈", text: "Use Heatmap to check illuminance uniformity" },
-                  { icon: "⚡", text: "Auto-place saves 80% of design time" },
-                  { icon: "◫", text: "DALI protocol allows per-fixture dimming" },
-                  { icon: "▦", text: "Panel lights ideal for uniform coverage" },
-                ].map(({ icon, text }, i) => (
-                  <div key={i} className="dash-suggestion-row">
-                    <span className="dash-suggestion-icon">{icon}</span>
-                    <span className="dash-suggestion-text">{text}</span>
+                  <div className="projects-grid">
+                    {projects.map(proj => {
+                      const color = cardColor(proj.name)
+                      return (
+                        <div key={proj.id} className="project-card" onClick={() => handleOpen(proj)}>
+                          <div className="project-card-header" style={{ background: `${color}14`, borderBottom: `1px solid ${color}30` }}>
+                            <div className="project-card-initial" style={{ color, border: `1px solid ${color}50` }}>
+                              {(proj.name?.[0] ?? "?").toUpperCase()}
+                            </div>
+                            <div className="project-card-badge">
+                              {proj.roomCount > 0 ? "ACTIVE" : "EMPTY"}
+                            </div>
+                          </div>
+                          <div className="project-card-body">
+                            <div className="project-card-name">{proj.name}</div>
+                            <div className="project-card-meta">
+                              {proj.floorCount != null && <span>{proj.floorCount} floor{proj.floorCount !== 1 ? "s" : ""}</span>}
+                              {proj.roomCount  != null && <span>{proj.roomCount} room{proj.roomCount !== 1 ? "s" : ""}</span>}
+                              {proj.updatedAt  && <span style={{ marginLeft: "auto" }}>{timeAgo(proj.updatedAt)}</span>}
+                            </div>
+                          </div>
+                          <div className="project-card-actions" onClick={e => e.stopPropagation()}>
+                            <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px", flex: 1 }} onClick={() => handleOpen(proj)}>
+                              OPEN →
+                            </button>
+                            <button
+                              className="btn-danger"
+                              style={{ fontSize: 9, padding: "5px 10px" }}
+                              disabled={deletingId === proj.id}
+                              onClick={e => handleDelete(e, proj.id)}
+                            >
+                              {deletingId === proj.id ? "…" : "✕"}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
+                </>
+              )}
+
+              {/* Templates — single section */}
+              <div className="dash-template-section">
+                <div className="dash-template-header">
+                  <div className="dash-template-title">START FROM TEMPLATE</div>
+                </div>
+                <TemplateCards onNewProject={handleNewProject} navigate={navigate} />
               </div>
+
+              {/* Recent Projects */}
+              <div className="dash-template-section">
+                <div className="dash-template-header">
+                  <div className="dash-template-title">RECENT PROJECTS</div>
+                </div>
+                {recentThree.length === 0 ? (
+                  <div className="dash-recent-empty-state">
+                    <div className="dash-recent-empty-text">No recent projects yet.</div>
+                    <button className="dash-recent-create-link" onClick={handleNewProject}>
+                      + Create your first project
+                    </button>
+                  </div>
+                ) : (
+                  <div className="dash-recent-row">
+                    {recentThree.map(proj => {
+                      const color = cardColor(proj.name)
+                      return (
+                        <div key={proj.id} className="dash-recent-card" onClick={() => handleOpen(proj)}>
+                          <div className="dash-recent-dot" style={{ background: color }} />
+                          <div className="dash-recent-info">
+                            <div className="dash-recent-name">{proj.name}</div>
+                            <div className="dash-recent-meta">
+                              {proj.roomCount != null && <span>{proj.roomCount} rooms</span>}
+                              {proj.lightCount != null && proj.lightCount > 0 && <span>{proj.lightCount} fixtures</span>}
+                            </div>
+                            <div className="dash-recent-time">{timeAgo(proj.updatedAt)}</div>
+                          </div>
+                          <div className="dash-recent-arrow">→</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Getting Started */}
+              <div className="dash-template-section">
+                <div className="dash-template-header">
+                  <div className="dash-template-title">GETTING STARTED</div>
+                </div>
+                <div className="dash-steps-list">
+                  {[
+                    { n: 1, title: "Choose a template", desc: "Pick a room type above to start with pre-configured fixtures and lux targets" },
+                    { n: 2, title: "Place fixtures",    desc: "Use the left panel to drag fixtures onto the canvas, or use Auto-place" },
+                    { n: 3, title: "AI recommendations", desc: "Click AI in the left panel to get instant fixture suggestions for your room" },
+                  ].map(({ n, title, desc }) => (
+                    <div key={n} className="dash-step-row">
+                      <div className="dash-step-num">{n}</div>
+                      <div className="dash-step-body">
+                        <div className="dash-step-title">{title}</div>
+                        <div className="dash-step-desc">{desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
 
-            {/* Upgrade block */}
-            <div className="dash-upgrade-block">
-              <div className="dash-upgrade-title">UNLOCK PRO FEATURES</div>
-              <div className="dash-upgrade-desc">Take your designs further</div>
-              <ul className="dash-upgrade-list">
-                <li>Export PDF / Excel Reports</li>
-                <li>DALI 2.0 Planning &amp; Addressing</li>
-                <li>Advanced Heatmap Analysis</li>
-                <li>Unlimited Projects</li>
-                <li>Priority Support</li>
-              </ul>
-              <button className="btn-upgrade" onClick={() => {}}>
-                Upgrade to Pro →
-              </button>
-            </div>
+            {/* ── Right panel — independently scrollable ── */}
+            <div className="dash-right-col">
 
+              <div className="dash-widget">
+                <div className="dash-widget-title">KEYBOARD SHORTCUTS</div>
+                <div className="dash-tips-list">
+                  {[
+                    { icon: "⚡", key: "A",          tip: "Auto-place fixtures" },
+                    { icon: "⌫", key: "Del",         tip: "Delete selected" },
+                    { icon: "💾", key: "Ctrl+S",      tip: "Save project" },
+                    { icon: "🔍", key: "Scroll",      tip: "Zoom in / out" },
+                    { icon: "✋", key: "Space+drag",  tip: "Pan canvas" },
+                    { icon: "⬚", key: "Click+drag",  tip: "Multi-select" },
+                  ].map(({ icon, key, tip }) => (
+                    <div key={key} className="dash-tip-row">
+                      <span className="dash-tip-icon">{icon}</span>
+                      <span className="dash-tip-key">{key}</span>
+                      <span className="dash-tip-text">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="dash-widget">
+                <div className="dash-widget-title">SMART SUGGESTIONS</div>
+                <div className="dash-suggestions-list">
+                  {[
+                    { icon: "◎", text: "Recommended lux for offices: 500 lux" },
+                    { icon: "◈", text: "Use Heatmap to check illuminance uniformity" },
+                    { icon: "⚡", text: "Auto-place saves 80% of design time" },
+                    { icon: "◫", text: "DALI protocol allows per-fixture dimming" },
+                    { icon: "▦", text: "Panel lights ideal for uniform coverage" },
+                  ].map(({ icon, text }, i) => (
+                    <div key={i} className="dash-suggestion-row">
+                      <span className="dash-suggestion-icon">{icon}</span>
+                      <span className="dash-suggestion-text">{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="dash-upgrade-block">
+                <div className="dash-upgrade-title">UNLOCK PRO FEATURES</div>
+                <div className="dash-upgrade-desc">Take your designs further</div>
+                <ul className="dash-upgrade-list">
+                  <li>Export PDF / Excel Reports</li>
+                  <li>DALI 2.0 Planning &amp; Addressing</li>
+                  <li>Advanced Heatmap Analysis</li>
+                  <li>Unlimited Projects</li>
+                  <li>Priority Support</li>
+                </ul>
+                <button className="btn-upgrade" onClick={() => {}}>
+                  Upgrade to Pro →
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {showWizard && <NewProjectWizard onClose={() => setShowWizard(false)} />}
     </>
