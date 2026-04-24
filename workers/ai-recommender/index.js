@@ -4,6 +4,13 @@
  * ANTHROPIC_API_KEY never leaves this worker; it is NOT a VITE_ var.
  */
 
+const APP_SECRET_TOKEN = "X-App-Token"
+
+function isAuthorized(request, env) {
+  const token = request.headers.get(APP_SECRET_TOKEN)
+  return token === env.APP_SECRET_TOKEN
+}
+
 const ALLOWED_ORIGINS = [
   'https://app.lightillumina.com',
   'https://lumina-design-app.vercel.app',
@@ -206,6 +213,12 @@ export default {
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers })
+    }
+
+    if (!isAuthorized(request, env)) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...headers, "Content-Type": "application/json" }
+      })
     }
 
     if (request.method !== "POST") {
