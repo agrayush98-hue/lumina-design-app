@@ -137,10 +137,10 @@ function buildRetailStore() {
       lights.push(mkFixture(id++, 1500 + col * 3000, 1333 + row * 2667, geo, { ...DL12 }))
     }
   }
-  lights.push(mkFixture(id++, 0,     2000, geo, { ...WW15 }))
-  lights.push(mkFixture(id++, 0,     6000, geo, { ...WW15 }))
-  lights.push(mkFixture(id++, 12000, 2000, geo, { ...WW15 }))
-  lights.push(mkFixture(id++, 12000, 6000, geo, { ...WW15 }))
+  lights.push(mkFixture(id++,   500, 2000, geo, { ...WW15 }))
+  lights.push(mkFixture(id++,   500, 6000, geo, { ...WW15 }))
+  lights.push(mkFixture(id++, 11500, 2000, geo, { ...WW15 }))
+  lights.push(mkFixture(id++, 11500, 6000, geo, { ...WW15 }))
   return {
     id: "retail-store",
     name: "Retail Store",

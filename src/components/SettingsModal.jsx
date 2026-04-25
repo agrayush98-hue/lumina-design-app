@@ -13,8 +13,8 @@ function Toggle({ value, onChange }) {
       onClick={() => onChange(!value)}
       style={{
         width: 36, height: 20, borderRadius: 10, flexShrink: 0,
-        background: value ? '#3dba74' : '#1a2b3c',
-        border: `1px solid ${value ? '#2a9457' : '#2a3a4a'}`,
+        background: value ? '#d4a843' : '#333333',
+        border: `1px solid ${value ? '#b8902f' : '#333333'}`,
         cursor: 'pointer', position: 'relative', transition: 'background 0.18s',
       }}
     >
@@ -22,7 +22,7 @@ function Toggle({ value, onChange }) {
         position: 'absolute', top: 3,
         left: value ? 18 : 3,
         width: 12, height: 12, borderRadius: '50%',
-        background: value ? '#fff' : '#4a7a96',
+        background: value ? '#fff' : '#666666',
         transition: 'left 0.18s',
       }} />
     </div>
@@ -31,10 +31,10 @@ function Toggle({ value, onChange }) {
 
 function Row({ label, hint, children }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #0e1520' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #1a1a1a' }}>
       <div>
-        <div style={{ ...mono, fontSize: 10, color: '#cdd9e5' }}>{label}</div>
-        {hint && <div style={{ ...mono, fontSize: 8, color: '#2d4f68', marginTop: 2 }}>{hint}</div>}
+        <div style={{ ...mono, fontSize: 10, color: '#cccccc' }}>{label}</div>
+        {hint && <div style={{ ...mono, fontSize: 8, color: '#444444', marginTop: 2 }}>{hint}</div>}
       </div>
       <div style={{ flexShrink: 0, marginLeft: 16 }}>{children}</div>
     </div>
@@ -43,7 +43,7 @@ function Row({ label, hint, children }) {
 
 function SectionHeader({ children }) {
   return (
-    <div style={{ ...mono, fontSize: 9, color: '#d4a843', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4, marginTop: 4, paddingBottom: 6, borderBottom: '1px solid #1a2b3c' }}>
+    <div style={{ ...mono, fontSize: 9, color: '#d4a843', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4, marginTop: 4, paddingBottom: 6, borderBottom: '1px solid #222222' }}>
       {children}
     </div>
   )
@@ -51,15 +51,15 @@ function SectionHeader({ children }) {
 
 const inputStyle = {
   ...mono, fontSize: 10,
-  background: '#0a0f14', color: '#cdd9e5',
-  border: '1px solid #1a2b3c', borderRadius: 3,
+  background: '#0d0d0d', color: '#cccccc',
+  border: '1px solid #222222', borderRadius: 3,
   padding: '5px 8px',
 }
 
 const selectStyle = {
   ...mono, fontSize: 10,
-  background: '#0a0f14', color: '#cdd9e5',
-  border: '1px solid #1a2b3c', borderRadius: 3,
+  background: '#0d0d0d', color: '#cccccc',
+  border: '1px solid #222222', borderRadius: 3,
   padding: '5px 8px', cursor: 'pointer',
 }
 
@@ -105,7 +105,7 @@ function CalcSection({ s, upd }) {
             onChange={(e) => upd('calculations', 'ceilingHeight', Number(e.target.value) || 2700)}
             style={{ ...inputStyle, width: 72, textAlign: 'right' }}
           />
-          <span style={{ ...mono, fontSize: 9, color: '#4a7a96' }}>mm</span>
+          <span style={{ ...mono, fontSize: 9, color: '#666666' }}>mm</span>
         </div>
       </Row>
       <Row label="Target Illuminance" hint="Design target for space">
@@ -116,7 +116,7 @@ function CalcSection({ s, upd }) {
             onChange={(e) => upd('calculations', 'targetLux', Number(e.target.value) || 300)}
             style={{ ...inputStyle, width: 72, textAlign: 'right' }}
           />
-          <span style={{ ...mono, fontSize: 9, color: '#4a7a96' }}>lx</span>
+          <span style={{ ...mono, fontSize: 9, color: '#666666' }}>lx</span>
         </div>
       </Row>
       <Row label="Maintenance Factor" hint="Light loss factor (0.5 – 1.0)">
@@ -282,16 +282,16 @@ export default function SettingsModal({ isOpen, onClose }) {
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: '#0d1117', border: '1px solid #1a2b3c', borderRadius: 4, width: 680, maxHeight: '84vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ background: '#0a0a0a', border: '1px solid #222222', borderRadius: 4, width: 680, maxHeight: '84vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #1a2b3c', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #222222', flexShrink: 0 }}>
           <span style={{ ...mono, fontSize: 12, color: '#d4a843', fontWeight: 600, letterSpacing: '0.12em' }}>
             ⚙ SETTINGS
           </span>
           <button
             onClick={onClose}
-            style={{ ...mono, background: 'transparent', border: 'none', color: '#4a7a96', fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 6px' }}
+            style={{ ...mono, background: 'transparent', border: 'none', color: '#ffffff', fontSize: 16, cursor: 'pointer', lineHeight: 1, padding: '2px 6px' }}
           >
             ✕
           </button>
@@ -301,7 +301,7 @@ export default function SettingsModal({ isOpen, onClose }) {
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
           {/* Left tab nav */}
-          <div style={{ width: 140, borderRight: '1px solid #1a2b3c', display: 'flex', flexDirection: 'column', padding: '8px 0', flexShrink: 0 }}>
+          <div style={{ width: 140, borderRight: '1px solid #222222', display: 'flex', flexDirection: 'column', padding: '8px 0', flexShrink: 0 }}>
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -309,8 +309,8 @@ export default function SettingsModal({ isOpen, onClose }) {
                 style={{
                   ...mono, fontSize: 10, textAlign: 'left',
                   padding: '9px 16px', border: 'none', cursor: 'pointer',
-                  background: activeTab === t.id ? '#0e1d2a' : 'transparent',
-                  color: activeTab === t.id ? '#6ae5ff' : '#4a7a96',
+                  background: activeTab === t.id ? '#111111' : 'transparent',
+                  color: activeTab === t.id ? '#6ae5ff' : '#666666',
                   borderLeft: `2px solid ${activeTab === t.id ? '#6ae5ff' : 'transparent'}`,
                   letterSpacing: '0.06em',
                 }}
@@ -327,7 +327,7 @@ export default function SettingsModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', gap: 10, padding: '12px 20px', borderTop: '1px solid #1a2b3c', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 10, padding: '12px 20px', borderTop: '1px solid #222222', flexShrink: 0 }}>
           <button
             onClick={handleReset}
             style={{ ...mono, fontSize: 10, padding: '7px 14px', background: '#1a0e0a', color: '#8b3a3a', border: '1px solid #3a1a1a', borderRadius: 3, cursor: 'pointer' }}
@@ -337,7 +337,7 @@ export default function SettingsModal({ isOpen, onClose }) {
           <div style={{ flex: 1 }} />
           <button
             onClick={onClose}
-            style={{ ...mono, fontSize: 10, padding: '7px 14px', background: '#1a2a3a', color: '#cdd9e5', border: '1px solid #2a3a4a', borderRadius: 3, cursor: 'pointer' }}
+            style={{ ...mono, fontSize: 10, padding: '7px 14px', background: 'transparent', color: '#ffffff', border: '1px solid #444444', borderRadius: 3, cursor: 'pointer' }}
           >
             CLOSE
           </button>

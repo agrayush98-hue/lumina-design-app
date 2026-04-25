@@ -4,20 +4,20 @@ const mono = { fontFamily: 'IBM Plex Mono, monospace' }
 
 const S = {
   overlay: {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     zIndex: 1000,
   },
   modal: {
-    background: '#0d1117', border: '1px solid #1a2b3c',
+    background: '#0a0a0a', border: '1px solid #222222',
     borderRadius: 6, padding: 24, width: 340,
-    boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
   },
   title: { ...mono, fontSize: 12, color: '#d4a843', letterSpacing: '0.1em', marginBottom: 20 },
-  label: { ...mono, fontSize: 9, color: '#4a7a96', letterSpacing: '0.08em', marginBottom: 4, display: 'block' },
+  label: { ...mono, fontSize: 9, color: '#666666', letterSpacing: '0.08em', marginBottom: 4, display: 'block' },
   input: {
     ...mono, fontSize: 11, width: '100%', boxSizing: 'border-box',
-    background: '#060a0e', color: '#cdd9e5', border: '1px solid #1a2b3c',
+    background: '#0d0d0d', color: '#cccccc', border: '1px solid #222222',
     borderRadius: 3, padding: '7px 10px', marginBottom: 14, outline: 'none',
   },
   row: { display: 'flex', gap: 12 },
@@ -25,15 +25,15 @@ const S = {
   btnRow: { display: 'flex', gap: 8, marginTop: 8 },
   btnOk: {
     ...mono, flex: 1, padding: '8px 0', fontSize: 10, letterSpacing: '0.08em',
-    background: '#d4a843', color: '#0f0f0f', border: 'none',
+    background: '#d4a843', color: '#000000', border: 'none',
     borderRadius: 3, cursor: 'pointer', fontWeight: 700,
   },
   btnCancel: {
     ...mono, padding: '8px 16px', fontSize: 10, letterSpacing: '0.08em',
-    background: 'transparent', color: '#4a7a96', border: '1px solid #1a2b3c',
+    background: 'transparent', color: '#ffffff', border: '1px solid #444444',
     borderRadius: 3, cursor: 'pointer',
   },
-  hint: { ...mono, fontSize: 8, color: '#2d4f68', marginBottom: 16, letterSpacing: '0.06em' },
+  hint: { ...mono, fontSize: 8, color: '#444444', marginBottom: 16, letterSpacing: '0.06em' },
 }
 
 export default function RoomSetupModal({ pointCount, onConfirm, onCancel }) {

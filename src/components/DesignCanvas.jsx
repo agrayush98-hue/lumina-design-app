@@ -484,7 +484,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     if (isPanning.current) return
     if (isStripMode) return
     if (activeTool === "draw-room") return
-    if (!floorPlan && e.target?.name?.() !== 'room-fill') return
+    // When no floor plan, the room-fill Rect handles clicks via its own onClick — don't double-fire
+    if (!floorPlan) return
     handleRoomClick(e)
   }
 

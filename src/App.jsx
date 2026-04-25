@@ -1730,7 +1730,7 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#000000", overflow: "hidden", fontFamily: "IBM Plex Mono" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header style={{ height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#000000", borderBottom: "1px solid #2e2e2e", flexShrink: 0 }}>
+      <header style={{ height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#000000", borderBottom: "1px solid #2e2e2e", flexShrink: 0, position: "relative", zIndex: 600 }}>
         {/* Left: logo + project name */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>

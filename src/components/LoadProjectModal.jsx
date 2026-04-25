@@ -2,14 +2,14 @@ import { useState, useEffect } from "react"
 import { listProjects, loadProject, deleteProject } from "../firebase"
 
 const C = {
-  bg:      "#0a1018",
-  panel:   "#0d1520",
-  border:  "#1a2b3c",
-  accent:  "#39c5cf",
-  label:   "#2d4f68",
-  value:   "#cdd9e5",
-  dim:     "#4a7a96",
-  hover:   "#0f1e2e",
+  bg:      "#0a0a0a",
+  panel:   "#0a0a0a",
+  border:  "#222222",
+  accent:  "#d4a843",
+  label:   "#444444",
+  value:   "#cccccc",
+  dim:     "#ffffff",
+  hover:   "#111111",
   red:     "#d94f4f",
   redDim:  "#1a0808",
 }

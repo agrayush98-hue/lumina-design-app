@@ -39,8 +39,8 @@ function SelectRow({ label, value, options, onChange }) {
         value={value}
         onChange={e => onChange(e.target.value)}
         style={{
-          flex: 1, background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-          color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 9, padding: '4px 6px',
+          flex: 1, background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+          color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 9, padding: '4px 6px',
           outline: 'none', cursor: 'pointer',
         }}
       >
@@ -63,8 +63,8 @@ function InputRow({ label, value, onChange, placeholder }) {
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
         style={{
-          flex: 1, background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-          color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 9, padding: '4px 6px',
+          flex: 1, background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+          color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 9, padding: '4px 6px',
           outline: 'none',
         }}
       />
@@ -85,7 +85,7 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
 
   return (
     <div style={{
-      background: '#0a1018', border: '1px solid #1a2b3c', borderRadius: 6,
+      background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6,
       padding: 16, display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       {/* Card header */}
@@ -94,7 +94,7 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
           width: 11, height: 11, borderRadius: '50%', flexShrink: 0,
           background: vis.fill, border: `2px solid ${vis.stroke}`,
         }} />
-        <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#cdd9e5', flex: 1 }}>
+        <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#cccccc', flex: 1 }}>
           {meta.label}
         </span>
         {config.cct === 'Tunable' && (
@@ -115,7 +115,7 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
         ].map(([k, v]) => (
           <div key={k}>
             <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 7, color: '#2d4f68', marginBottom: 3, letterSpacing: '0.1em' }}>{k}</div>
-            <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#4a7a96' }}>{v}</div>
+            <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#666666' }}>{v}</div>
           </div>
         ))}
       </div>
@@ -167,12 +167,12 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
       <button
         onClick={onSelect}
         style={{
-          padding: '8px', background: '#0a1e2e', border: `1px solid ${vis.stroke}66`,
+          padding: '8px', background: '#111111', border: `1px solid ${vis.stroke}66`,
           borderRadius: 4, color: vis.stroke, fontFamily: 'IBM Plex Mono',
           fontSize: 9, letterSpacing: '0.16em', cursor: 'pointer', textTransform: 'uppercase',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = '#0e2a3a'; e.currentTarget.style.borderColor = vis.stroke }}
-        onMouseLeave={e => { e.currentTarget.style.background = '#0a1e2e'; e.currentTarget.style.borderColor = vis.stroke + '66' }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#1a1400'; e.currentTarget.style.borderColor = vis.stroke }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#111111'; e.currentTarget.style.borderColor = vis.stroke + '66' }}
       >
         Select
       </button>
@@ -186,12 +186,12 @@ function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
   const catMeta = CATEGORY_META[fixture.category]
   return (
     <div style={{
-      background: '#0a1018', border: '1px solid #1a2b3c', borderRadius: 6,
+      background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6,
       padding: 14, display: 'flex', flexDirection: 'column', gap: 10,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: vis.fill, border: `2px solid ${vis.stroke}` }} />
-        <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#cdd9e5', flex: 1 }}>{fixture.name || 'Unnamed'}</span>
+        <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 11, color: '#cccccc', flex: 1 }}>{fixture.name || 'Unnamed'}</span>
         {fixture.tunable && (
           <span style={{ fontSize: 8, color: '#e8a830', border: '1px solid #e8a83066', borderRadius: 2, padding: '1px 5px' }}>TUNABLE</span>
         )}
@@ -212,7 +212,7 @@ function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
         ].map(([k, v]) => (
           <div key={k}>
             <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 7, color: '#2d4f68', marginBottom: 2, letterSpacing: '0.1em' }}>{k}</div>
-            <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#4a7a96' }}>{v}</div>
+            <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#666666' }}>{v}</div>
           </div>
         ))}
       </div>
@@ -227,7 +227,7 @@ function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
         <button
           onClick={onSelect}
           style={{
-            flex: 1, padding: '6px', background: '#0a1e2e', border: `1px solid ${vis.stroke}66`,
+            flex: 1, padding: '6px', background: '#111111', border: `1px solid ${vis.stroke}66`,
             borderRadius: 3, color: vis.stroke, fontFamily: 'IBM Plex Mono', fontSize: 9,
             letterSpacing: '0.14em', cursor: 'pointer', textTransform: 'uppercase',
           }}
@@ -235,14 +235,14 @@ function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
         <button
           onClick={onEdit}
           style={{
-            padding: '6px 10px', background: 'transparent', border: '1px solid #1a2b3c',
-            borderRadius: 3, color: '#4a7a96', fontFamily: 'IBM Plex Mono', fontSize: 9, cursor: 'pointer',
+            padding: '6px 10px', background: 'transparent', border: '1px solid #222222',
+            borderRadius: 3, color: '#666666', fontFamily: 'IBM Plex Mono', fontSize: 9, cursor: 'pointer',
           }}
         >Edit</button>
         <button
           onClick={onDelete}
           style={{
-            padding: '6px 10px', background: 'transparent', border: '1px solid #1a2b3c',
+            padding: '6px 10px', background: 'transparent', border: '1px solid #222222',
             borderRadius: 3, color: '#4a4060', fontFamily: 'IBM Plex Mono', fontSize: 9, cursor: 'pointer',
           }}
         >Del</button>
@@ -266,8 +266,8 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
           placeholder={placeholder}
           onChange={e => onChange({ [key]: type === 'number' ? Number(e.target.value) : e.target.value })}
           style={{
-            background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-            color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
+            background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+            color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
             outline: 'none',
           }}
         />
@@ -277,10 +277,10 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
 
   return (
     <div style={{
-      background: '#0a1018', border: '1px solid #1e3448', borderRadius: 6,
+      background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6,
       padding: 20, marginBottom: 20,
     }}>
-      <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#39c5cf', letterSpacing: '0.14em', marginBottom: 16 }}>
+      <div style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', marginBottom: 16 }}>
         {isEdit ? 'EDIT FIXTURE' : 'ADD NEW FIXTURE'}
       </div>
 
@@ -293,8 +293,8 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
             value={data.category}
             onChange={e => onChange({ category: e.target.value })}
             style={{
-              background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-              color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
+              background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+              color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
               outline: 'none', cursor: 'pointer',
             }}
           >
@@ -315,8 +315,8 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
               value={data.cct}
               onChange={e => onChange({ cct: e.target.value, tunable: e.target.value === 'Tunable' })}
               style={{
-                flex: 1, background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-                color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
+                flex: 1, background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+                color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
                 outline: 'none', cursor: 'pointer',
               }}
             >
@@ -342,8 +342,8 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
             value={data.protocol ?? 'Room Default'}
             onChange={e => onChange({ protocol: e.target.value })}
             style={{
-              background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-              color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
+              background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+              color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
               outline: 'none', cursor: 'pointer',
             }}
           >
@@ -368,8 +368,8 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
           onChange={e => onChange({ notes: e.target.value })}
           rows={2}
           style={{
-            width: '100%', background: '#070c12', border: '1px solid #1a2b3c', borderRadius: 3,
-            color: '#cdd9e5', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
+            width: '100%', background: '#0d0d0d', border: '1px solid #222222', borderRadius: 3,
+            color: '#cccccc', fontFamily: 'IBM Plex Mono', fontSize: 10, padding: '6px 8px',
             outline: 'none', resize: 'vertical', boxSizing: 'border-box',
           }}
         />
@@ -380,16 +380,16 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
           onClick={onSave}
           disabled={saving}
           style={{
-            padding: '7px 20px', background: '#0e2a3a', border: '1px solid #39c5cf',
-            borderRadius: 3, color: '#39c5cf', fontFamily: 'IBM Plex Mono', fontSize: 10,
+            padding: '7px 20px', background: '#1a1400', border: '1px solid #d4a843',
+            borderRadius: 3, color: '#d4a843', fontFamily: 'IBM Plex Mono', fontSize: 10,
             letterSpacing: '0.12em', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
           }}
         >{saving ? 'SAVING...' : 'SAVE'}</button>
         <button
           onClick={onCancel}
           style={{
-            padding: '7px 14px', background: 'transparent', border: '1px solid #1a2b3c',
-            borderRadius: 3, color: '#4a7a96', fontFamily: 'IBM Plex Mono', fontSize: 10, cursor: 'pointer',
+            padding: '7px 14px', background: 'transparent', border: '1px solid #222222',
+            borderRadius: 3, color: '#666666', fontFamily: 'IBM Plex Mono', fontSize: 10, cursor: 'pointer',
           }}
         >Cancel</button>
       </div>
@@ -528,7 +528,7 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
     >
       <div style={{
         width: '92vw', height: '88vh',
-        background: '#0d1117', border: '1px solid #1a2b3c', borderRadius: 6,
+        background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         fontFamily: 'IBM Plex Mono',
         boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
@@ -537,29 +537,29 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
         {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 20px', borderBottom: '1px solid #1a2b3c',
-          background: '#0a1018', flexShrink: 0,
+          padding: '12px 20px', borderBottom: '1px solid #222222',
+          background: '#0a0a0a', flexShrink: 0,
         }}>
-          <span style={{ fontSize: 12, letterSpacing: '0.2em', color: '#39c5cf' }}>FIXTURE LIBRARY</span>
+          <span style={{ fontSize: 12, letterSpacing: '0.2em', color: '#d4a843' }}>FIXTURE LIBRARY</span>
           <button
             onClick={onClose}
             style={{
-              background: 'transparent', border: 'none', color: '#4a7a96',
+              background: 'transparent', border: 'none', color: '#ffffff',
               fontSize: 16, cursor: 'pointer', padding: '0 4px', lineHeight: 1,
             }}
           >✕</button>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid #1a2b3c', flexShrink: 0, background: '#090c10' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #222222', flexShrink: 0, background: '#090c10' }}>
           {[['standard', 'STANDARD LIBRARY'], ['my', 'MY FIXTURES']].map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               style={{
                 padding: '10px 22px', background: 'transparent', border: 'none',
-                borderBottom: `2px solid ${tab === t ? '#39c5cf' : 'transparent'}`,
-                color: tab === t ? '#39c5cf' : '#4a7a96',
+                borderBottom: `2px solid ${tab === t ? '#d4a843' : 'transparent'}`,
+                color: tab === t ? '#d4a843' : '#666666',
                 fontFamily: 'IBM Plex Mono', fontSize: 10, letterSpacing: '0.14em',
                 cursor: 'pointer', textTransform: 'uppercase',
               }}
@@ -573,7 +573,7 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
 
             {/* Sidebar */}
             <div style={{
-              width: 190, borderRight: '1px solid #1a2b3c',
+              width: 190, borderRight: '1px solid #222222',
               overflowY: 'auto', padding: '10px 0', flexShrink: 0,
               background: '#090c10',
             }}>
@@ -588,9 +588,9 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       width: '100%', padding: '9px 16px', textAlign: 'left',
-                      background: isActive ? '#0e2a3a' : 'transparent', border: 'none',
-                      borderLeft: `2px solid ${isActive ? '#39c5cf' : 'transparent'}`,
-                      color: isActive ? '#cdd9e5' : '#4a7a96',
+                      background: isActive ? '#1a1400' : 'transparent', border: 'none',
+                      borderLeft: `2px solid ${isActive ? '#d4a843' : 'transparent'}`,
+                      color: isActive ? '#cccccc' : '#666666',
                       fontFamily: 'IBM Plex Mono', fontSize: 9, letterSpacing: '0.12em',
                       cursor: 'pointer', textTransform: 'uppercase',
                     }}
@@ -634,14 +634,14 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
 
             {/* Top bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#4a7a96', letterSpacing: '0.12em' }}>
+              <span style={{ fontFamily: 'IBM Plex Mono', fontSize: 10, color: '#666666', letterSpacing: '0.12em' }}>
                 MY CUSTOM FIXTURES
               </span>
               <button
                 onClick={openAdd}
                 style={{
-                  padding: '7px 16px', background: '#0e2a3a', border: '1px solid #39c5cf',
-                  borderRadius: 3, color: '#39c5cf', fontFamily: 'IBM Plex Mono',
+                  padding: '7px 16px', background: '#1a1400', border: '1px solid #d4a843',
+                  borderRadius: 3, color: '#d4a843', fontFamily: 'IBM Plex Mono',
                   fontSize: 9, letterSpacing: '0.12em', cursor: 'pointer',
                 }}
               >+ ADD NEW FIXTURE</button>
@@ -695,11 +695,11 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <div style={{
-            background: '#0d1117', border: '1px solid #1a2b3c', borderRadius: 6,
+            background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6,
             padding: '24px 28px', fontFamily: 'IBM Plex Mono', textAlign: 'center',
             boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
           }}>
-            <div style={{ fontSize: 11, color: '#cdd9e5', marginBottom: 8 }}>Delete this fixture?</div>
+            <div style={{ fontSize: 11, color: '#cccccc', marginBottom: 8 }}>Delete this fixture?</div>
             <div style={{ fontSize: 9, color: '#2d4f68', marginBottom: 20 }}>This action cannot be undone.</div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button
@@ -713,8 +713,8 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
               <button
                 onClick={() => setDeleteConfirm(null)}
                 style={{
-                  padding: '7px 18px', background: 'transparent', border: '1px solid #1a2b3c',
-                  borderRadius: 3, color: '#4a7a96', fontFamily: 'IBM Plex Mono',
+                  padding: '7px 18px', background: 'transparent', border: '1px solid #222222',
+                  borderRadius: 3, color: '#666666', fontFamily: 'IBM Plex Mono',
                   fontSize: 10, cursor: 'pointer',
                 }}
               >Cancel</button>
