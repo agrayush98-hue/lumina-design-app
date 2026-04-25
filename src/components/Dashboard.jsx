@@ -6,7 +6,7 @@ import {
   listProjects, loadProject, deleteProject, saveProject,
   getUserProfile, updateUserProfile,
   getUserSubscription, getBillingHistory,
-  cancelSubscription,
+  cancelSubscription, createSubscription, addBillingRecord,
   isTrialActive, getTrialDaysRemaining, checkProjectLimit,
 } from "../firebase"
 import NewProjectWizard        from "./NewProjectWizard"
@@ -35,7 +35,7 @@ const PLANS = [
       { text: "Priority support",            highlight: false },
       { text: "Team collaboration",          highlight: false },
     ],
-    razorpayPlan: "plan_pro_monthly",
+    amountPaise: 117900,
   },
   {
     id: "professional",
@@ -51,7 +51,7 @@ const PLANS = [
       { text: "Team collaboration",          highlight: true },
       { text: "Custom fixture library",      highlight: true },
     ],
-    razorpayPlan: "plan_professional_monthly",
+    amountPaise: 294900,
   },
 ]
 
@@ -693,6 +693,7 @@ function SubscriptionTab({ user }) {
   const [paying,      setPaying]      = useState(null)
   const [cancelling,  setCancelling]  = useState(false)
   const [error,       setError]       = useState(null)
+  const [success,     setSuccess]     = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -712,6 +713,7 @@ function SubscriptionTab({ user }) {
   async function handleUpgrade(plan) {
     setPaying(plan.id)
     setError(null)
+    setSuccess(null)
     try {
       // Step 1: create Razorpay order via Vercel serverless function
       const res = await fetch("/api/create-checkout", {
@@ -729,11 +731,14 @@ function SubscriptionTab({ user }) {
         currency:    data.currency ?? "INR",
         order_id:    data.orderId,
         name:        "Lumina Design",
-        description: plan.name,
-        prefill:     { email: user.email ?? "" },
-        theme:       { color: "#39c5cf" },
+        description: `${plan.name} Plan — Monthly`,
+        prefill: {
+          name:  user.displayName ?? "",
+          email: user.email       ?? "",
+        },
+        theme: { color: "#d4a843" },
         handler: async function (response) {
-          // Step 3: verify payment and activate subscription
+          // Step 3: verify HMAC signature on server
           try {
             const vRes = await fetch("/api/verify-payment", {
               method:  "POST",
@@ -743,15 +748,33 @@ function SubscriptionTab({ user }) {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
                 userId:              user.uid,
+                planId:              plan.id,
               }),
             })
             const vData = await vRes.json()
             if (!vRes.ok) throw new Error(vData.error ?? "Verification failed")
-            // Reload subscription state
-            const updated = await getUserSubscription(user.uid)
+
+            // Step 4: activate subscription + record billing in Firestore
+            await createSubscription(user.uid, plan.id, response.razorpay_payment_id)
+            await addBillingRecord(user.uid, {
+              plan:        plan.id,
+              amount:      plan.amountPaise / 100,
+              paymentId:   response.razorpay_payment_id,
+              description: `${plan.name} Plan`,
+            })
+
+            // Step 5: refresh local state
+            const [updated, updatedBilling] = await Promise.all([
+              getUserSubscription(user.uid),
+              getBillingHistory(user.uid),
+            ])
             setSub(updated)
+            setBilling(updatedBilling)
+            setPaying(null)
+            setSuccess(`${plan.name} plan activated! You now have full access.`)
           } catch (e) {
-            setError(`Payment verified but activation failed: ${e.message}`)
+            setError(`Activation failed: ${e.message}`)
+            setPaying(null)
           }
         },
         modal: { ondismiss: () => setPaying(null) },
@@ -786,7 +809,13 @@ function SubscriptionTab({ user }) {
         <div className="dash-section-title">SUBSCRIPTION</div>
       </div>
 
-      {error && <div className="inline-error">{error}</div>}
+      {error   && <div className="inline-error">{error}</div>}
+      {success && (
+        <div className="inline-success" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.3)", borderRadius: 6, marginBottom: 20 }}>
+          <span style={{ fontSize: 14 }}>✓</span>
+          <span>{success}</span>
+        </div>
+      )}
 
       {/* Current Plan section — always visible */}
       <div className="current-plan-section">
@@ -854,7 +883,7 @@ function SubscriptionTab({ user }) {
                   disabled={paying === plan.id}
                   onClick={() => handleUpgrade(plan)}
                 >
-                  {paying === plan.id ? "REDIRECTING…" : "UPGRADE"}
+                  {paying === plan.id ? "OPENING…" : "UPGRADE →"}
                 </button>
               )}
             </div>
@@ -883,7 +912,7 @@ function SubscriptionTab({ user }) {
                   <td>{fmt(b.date?.toDate?.() ?? b.date)}</td>
                   <td>{b.description ?? "Subscription payment"}</td>
                   <td>₹{b.amount}</td>
-                  <td style={{ color: b.status === "paid" ? "#39c5cf" : "#d94f4f" }}>
+                  <td style={{ color: b.status === "paid" ? "#d4a843" : "#d94f4f" }}>
                     {(b.status ?? "—").toUpperCase()}
                   </td>
                 </tr>

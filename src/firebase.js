@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app"
-import { getFirestore, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp } from "firebase/firestore"
+import { getFirestore, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp, serverTimestamp } from "firebase/firestore"
 import { getAuth } from "firebase/auth"
 
 const firebaseConfig = {
@@ -128,6 +128,17 @@ export async function cancelSubscription(userId) {
   await updateDoc(doc(db, "users", userId, "subscription", "current"), {
     status: "cancelled",
     cancelledAt: new Date(),
+  })
+}
+
+export async function addBillingRecord(userId, { plan, amount, paymentId, description }) {
+  await addDoc(collection(db, "users", userId, "billingHistory"), {
+    date:        new Date(),
+    plan,
+    amount,
+    paymentId,
+    description: description ?? `${plan} subscription`,
+    status:      "paid",
   })
 }
 
