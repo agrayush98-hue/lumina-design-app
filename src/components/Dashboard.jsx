@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Shield, Lock, RefreshCw, BadgeCheck, CreditCard } from 'lucide-react'
 import { useNavigate, useLocation } from "react-router-dom"
 import { signOut, updateProfile } from "firebase/auth"
 import { auth }                from "../firebase"
@@ -937,32 +938,27 @@ function SubscriptionTab({ user }) {
       <div className="trust-bar">
         <div className="trust-bar-items">
           <span className="trust-bar-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <Shield size={18} color="#d4a843" strokeWidth={1.5} />
             Secured by Razorpay
           </span>
           <span className="trust-bar-sep">|</span>
           <span className="trust-bar-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <Lock size={18} color="#d4a843" strokeWidth={1.5} />
             SSL Encrypted
           </span>
           <span className="trust-bar-sep">|</span>
           <span className="trust-bar-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+            <RefreshCw size={18} color="#d4a843" strokeWidth={1.5} />
             Cancel Anytime
           </span>
           <span className="trust-bar-sep">|</span>
           <span className="trust-bar-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <BadgeCheck size={18} color="#d4a843" strokeWidth={1.5} />
             PCI DSS Compliant
           </span>
         </div>
         <div className="trust-bar-powered">
-          <img
-            src="https://razorpay.com/assets/razorpay-glyph.svg"
-            alt=""
-            className="trust-bar-rzp-logo"
-            onError={e => { e.target.style.display = 'none' }}
-          />
+          <CreditCard size={14} color="#555555" strokeWidth={1.5} />
           <span>Payments powered by Razorpay</span>
         </div>
       </div>
