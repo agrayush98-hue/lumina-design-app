@@ -1243,6 +1243,76 @@
 .plan-features li.highlight::before { content: '✓'; color: #d4a843; }
 .plan-features li.highlight { color: #aaaaaa; }
 
+/* ── Trust badges ───────────────────────────────────────────────────────────── */
+.trust-badges {
+  margin-top: 14px;
+  padding: 12px 10px 10px;
+  background: #111111;
+  border: 1px solid #222222;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trust-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.trust-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.trust-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.trust-label {
+  font-size: 7px;
+  color: #ffffff;
+  letter-spacing: 0.06em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.trust-sub {
+  font-size: 7px;
+  color: #888888;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.trust-razorpay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid #1e1e1e;
+}
+
+.trust-rzp-logo {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  filter: brightness(0) invert(1);
+}
+
+.trust-rzp-text {
+  font-size: 7px;
+  color: #555555;
+  letter-spacing: 0.06em;
+}
+
 .billing-section { margin-top: 8px; }
 .billing-title {
   font-size: 10px;

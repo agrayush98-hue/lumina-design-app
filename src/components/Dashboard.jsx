@@ -928,6 +928,47 @@ function SubscriptionTab({ user }) {
                   {paying === plan.id ? "OPENING…" : "UPGRADE →"}
                 </button>
               )}
+
+              {/* Trust badges */}
+              <div className="trust-badges">
+                <div className="trust-row">
+                  {[
+                    { icon: "🔒", label: "Secured by", sub: "Razorpay" },
+                    { icon: "🛡️", label: "256-bit", sub: "SSL Encryption" },
+                    { icon: "↩️", label: "Cancel", sub: "Anytime" },
+                    { icon: "✅", label: "PCI DSS", sub: "Compliant" },
+                  ].map(b => (
+                    <div key={b.sub} className="trust-badge">
+                      <span className="trust-icon">{b.icon}</span>
+                      <span className="trust-label">{b.label}</span>
+                      <span className="trust-sub">{b.sub}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="trust-row">
+                  {[
+                    { icon: "🏆", label: "14-day", sub: "Free Trial" },
+                    { icon: "💰", label: "No Hidden", sub: "Charges" },
+                    { icon: "🎧", label: "Priority", sub: "Support" },
+                    { icon: "🔄", label: "Instant", sub: "Activation" },
+                  ].map(b => (
+                    <div key={b.sub} className="trust-badge">
+                      <span className="trust-icon">{b.icon}</span>
+                      <span className="trust-label">{b.label}</span>
+                      <span className="trust-sub">{b.sub}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="trust-razorpay">
+                  <img
+                    src="https://razorpay.com/assets/razorpay-glyph.svg"
+                    alt="Razorpay"
+                    className="trust-rzp-logo"
+                    onError={e => { e.target.style.display = 'none' }}
+                  />
+                  <span className="trust-rzp-text">Payments powered by Razorpay</span>
+                </div>
+              </div>
             </div>
           )
         })}
