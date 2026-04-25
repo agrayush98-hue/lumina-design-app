@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { listProjects, loadProject, deleteProject } from "../firebase"
+import { useConfirm } from "./ConfirmModal"
 
 const C = {
   bg:      "#0a0a0a",
@@ -21,6 +22,7 @@ function fmt(date) {
 }
 
 export default function LoadProjectModal({ userId, onLoad, onClose }) {
+  const confirm  = useConfirm()
   const [projects,  setProjects]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
@@ -54,7 +56,12 @@ export default function LoadProjectModal({ userId, onLoad, onClose }) {
 
   async function handleDelete(e, projId) {
     e.stopPropagation()
-    if (!window.confirm("Delete this project? This cannot be undone.")) return
+    const ok = await confirm("Delete this project? This cannot be undone.", {
+      title: "DELETE PROJECT",
+      confirmLabel: "DELETE",
+      danger: true,
+    })
+    if (!ok) return
     setDeletingId(projId)
     try {
       await deleteProject(projId)

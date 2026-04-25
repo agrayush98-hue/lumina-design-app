@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import { Shield, Lock, RefreshCw, BadgeCheck, CreditCard } from 'lucide-react'
 import { useNavigate, useLocation } from "react-router-dom"
-import { signOut, updateProfile } from "firebase/auth"
-import { auth }                from "../firebase"
+import { signOut, updateProfile, reauthenticateWithPopup, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider, deleteUser } from "firebase/auth"
+import { doc, deleteDoc } from "firebase/firestore"
+import { auth, db }       from "../firebase"
+import { useToast }        from "./Toast"
 import {
   listProjects, loadProject, deleteProject, saveProject,
   getUserProfile, updateUserProfile,
@@ -13,6 +15,7 @@ import {
 import NewProjectWizard        from "./NewProjectWizard"
 import { PROJECT_TEMPLATES }   from "../templates/projectTemplates"
 import { emailPaymentSuccess, emailSubscriptionCancelled } from "../emails/templates"
+import { useConfirm }          from "./ConfirmModal"
 import "./Dashboard.css"
 
 async function sendEmail(to, subject, html) {
@@ -135,6 +138,8 @@ function TemplateCards({ onNewProject, navigate }) {
 
 function ProjectsTab({ user }) {
   const navigate     = useNavigate()
+  const toast        = useToast()
+  const confirm      = useConfirm()
   const [projects,   setProjects]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
@@ -164,13 +169,19 @@ function ProjectsTab({ user }) {
 
   async function handleDelete(e, projId) {
     e.stopPropagation()
-    if (!window.confirm("Delete this project? This cannot be undone.")) return
+    const ok = await confirm("Delete this project? This cannot be undone.", {
+      title: "DELETE PROJECT",
+      confirmLabel: "DELETE",
+      danger: true,
+    })
+    if (!ok) return
     setDeletingId(projId)
     try {
       await deleteProject(projId)
       setProjects(prev => prev.filter(p => p.id !== projId))
+      toast.success("Project deleted.")
     } catch (err) {
-      setError(`Delete failed: ${err.message}`)
+      toast.error(`Delete failed: ${err.message}`)
     } finally {
       setDeletingId(null)
     }
@@ -580,6 +591,7 @@ function ProfileTab({ user }) {
 
 function SettingsTab({ user }) {
   const navigate = useNavigate()
+  const toast    = useToast()
   const [notifications, setNotifications] = useState(true)
   const [twoFA,         setTwoFA]         = useState(false)
   const [darkTheme,     setDarkTheme]     = useState(true)
@@ -589,16 +601,46 @@ function SettingsTab({ user }) {
   const [defaultUnit,   setDefaultUnit]   = useState("mm")
   const [defaultProto,  setDefaultProto]  = useState("NON-DIM")
   const [deleting,      setDeleting]      = useState(false)
+  const [reAuthModal,   setReAuthModal]   = useState(false)
+  const [reAuthPw,      setReAuthPw]      = useState("")
+  const [reAuthErr,     setReAuthErr]     = useState("")
+  const [reAuthing,     setReAuthing]     = useState(false)
 
-  async function handleDeleteAccount() {
-    if (!window.confirm("Permanently delete your account and all projects? This cannot be undone.")) return
+  const isGoogle = user?.providerData?.[0]?.providerId === "google.com"
+
+  async function _deleteAccountNow() {
     setDeleting(true)
     try {
-      await user.delete()
+      // Delete Firestore doc first, then Auth account
+      await deleteDoc(doc(db, "users", user.uid))
+      await deleteUser(user)
       navigate("/")
     } catch (e) {
-      alert(`Delete failed: ${e.message}`)
+      toast.error(`Delete failed: ${e.message}`)
       setDeleting(false)
+    }
+  }
+
+  async function handleReAuth() {
+    setReAuthErr("")
+    setReAuthing(true)
+    try {
+      if (isGoogle) {
+        const provider = new GoogleAuthProvider()
+        await reauthenticateWithPopup(user, provider)
+      } else {
+        const cred = EmailAuthProvider.credential(user.email, reAuthPw)
+        await reauthenticateWithCredential(user, cred)
+      }
+      setReAuthModal(false)
+      await _deleteAccountNow()
+    } catch (e) {
+      const msg = e.code === "auth/wrong-password" ? "Incorrect password." :
+                  e.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." :
+                  e.message
+      setReAuthErr(msg)
+    } finally {
+      setReAuthing(false)
     }
   }
 
@@ -685,13 +727,46 @@ function SettingsTab({ user }) {
             <div className="settings-danger-desc">
               Permanently delete your account and all projects. This cannot be undone.
             </div>
-            <button className="btn-danger" style={{ alignSelf: "flex-start", fontSize: 9 }} disabled={deleting} onClick={handleDeleteAccount}>
+            <button className="btn-danger" style={{ alignSelf: "flex-start", fontSize: 9 }} disabled={deleting} onClick={() => setReAuthModal(true)}>
               {deleting ? "DELETING…" : "DELETE ACCOUNT"}
             </button>
           </div>
         </div>
 
       </div>
+
+      {/* Re-auth + delete confirmation modal */}
+      {reAuthModal && (
+        <div className="modal-overlay" onClick={() => setReAuthModal(false)}>
+          <div className="reauth-modal" onClick={e => e.stopPropagation()}>
+            <div className="reauth-modal-title">DELETE ACCOUNT</div>
+            <div className="reauth-modal-body">
+              This will permanently delete your account and all projects. This cannot be undone.
+            </div>
+            <div className="reauth-modal-body" style={{ marginTop: 8, color: '#888' }}>
+              {isGoogle ? "Click below to confirm with your Google account." : "Enter your password to confirm."}
+            </div>
+            {!isGoogle && (
+              <input
+                className="reauth-modal-input"
+                type="password"
+                placeholder="Your password"
+                value={reAuthPw}
+                onChange={e => setReAuthPw(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleReAuth()}
+                autoFocus
+              />
+            )}
+            {reAuthErr && <div className="reauth-modal-err">{reAuthErr}</div>}
+            <div className="reauth-modal-actions">
+              <button className="btn-secondary" style={{ fontSize: 9 }} onClick={() => setReAuthModal(false)}>CANCEL</button>
+              <button className="btn-danger" style={{ fontSize: 9 }} disabled={reAuthing || deleting} onClick={handleReAuth}>
+                {reAuthing || deleting ? "VERIFYING…" : isGoogle ? "CONFIRM WITH GOOGLE" : "DELETE ACCOUNT"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -699,6 +774,8 @@ function SettingsTab({ user }) {
 // ── Subscription tab ──────────────────────────────────────────────────────────
 
 function SubscriptionTab({ user }) {
+  const toast        = useToast()
+  const confirm      = useConfirm()
   const [sub,         setSub]         = useState(null)
   const [billing,     setBilling]     = useState([])
   const [trialActive, setTrialActive] = useState(false)
@@ -706,8 +783,6 @@ function SubscriptionTab({ user }) {
   const [loading,     setLoading]     = useState(true)
   const [paying,      setPaying]      = useState(null)
   const [cancelling,  setCancelling]  = useState(false)
-  const [error,       setError]       = useState(null)
-  const [success,     setSuccess]     = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -788,7 +863,7 @@ function SubscriptionTab({ user }) {
             setSub(updated)
             setBilling(updatedBilling)
             setPaying(null)
-            setSuccess(`${plan.name} plan activated! You now have full access.`)
+            toast.success(`${plan.name} plan activated! You now have full access.`)
 
             // Step 6: send payment confirmation email (fire-and-forget)
             sendEmail(
@@ -804,7 +879,7 @@ function SubscriptionTab({ user }) {
               }),
             )
           } catch (e) {
-            setError(`Activation failed: ${e.message}`)
+            toast.error(`Activation failed: ${e.message}`)
             setPaying(null)
           }
         },
@@ -812,18 +887,24 @@ function SubscriptionTab({ user }) {
       })
       rzp.open()
     } catch (e) {
-      setError(e.message)
+      toast.error(e.message)
       setPaying(null)
     }
   }
 
   async function handleCancel() {
-    if (!window.confirm("Cancel your subscription? You'll keep access until the billing period ends.")) return
+    const ok = await confirm("Cancel your subscription? You'll keep access until the billing period ends.", {
+      title: "CANCEL SUBSCRIPTION",
+      confirmLabel: "CANCEL PLAN",
+      danger: true,
+    })
+    if (!ok) return
     setCancelling(true)
     try {
       const accessUntil = sub?.renewalDate?.toDate?.() ?? sub?.renewalDate ?? null
       await cancelSubscription(user.uid)
       setSub(prev => prev ? { ...prev, status: "cancelled" } : prev)
+      toast.warning("Subscription cancelled. Access continues until the billing period ends.")
 
       // Send cancellation email (fire-and-forget)
       sendEmail(
@@ -836,7 +917,7 @@ function SubscriptionTab({ user }) {
         }),
       )
     } catch (e) {
-      setError(e.message)
+      toast.error(e.message)
     } finally {
       setCancelling(false)
     }
@@ -851,14 +932,6 @@ function SubscriptionTab({ user }) {
       <div className="dash-section-header">
         <div className="dash-section-title">SUBSCRIPTION</div>
       </div>
-
-      {error   && <div className="inline-error">{error}</div>}
-      {success && (
-        <div className="inline-success" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.3)", borderRadius: 6, marginBottom: 20 }}>
-          <span style={{ fontSize: 14 }}>✓</span>
-          <span>{success}</span>
-        </div>
-      )}
 
       {/* Current Plan section — always visible */}
       <div className="current-plan-section">

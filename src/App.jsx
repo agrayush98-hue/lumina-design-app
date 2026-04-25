@@ -21,6 +21,8 @@ import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./
 import { saveProject, loadProject, shareProject as fbShareProject } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
 import { getTemplate } from "./templates/projectTemplates"
+import { useToast as useToastNotify } from "./components/Toast"
+import { useConfirm }                 from "./components/ConfirmModal"
 
 const CANVAS_W        = 1400
 const CANVAS_H        = 750
@@ -231,6 +233,8 @@ export default function App() {
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
   const { getTrialStatus } = useAuth()
+  const notify  = useToastNotify()
+  const confirm = useConfirm()
 
   const [user,        setUser]        = useState(undefined)  // undefined = loading
   const [authLoading, setAuthLoading] = useState(true)
@@ -2404,9 +2408,10 @@ export default function App() {
 
                       {/* Delete — batch when multi */}
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           const msg = multi ? `Delete ${sel.length} fixtures?` : `Delete fixture?`
-                          if (!window.confirm(msg)) return
+                          const ok  = await confirm(msg, { confirmLabel: "DELETE", danger: true })
+                          if (!ok) return
                           sel.forEach(l => deleteLight(l.id))
                           setSelectedLights([])
                         }}

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo, forwardRef, useImperativeHandle }
 import { createPortal } from "react-dom"
 import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star } from "react-konva"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
+import { useToast } from "./Toast"
 
 const CANVAS_W = 1400
 const CANVAS_H = 750
@@ -105,6 +106,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   onSelectLights,
   selectedLightIds,
 }, ref) {
+  const toast = useToast()
   const stageRef = useRef(null)
   useImperativeHandle(ref, () => ({ getStage: () => stageRef.current }))
   const floorPlanDisplayRef = useRef({ imgX: 0, imgY: 0, displayW: 0, displayH: 0, scaleX: 1, scaleY: 1 })
@@ -1200,7 +1202,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const wVal = parseFloat(roomSizePopup.wInput)
     const hVal = parseFloat(roomSizePopup.hInput)
     if (isNaN(wVal) || isNaN(hVal) || wVal <= 0 || hVal <= 0) {
-      alert('Please enter valid width and height values')
+      toast.error('Please enter valid width and height values')
       return
     }
     const widthM  = toMM(wVal, popupUnit) / 1000

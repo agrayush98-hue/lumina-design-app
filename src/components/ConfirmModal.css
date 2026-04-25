@@ -1,0 +1,71 @@
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-modal {
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 24px;
+  width: 360px;
+  max-width: 90vw;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.cm-title {
+  font-size: 11px;
+  color: #ffffff;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.cm-message {
+  font-size: 11px;
+  color: #888888;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  letter-spacing: 0.03em;
+}
+
+.cm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cm-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.cm-btn:hover { opacity: 0.85; }
+
+.cm-btn--cancel {
+  background: #1a1a1a;
+  color: #888888;
+  border: 1px solid #333;
+}
+
+.cm-btn--confirm {
+  background: #d4a843;
+  color: #000000;
+}
+
+.cm-btn--danger {
+  background: #8b0000;
+  color: #ffffff;
+}

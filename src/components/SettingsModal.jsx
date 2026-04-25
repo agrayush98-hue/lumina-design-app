@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSettings, DEFAULT_SETTINGS } from '../contexts/SettingsContext'
+import { useConfirm } from './ConfirmModal'
 
 // ── small reusable pieces ────────────────────────────────────────────────────
 
@@ -255,14 +256,19 @@ const TABS = [
 export default function SettingsModal({ isOpen, onClose }) {
   const { settings, updateSetting, resetSettings } = useSettings()
   const [activeTab, setActiveTab] = useState('display')
+  const confirm = useConfirm()
 
   if (!isOpen) return null
 
   const s   = settings[activeTab] ?? {}
   const upd = updateSetting
 
-  const handleReset = () => {
-    if (window.confirm('Reset all settings to defaults?')) resetSettings()
+  const handleReset = async () => {
+    const ok = await confirm('Reset all settings to defaults?', {
+      title: "RESET SETTINGS",
+      confirmLabel: "RESET",
+    })
+    if (ok) resetSettings()
   }
 
   const sectionContent = () => {

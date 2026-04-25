@@ -1349,6 +1349,54 @@
 }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+/* ── Re-auth / delete account modal ────────────────────────────────────────── */
+.reauth-modal {
+  background: #0a0a0a;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 24px;
+  width: 380px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.reauth-modal-title {
+  font-size: 11px;
+  color: #ef4444;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+.reauth-modal-body {
+  font-size: 11px;
+  color: #888;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+.reauth-modal-input {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: #ccc;
+  width: 100%;
+  outline: none;
+}
+.reauth-modal-input:focus { border-color: #555; }
+.reauth-modal-err {
+  font-size: 10px;
+  color: #ef4444;
+  letter-spacing: 0.04em;
+}
+.reauth-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
 /* ── Error/toast ─────────────────────────────────────────────────────────────── */
 .inline-error {
   font-size: 10px;

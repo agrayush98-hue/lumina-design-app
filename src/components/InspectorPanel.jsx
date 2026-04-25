@@ -1,6 +1,7 @@
 import { getNadirLux, getTotalLuxAtPoint, getBeamRadiusPx } from '../utils/luxCalculator'
 import { beamDescription } from '../utils/luminousIntensityLookup'
 import { SCALE } from '../utils/canvasConstants'
+import { useConfirm } from './ConfirmModal'
 
 export default function InspectorPanel({
   fixture,
@@ -11,16 +12,16 @@ export default function InspectorPanel({
   allFixtures = [],
   ceilingHeight = 2700,
 }) {
+  const confirm = useConfirm()
   if (!fixture) return null
 
   const handleChange = (field, value) => {
     onUpdate(fixture.id, { [field]: value })
   }
 
-  const handleDelete = () => {
-    if (window.confirm(`Delete ${fixture.name}?`)) {
-      onDelete(fixture.id)
-    }
+  const handleDelete = async () => {
+    const ok = await confirm(`Delete ${fixture.name}?`, { confirmLabel: "DELETE", danger: true })
+    if (ok) onDelete(fixture.id)
   }
 
   const isDali = fixture.protocol?.startsWith('DALI')
