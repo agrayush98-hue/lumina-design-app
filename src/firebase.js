@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app"
-import { getFirestore, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp, serverTimestamp } from "firebase/firestore"
+import { getFirestore, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp, serverTimestamp, increment } from "firebase/firestore"
 import { getAuth } from "firebase/auth"
 
 const firebaseConfig = {
@@ -230,7 +230,43 @@ export async function getTrialDaysRemaining(userId) {
 }
 
 // ── Project limit ──────────────────────────────────────────────────────────────
-const PLAN_LIMITS = { free: 3, trial: 10, pro: 10, professional: Infinity }
+const PLAN_LIMITS   = { free: 3, trial: 10, pro: 10, professional: Infinity }
+const AI_CALL_LIMITS = { pro: 50, professional: 200 }
+
+// ── AI call tracking ──────────────────────────────────────────────────────────
+
+// Returns { allowed: bool, used: number, limit: number }
+export async function checkAiLimit(userId) {
+  const rootDoc = await _getRootUserDoc(userId)
+  const plan    = rootDoc?.subscription?.plan ?? 'free'
+  const limit   = AI_CALL_LIMITS[plan] ?? 0
+  if (limit === 0) return { allowed: false, used: 0, limit: 0 }
+
+  // Reset counter if new calendar month
+  const lastReset  = rootDoc?.aiUsage?.lastReset?.toDate?.() ?? new Date(0)
+  const now        = new Date()
+  const sameMonth  = lastReset.getFullYear() === now.getFullYear() &&
+                     lastReset.getMonth()    === now.getMonth()
+
+  if (!sameMonth) {
+    await updateDoc(doc(db, 'users', userId), {
+      'aiUsage.thisMonth': 0,
+      'aiUsage.lastReset': serverTimestamp(),
+    })
+    return { allowed: true, used: 0, limit }
+  }
+
+  const used = rootDoc?.aiUsage?.thisMonth ?? 0
+  return { allowed: used < limit, used, limit }
+}
+
+// Increment AI call counter (call after successful AI use)
+export async function incrementAiCall(userId) {
+  await updateDoc(doc(db, 'users', userId), {
+    'aiUsage.thisMonth': increment(1),
+    'aiUsage.totalCalls': increment(1),
+  })
+}
 
 export async function checkProjectLimit(userId) {
   const [sub, projects, rootDoc] = await Promise.all([

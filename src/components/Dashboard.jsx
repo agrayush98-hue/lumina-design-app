@@ -5,6 +5,7 @@ import { signOut, updateProfile, reauthenticateWithPopup, reauthenticateWithCred
 import { doc, deleteDoc } from "firebase/firestore"
 import { auth, db }       from "../firebase"
 import { useToast }        from "./Toast"
+import { useAuth }         from "../contexts/AuthContext"
 import {
   listProjects, loadProject, deleteProject, saveProject,
   getUserProfile, updateUserProfile,
@@ -44,13 +45,15 @@ const PLANS = [
     price: "₹1,179",
     period: "/month",
     features: [
-      { text: "Up to 10 projects",          highlight: true },
-      { text: "All fixture library",         highlight: true },
-      { text: "PDF export",                  highlight: true },
-      { text: "Floor plan upload",           highlight: true },
-      { text: "Email support",               highlight: false },
-      { text: "Priority support",            highlight: false },
-      { text: "Team collaboration",          highlight: false },
+      { text: "10 projects",                      highlight: true },
+      { text: "5 rooms per project",              highlight: true },
+      { text: "50 AI calls / month",              highlight: true },
+      { text: "PDF + Excel export",               highlight: true },
+      { text: "Floor plan upload",                highlight: true },
+      { text: "DALI 2.0 planning",               highlight: true },
+      { text: "Heatmap + beam analysis",         highlight: true },
+      { text: "All standard fixtures",            highlight: true },
+      { text: "Email support",                    highlight: false },
     ],
     amountPaise: 117900,
   },
@@ -60,13 +63,15 @@ const PLANS = [
     price: "₹2,949",
     period: "/month",
     features: [
-      { text: "Unlimited projects",          highlight: true },
-      { text: "All fixture library",         highlight: true },
-      { text: "PDF export",                  highlight: true },
-      { text: "Floor plan upload",           highlight: true },
-      { text: "Priority support",            highlight: true },
-      { text: "Team collaboration",          highlight: true },
-      { text: "Custom fixture library",      highlight: true },
+      { text: "Unlimited projects & rooms",             highlight: true },
+      { text: "200 AI calls / month",                   highlight: true },
+      { text: "PDF + Excel export",                     highlight: true },
+      { text: "Floor plan upload",                      highlight: true },
+      { text: "DALI 2.0 planning",                      highlight: true },
+      { text: "Branded fixtures (Philips/Havells/Wipro)", highlight: true },
+      { text: "Branded client reports",                 highlight: true },
+      { text: "Project folders",                        highlight: true },
+      { text: "Priority email support",                 highlight: true },
     ],
     amountPaise: 294900,
   },
@@ -140,12 +145,21 @@ function ProjectsTab({ user }) {
   const navigate     = useNavigate()
   const toast        = useToast()
   const confirm      = useConfirm()
+  const { userDoc }  = useAuth()
   const [projects,   setProjects]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showWizard, setShowWizard] = useState(false)
   const [trialDays,  setTrialDays]  = useState(null)
+
+  const sub        = userDoc?.subscription
+  const isPro      = sub?.status === 'active' && sub?.plan === 'pro'
+  const isProfessional = sub?.status === 'active' && sub?.plan === 'professional'
+  const isPaid     = isPro || isProfessional
+  const projectLimit = isProfessional ? Infinity : isPro ? 10 : 3
+  const aiLimit      = isProfessional ? 200 : isPro ? 50 : 0
+  const aiUsed       = userDoc?.aiUsage?.thisMonth ?? 0
 
   useEffect(() => {
     fetchProjects()
@@ -436,20 +450,75 @@ function ProjectsTab({ user }) {
                 </div>
               </div>
 
-              <div className="dash-upgrade-block">
-                <div className="dash-upgrade-title">UNLOCK PRO FEATURES</div>
-                <div className="dash-upgrade-desc">Take your designs further</div>
-                <ul className="dash-upgrade-list">
-                  <li>Export PDF / Excel Reports</li>
-                  <li>DALI 2.0 Planning &amp; Addressing</li>
-                  <li>Advanced Heatmap Analysis</li>
-                  <li>Unlimited Projects</li>
-                  <li>Priority Support</li>
-                </ul>
-                <button className="btn-upgrade" onClick={() => {}}>
-                  Upgrade to Pro →
-                </button>
+              {/* Usage bar */}
+              <div className="dash-widget">
+                <div className="dash-widget-title">USAGE</div>
+                <div className="usage-list">
+                  <div className="usage-row">
+                    <div className="usage-row-header">
+                      <span className="usage-label">Projects</span>
+                      <span className="usage-count">
+                        {projects.length}{projectLimit === Infinity ? "" : `/${projectLimit}`}
+                        {projectLimit === Infinity && <span className="usage-unlimited">unlimited</span>}
+                      </span>
+                    </div>
+                    {projectLimit !== Infinity && (
+                      <div className="usage-bar-track">
+                        <div
+                          className="usage-bar-fill"
+                          style={{ width: `${Math.min(100, (projects.length / projectLimit) * 100)}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {isPaid && (
+                    <div className="usage-row">
+                      <div className="usage-row-header">
+                        <span className="usage-label">AI Calls (this month)</span>
+                        <span className="usage-count">{aiUsed}/{aiLimit}</span>
+                      </div>
+                      <div className="usage-bar-track">
+                        <div
+                          className="usage-bar-fill"
+                          style={{ width: `${Math.min(100, (aiUsed / aiLimit) * 100)}%`,
+                                   background: aiUsed >= aiLimit ? '#ef4444' : undefined }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Upgrade block — only for non-paid users */}
+              {!isPaid && (
+                <div className="dash-upgrade-block">
+                  <div className="dash-upgrade-title">UNLOCK PRO FEATURES</div>
+                  <div className="dash-upgrade-desc">Take your designs further</div>
+                  <ul className="dash-upgrade-list">
+                    <li>PDF + Excel Reports</li>
+                    <li>DALI 2.0 Planning</li>
+                    <li>AI Recommendations (50/mo)</li>
+                    <li>10 Projects + floor plan upload</li>
+                    <li>Priority Support</li>
+                  </ul>
+                  <button className="btn-upgrade" onClick={() => navigate('/dashboard', { state: { openTab: 'subscription' } })}>
+                    Upgrade to Pro →
+                  </button>
+                </div>
+              )}
+
+              {/* Pro activated indicator */}
+              {isPaid && (
+                <div className="dash-pro-active">
+                  <BadgeCheck size={16} color="#d4a843" strokeWidth={1.5} />
+                  <div>
+                    <div className="dash-pro-active-title">
+                      {isProfessional ? "YOU'RE ON PROFESSIONAL" : "YOU'RE ON PRO"}
+                    </div>
+                    <div className="dash-pro-active-sub">All features unlocked</div>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
@@ -1034,6 +1103,14 @@ function SubscriptionTab({ user }) {
           <CreditCard size={14} color="#555555" strokeWidth={1.5} />
           <span>Payments powered by Razorpay</span>
         </div>
+      </div>
+
+      {/* Support */}
+      <div className="sub-support-line">
+        Questions? Email us at{" "}
+        <a href="mailto:support@lightillumina.com" className="sub-support-link">
+          support@lightillumina.com
+        </a>
       </div>
 
       {/* Billing history */}

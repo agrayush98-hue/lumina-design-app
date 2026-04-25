@@ -455,6 +455,84 @@
 }
 .btn-upgrade:hover { opacity: 0.85; }
 
+/* ── Usage bar ───────────────────────────────────────────────────────────────── */
+.usage-list { display: flex; flex-direction: column; gap: 14px; }
+
+.usage-row { display: flex; flex-direction: column; gap: 6px; }
+
+.usage-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.usage-label { font-size: 9px; color: #666; letter-spacing: 0.08em; }
+
+.usage-count { font-size: 10px; color: #cccccc; font-weight: 600; }
+
+.usage-unlimited {
+  font-size: 8px;
+  color: #d4a843;
+  letter-spacing: 0.06em;
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.usage-bar-track {
+  height: 3px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.usage-bar-fill {
+  height: 100%;
+  background: #d4a843;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── Pro active indicator ────────────────────────────────────────────────────── */
+.dash-pro-active {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(212, 168, 67, 0.05);
+  border: 1px solid rgba(212, 168, 67, 0.2);
+  border-radius: 4px;
+}
+
+.dash-pro-active-title {
+  font-size: 9px;
+  color: #d4a843;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.dash-pro-active-sub {
+  font-size: 8px;
+  color: #555;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ── Support line ────────────────────────────────────────────────────────────── */
+.sub-support-line {
+  font-size: 10px;
+  color: #444;
+  text-align: center;
+  padding: 8px 0 4px;
+  letter-spacing: 0.03em;
+}
+
+.sub-support-link {
+  color: #888;
+  text-decoration: none;
+}
+
+.sub-support-link:hover { color: #d4a843; }
+
 /* ── New project button in right col ─────────────────────────────────────────── */
 .dash-new-btn {
   width: 100%;

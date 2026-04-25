@@ -18,7 +18,7 @@ import ReportPanel from "./components/ReportPanel"
 import LoadProjectModal from "./components/LoadProjectModal"
 import AIRecommender from "./components/AIRecommender"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
-import { saveProject, loadProject, shareProject as fbShareProject } from "./firebase"
+import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
 import { getTemplate } from "./templates/projectTemplates"
 import { useToast as useToastNotify } from "./components/Toast"
@@ -251,6 +251,21 @@ export default function App() {
     } else {
       setGateModal({ feature })
     }
+  }
+
+  // AI tab gate — checks subscription AND monthly call limit
+  async function openAiTab() {
+    if (!isProActive()) { setGateModal({ feature: 'AI Recommend' }); return }
+    if (!user) return
+    try {
+      const { allowed, used, limit } = await checkAiLimit(user.uid)
+      if (!allowed) {
+        notify.warning(`AI call limit reached (${used}/${limit} this month). Resets on the 1st.`)
+        return
+      }
+    } catch { /* non-fatal — allow through if check fails */ }
+    setLeftSidebarCollapsed(false)
+    setLeftTab('ai')
   }
 
   useEffect(() => {
@@ -1074,12 +1089,13 @@ export default function App() {
   // ── Single-zone apply (PLACE button per zone) ─────────────────────────────────
 
   function handleAIApply(fixture, quantity = 1) {
-    const existing  = lights ?? []   // lights = activeRoomObj.lights (room settings has no .lights)
+    const existing  = lights ?? []
     const generated = placeFixtureGroup(fixture, quantity, undefined, existing)
     setRecentCustom(prev => [fixture, ...prev].slice(0, 8))
     setActiveFixtureId(fixture.id)
     setActiveTool("fixture")
     patchActiveRoom(r => ({ lights: [...r.lights, ...generated] }))
+    if (user) incrementAiCall(user.uid).catch(() => {})
     return generated.length
   }
 
@@ -1090,9 +1106,8 @@ export default function App() {
     let id = Date.now()
     const allLights = []
     const newCustom  = []
-    const existing   = lights ?? []  // lights = activeRoomObj.lights (room settings has no .lights)
+    const existing   = lights ?? []
     for (const { fixture, quantity } of zones) {
-      // Pass existing room lights + lights placed by earlier zones in this batch
       allLights.push(...placeFixtureGroup(fixture, quantity, id, [...existing, ...allLights]))
       id += quantity + 1
       newCustom.push(fixture)
@@ -1101,6 +1116,7 @@ export default function App() {
     setActiveFixtureId(zones[0].fixture.id)
     setActiveTool("fixture")
     patchActiveRoom(r => ({ lights: [...r.lights, ...allLights] }))
+    if (user) incrementAiCall(user.uid).catch(() => {})
     return allLights.length
   }
 
@@ -1894,7 +1910,7 @@ export default function App() {
                 style={{ width: 32, height: 32, background: leftTab === 'fixture' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'fixture' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
               >▤</button>
               <button
-                onClick={() => requirePro('AI Recommend', () => { setLeftSidebarCollapsed(false); setLeftTab('ai') })}
+                onClick={() => openAiTab()}
                 title="AI Suggest"
                 style={{ width: 32, height: 32, background: leftTab === 'ai' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'ai' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
               >✦</button>
@@ -1906,7 +1922,7 @@ export default function App() {
                 {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }].map(tab => (
                   <button
                     key={tab.id}
-                    onClick={() => tab.id === 'ai' ? requirePro('AI Recommend', () => setLeftTab('ai')) : setLeftTab(tab.id)}
+                    onClick={() => tab.id === 'ai' ? openAiTab() : setLeftTab(tab.id)}
                     style={{
                       flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#111111" : "transparent",
                       border: "none", borderBottom: leftTab === tab.id ? "2px solid #d4a843" : "2px solid transparent",
@@ -2005,7 +2021,7 @@ export default function App() {
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")} style={activeTool === "ctr" ? tbActive : {}} title="Place Contactor / Controller marker">CTR</button>
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}  style={activeTool === "jb"  ? tbActive : {}} title="Place Junction Box marker">JB</button>
               <button className={styles.tbBtn} onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }} style={showEmergency || activeTool === "emergency" ? tbActive : {}} title="Toggle emergency lighting mode">Emergency</button>
-              <button className={styles.tbBtn} onClick={() => requirePro('AI Recommend', () => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai'))} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
+              <button className={styles.tbBtn} onClick={() => leftTab === 'ai' ? setLeftTab('fixture') : openAiTab()} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
               <div className={styles.tbSeparator} />
               {floorPlan && (
                 <button

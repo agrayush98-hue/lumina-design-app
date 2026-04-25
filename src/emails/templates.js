@@ -119,9 +119,13 @@ function shell(bodyRows) {
                 © 2025 Lumina Design ·
                 <a href="${APP_URL}" style="color:#444444;text-decoration:none;">lightillumina.com</a>
               </p>
-              <p style="margin:0;font-family:'Helvetica Neue',Arial,sans-serif;
+              <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;
                          font-size:10px;color:#2a2a2a;letter-spacing:0.02em;">
                 You received this because you have a Lumina Design account.
+              </p>
+              <p style="margin:0;font-family:'Helvetica Neue',Arial,sans-serif;
+                         font-size:10px;color:#2a2a2a;letter-spacing:0.02em;">
+                Support: <a href="mailto:support@lightillumina.com" style="color:#333333;text-decoration:none;">support@lightillumina.com</a>
               </p>
             </td>
           </tr>
