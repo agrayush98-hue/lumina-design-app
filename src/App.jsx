@@ -236,15 +236,17 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [gateModal,   setGateModal]   = useState(null)  // null | { feature: string }
 
+  function isProActive() {
+    const { status } = getTrialStatus()
+    return status === 'active' || status === 'trial'
+  }
+
   function requirePro(feature, action) {
-    const trial = getTrialStatus()
-    // active paid plan or within trial window: allow all
-    if (trial.status === 'active' || trial.status === 'trial' || trial.status === 'loading') {
+    if (isProActive()) {
       action()
-      return
+    } else {
+      setGateModal({ feature })
     }
-    // expired or unknown: block gated feature
-    setGateModal({ feature })
   }
 
   useEffect(() => {
@@ -2565,8 +2567,10 @@ export default function App() {
               onStartDrag={startSettingsDrag}
               onClose={() => setShowSettings(false)}
               floorPlan={floorPlan}
-              onUploadFloorPlan={data => requirePro('Floor plan upload', () => updateFloorPlan(data))}
+              onUploadFloorPlan={updateFloorPlan}
               onRemoveFloorPlan={removeFloorPlan}
+              canUploadFloorPlan={isProActive()}
+              onUploadFloorPlanBlocked={() => setGateModal({ feature: 'Floor plan upload' })}
               activeTool={activeTool}
               onSetActiveTool={setActiveTool}
               embedded

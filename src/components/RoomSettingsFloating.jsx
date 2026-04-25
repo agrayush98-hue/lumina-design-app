@@ -41,11 +41,16 @@ async function readPdfFile(file) {
 }
 
 // ── Sub-component: floor plan section ────────────────────────────────────────
-function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActiveTool }) {
+function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActiveTool, canUpload = true, onUploadBlocked }) {
   const inputRef              = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const isDrawRoom = activeTool === "draw-room"
+
+  function triggerPicker() {
+    if (!canUpload) { onUploadBlocked?.(); return }
+    inputRef.current?.click()
+  }
 
   const linkBtn = {
     background: "none", border: "none", padding: 0,
@@ -89,7 +94,7 @@ function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActi
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
             <button
               style={{ ...linkBtn, color: "#888" }}
-              onClick={() => inputRef.current?.click()}
+              onClick={triggerPicker}
               onMouseEnter={e => { e.currentTarget.style.color = "#f0f0f0"; e.currentTarget.style.textDecorationColor = "#f0f0f0" }}
               onMouseLeave={e => { e.currentTarget.style.color = "#888"; e.currentTarget.style.textDecorationColor = "transparent" }}
             >Replace</button>
@@ -120,7 +125,7 @@ function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActi
         </>
       ) : (
         <div
-          onClick={() => !loading && inputRef.current?.click()}
+          onClick={() => !loading && triggerPicker()}
           style={{
             height: 90, display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "center", gap: 4,
@@ -158,6 +163,7 @@ export default function RoomSettingsFloating({
   room, setRoom, calculations,
   pos, onStartDrag, onClose,
   floorPlan, onUploadFloorPlan, onRemoveFloorPlan,
+  canUploadFloorPlan = true, onUploadFloorPlanBlocked,
   activeTool, onSetActiveTool,
   embedded,
 }) {
@@ -167,6 +173,8 @@ export default function RoomSettingsFloating({
         floorPlan={floorPlan}
         onUpload={onUploadFloorPlan}
         onRemove={onRemoveFloorPlan}
+        canUpload={canUploadFloorPlan}
+        onUploadBlocked={onUploadFloorPlanBlocked}
         activeTool={activeTool}
         onSetActiveTool={onSetActiveTool}
       />
