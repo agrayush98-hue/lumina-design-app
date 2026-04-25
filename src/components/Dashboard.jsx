@@ -11,7 +11,20 @@ import {
 } from "../firebase"
 import NewProjectWizard        from "./NewProjectWizard"
 import { PROJECT_TEMPLATES }   from "../templates/projectTemplates"
+import { emailPaymentSuccess, emailSubscriptionCancelled } from "../emails/templates"
 import "./Dashboard.css"
+
+async function sendEmail(to, subject, html) {
+  try {
+    await fetch('/api/send-email', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ to, subject, html }),
+    })
+  } catch (err) {
+    console.warn('[Dashboard] email send failed:', err)
+  }
+}
 
 const TABS = [
   { id: "projects",     label: "Projects",     icon: "◫" },
@@ -755,10 +768,13 @@ function SubscriptionTab({ user }) {
             if (!vRes.ok) throw new Error(vData.error ?? "Verification failed")
 
             // Step 4: activate subscription + record billing in Firestore
+            const now      = new Date()
+            const renewal  = new Date(now); renewal.setMonth(renewal.getMonth() + 1)
+            const amount   = plan.amountPaise / 100
             await createSubscription(user.uid, plan.id, response.razorpay_payment_id)
             await addBillingRecord(user.uid, {
               plan:        plan.id,
-              amount:      plan.amountPaise / 100,
+              amount,
               paymentId:   response.razorpay_payment_id,
               description: `${plan.name} Plan`,
             })
@@ -772,6 +788,20 @@ function SubscriptionTab({ user }) {
             setBilling(updatedBilling)
             setPaying(null)
             setSuccess(`${plan.name} plan activated! You now have full access.`)
+
+            // Step 6: send payment confirmation email (fire-and-forget)
+            sendEmail(
+              user.email,
+              `Payment confirmed — Lumina Design ${plan.name} activated`,
+              emailPaymentSuccess({
+                name:        user.displayName,
+                plan:        plan.id,
+                amount,
+                paymentId:   response.razorpay_payment_id,
+                activatedAt: now,
+                renewalDate: renewal,
+              }),
+            )
           } catch (e) {
             setError(`Activation failed: ${e.message}`)
             setPaying(null)
@@ -790,8 +820,20 @@ function SubscriptionTab({ user }) {
     if (!window.confirm("Cancel your subscription? You'll keep access until the billing period ends.")) return
     setCancelling(true)
     try {
+      const accessUntil = sub?.renewalDate?.toDate?.() ?? sub?.renewalDate ?? null
       await cancelSubscription(user.uid)
       setSub(prev => prev ? { ...prev, status: "cancelled" } : prev)
+
+      // Send cancellation email (fire-and-forget)
+      sendEmail(
+        user.email,
+        'Your Lumina Design subscription has been cancelled',
+        emailSubscriptionCancelled({
+          name:        user.displayName,
+          plan:        sub?.plan,
+          accessUntil,
+        }),
+      )
     } catch (e) {
       setError(e.message)
     } finally {
