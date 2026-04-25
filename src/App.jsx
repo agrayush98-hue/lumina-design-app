@@ -232,7 +232,7 @@ export default function App() {
   const uid           = () => nextId.current++
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
-  const { getTrialStatus } = useAuth()
+  const { getTrialStatus, userDoc } = useAuth()
   const notify  = useToastNotify()
   const confirm = useConfirm()
 
@@ -241,8 +241,12 @@ export default function App() {
   const [gateModal,   setGateModal]   = useState(null)  // null | { feature: string }
 
   function isProActive() {
+    const sub = userDoc?.subscription
+    // Paid: must have status=active AND a real plan
+    if (sub?.status === 'active' && (sub.plan === 'pro' || sub.plan === 'professional')) return true
+    // Trial: within 14-day window
     const { status } = getTrialStatus()
-    return status === 'active' || status === 'trial'
+    return status === 'trial'
   }
 
   function requirePro(feature, action) {

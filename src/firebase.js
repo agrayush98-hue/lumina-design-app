@@ -105,45 +105,33 @@ export async function updateUserProfile(userId, profileData) {
 }
 
 // ── Subscription ───────────────────────────────────────────────────────────────
+// getUserSubscription kept for billing-history reads only — subscription
+// status is now read from the root doc via AuthContext userDoc.
 export async function getUserSubscription(userId) {
-  const snap = await getDoc(doc(db, "users", userId, "subscription", "current"))
-  return snap.exists() ? snap.data() : null
+  const snap = await getDoc(doc(db, "users", userId))
+  return snap.exists() ? (snap.data().subscription ?? null) : null
 }
 
+// Client-side fallback write — primary write is in api/verify-payment.js (server).
+// Only touches the root doc; no subcollection.
 export async function createSubscription(userId, plan, razorpayPaymentId) {
-  const now = new Date()
-  const renewal = new Date(now)
-  renewal.setMonth(renewal.getMonth() + 1)
-  const subData = {
-    plan,
-    status: "active",
-    razorpayPaymentId,
-    startedAt: now,
-    renewalDate: renewal,
-    updatedAt: now,
-  }
-  await Promise.all([
-    // Subcollection — read by Dashboard getUserSubscription
-    setDoc(doc(db, "users", userId, "subscription", "current"), subData),
-    // Root doc — read by AuthContext getTrialStatus.
-    // setDoc+merge creates the doc if missing (updateDoc would throw on missing doc).
-    setDoc(doc(db, "users", userId), {
-      subscription: { status: "active", plan, activatedAt: now, updatedAt: now },
-    }, { merge: true }),
-  ])
+  const now      = new Date()
+  const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+  await setDoc(doc(db, "users", userId), {
+    subscription: {
+      status:            'active',
+      plan,
+      activatedAt:       now,
+      renewsAt,
+      razorpayPaymentId,
+    },
+  }, { merge: true })
 }
 
 export async function cancelSubscription(userId) {
-  await Promise.all([
-    updateDoc(doc(db, "users", userId, "subscription", "current"), {
-      status: "cancelled",
-      cancelledAt: new Date(),
-    }),
-    // setDoc+merge so this also works when root doc is missing
-    setDoc(doc(db, "users", userId), {
-      subscription: { status: "cancelled", updatedAt: new Date() },
-    }, { merge: true }),
-  ])
+  await setDoc(doc(db, "users", userId), {
+    subscription: { status: 'cancelled', cancelledAt: new Date() },
+  }, { merge: true })
 }
 
 export async function addBillingRecord(userId, { plan, amount, paymentId, description }) {

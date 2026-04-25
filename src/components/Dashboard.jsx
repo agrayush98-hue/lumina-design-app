@@ -9,9 +9,9 @@ import { useAuth }         from "../contexts/AuthContext"
 import {
   listProjects, loadProject, deleteProject, saveProject,
   getUserProfile, updateUserProfile,
-  getUserSubscription, getBillingHistory,
+  getBillingHistory,
   cancelSubscription, createSubscription, addBillingRecord,
-  isTrialActive, getTrialDaysRemaining, checkProjectLimit,
+  checkProjectLimit,
 } from "../firebase"
 import NewProjectWizard        from "./NewProjectWizard"
 import { PROJECT_TEMPLATES }   from "../templates/projectTemplates"
@@ -843,35 +843,28 @@ function SettingsTab({ user }) {
 // ── Subscription tab ──────────────────────────────────────────────────────────
 
 function SubscriptionTab({ user }) {
-  const toast        = useToast()
-  const confirm      = useConfirm()
-  const [sub,         setSub]         = useState(null)
-  const [billing,     setBilling]     = useState([])
-  const [trialActive, setTrialActive] = useState(false)
-  const [trialDays,   setTrialDays]   = useState(0)
-  const [loading,     setLoading]     = useState(true)
-  const [paying,      setPaying]      = useState(null)
-  const [cancelling,  setCancelling]  = useState(false)
+  const toast           = useToast()
+  const confirm         = useConfirm()
+  const { userDoc, getTrialStatus } = useAuth()
+  const [billing,       setBilling]     = useState([])
+  const [loading,       setLoading]     = useState(true)
+  const [paying,        setPaying]      = useState(null)
+  const [cancelling,    setCancelling]  = useState(false)
+
+  // Subscription comes from AuthContext root-doc onSnapshot — single source of truth
+  const sub = userDoc?.subscription ?? null
+  const { status: trialStatus, daysLeft: trialDays = 0 } = getTrialStatus()
+  const trialActive = trialStatus === 'trial'
 
   useEffect(() => {
-    Promise.all([
-      getUserSubscription(user.uid),
-      getBillingHistory(user.uid),
-      isTrialActive(user.uid),
-      getTrialDaysRemaining(user.uid),
-    ]).then(([s, b, trial, days]) => {
-      setSub(s)
-      setBilling(b)
-      setTrialActive(trial)
-      setTrialDays(days)
-    }).catch(e => setError(e.message))
+    getBillingHistory(user.uid)
+      .then(b => setBilling(b))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   async function handleUpgrade(plan) {
     setPaying(plan.id)
-    setError(null)
-    setSuccess(null)
     try {
       // Step 1: create Razorpay order via Vercel serverless function
       const res = await fetch("/api/create-checkout", {
@@ -896,7 +889,7 @@ function SubscriptionTab({ user }) {
         },
         theme: { color: "#d4a843" },
         handler: async function (response) {
-          // Step 3: verify HMAC signature on server
+          // Step 3: verify HMAC + server writes subscription to Firestore
           try {
             const vRes = await fetch("/api/verify-payment", {
               method:  "POST",
@@ -912,11 +905,15 @@ function SubscriptionTab({ user }) {
             const vData = await vRes.json()
             if (!vRes.ok) throw new Error(vData.error ?? "Verification failed")
 
-            // Step 4: activate subscription + record billing in Firestore
-            const now      = new Date()
-            const renewal  = new Date(now); renewal.setMonth(renewal.getMonth() + 1)
-            const amount   = plan.amountPaise / 100
-            await createSubscription(user.uid, plan.id, response.razorpay_payment_id)
+            // Step 4: client-side fallback write if server couldn't reach Firestore
+            const now    = new Date()
+            const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+            const amount = plan.amountPaise / 100
+            if (!vData.firestoreWritten) {
+              await createSubscription(user.uid, plan.id, response.razorpay_payment_id)
+            }
+
+            // Step 5: record billing
             await addBillingRecord(user.uid, {
               plan:        plan.id,
               amount,
@@ -924,17 +921,12 @@ function SubscriptionTab({ user }) {
               description: `${plan.name} Plan`,
             })
 
-            // Step 5: refresh local state
-            const [updated, updatedBilling] = await Promise.all([
-              getUserSubscription(user.uid),
-              getBillingHistory(user.uid),
-            ])
-            setSub(updated)
-            setBilling(updatedBilling)
+            // Step 6: refresh billing list (sub auto-updates via onSnapshot)
+            setBilling(await getBillingHistory(user.uid))
             setPaying(null)
             toast.success(`${plan.name} plan activated! You now have full access.`)
 
-            // Step 6: send payment confirmation email (fire-and-forget)
+            // Step 7: payment confirmation email (fire-and-forget)
             sendEmail(
               user.email,
               `Payment confirmed — Lumina Design ${plan.name} activated`,
@@ -944,7 +936,7 @@ function SubscriptionTab({ user }) {
                 amount,
                 paymentId:   response.razorpay_payment_id,
                 activatedAt: now,
-                renewalDate: renewal,
+                renewalDate: renewsAt,
               }),
             )
           } catch (e) {
@@ -970,9 +962,9 @@ function SubscriptionTab({ user }) {
     if (!ok) return
     setCancelling(true)
     try {
-      const accessUntil = sub?.renewalDate?.toDate?.() ?? sub?.renewalDate ?? null
+      const accessUntil = sub?.renewsAt?.toDate?.() ?? sub?.renewsAt ?? null
       await cancelSubscription(user.uid)
-      setSub(prev => prev ? { ...prev, status: "cancelled" } : prev)
+      // onSnapshot will auto-update sub from root doc — no setSub needed
       toast.warning("Subscription cancelled. Access continues until the billing period ends.")
 
       // Send cancellation email (fire-and-forget)
@@ -991,8 +983,6 @@ function SubscriptionTab({ user }) {
       setCancelling(false)
     }
   }
-
-  if (loading) return <div className="loading-state">Loading subscription…</div>
 
   const currentPlanId = sub?.plan ?? null
 
@@ -1025,8 +1015,8 @@ function SubscriptionTab({ user }) {
           {trialActive && (
             <span className="current-plan-section-trial-days">{trialDays} day{trialDays !== 1 ? "s" : ""} remaining</span>
           )}
-          {sub?.renewalDate && (
-            <span className="current-plan-section-renew">Renews {fmt(sub.renewalDate?.toDate?.() ?? sub.renewalDate)}</span>
+          {sub?.renewsAt && sub?.status === "active" && (
+            <span className="current-plan-section-renew">Renews {fmt(sub.renewsAt?.toDate?.() ?? sub.renewsAt)}</span>
           )}
           {sub?.status === "cancelled" && (
             <span className="current-plan-section-renew" style={{ color: "#d94f4f" }}>Cancelled — access until period end</span>
