@@ -928,50 +928,43 @@ function SubscriptionTab({ user }) {
                   {paying === plan.id ? "OPENING…" : "UPGRADE →"}
                 </button>
               )}
-
-              {/* Trust badges */}
-              <div className="trust-badges">
-                <div className="trust-row">
-                  {[
-                    { icon: "🔒", label: "Secured by", sub: "Razorpay" },
-                    { icon: "🛡️", label: "256-bit", sub: "SSL Encryption" },
-                    { icon: "↩️", label: "Cancel", sub: "Anytime" },
-                    { icon: "✅", label: "PCI DSS", sub: "Compliant" },
-                  ].map(b => (
-                    <div key={b.sub} className="trust-badge">
-                      <span className="trust-icon">{b.icon}</span>
-                      <span className="trust-label">{b.label}</span>
-                      <span className="trust-sub">{b.sub}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="trust-row">
-                  {[
-                    { icon: "🏆", label: "14-day", sub: "Free Trial" },
-                    { icon: "💰", label: "No Hidden", sub: "Charges" },
-                    { icon: "🎧", label: "Priority", sub: "Support" },
-                    { icon: "🔄", label: "Instant", sub: "Activation" },
-                  ].map(b => (
-                    <div key={b.sub} className="trust-badge">
-                      <span className="trust-icon">{b.icon}</span>
-                      <span className="trust-label">{b.label}</span>
-                      <span className="trust-sub">{b.sub}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="trust-razorpay">
-                  <img
-                    src="https://razorpay.com/assets/razorpay-glyph.svg"
-                    alt="Razorpay"
-                    className="trust-rzp-logo"
-                    onError={e => { e.target.style.display = 'none' }}
-                  />
-                  <span className="trust-rzp-text">Payments powered by Razorpay</span>
-                </div>
-              </div>
             </div>
           )
         })}
+      </div>
+
+      {/* Trust bar */}
+      <div className="trust-bar">
+        <div className="trust-bar-items">
+          <span className="trust-bar-item">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Secured by Razorpay
+          </span>
+          <span className="trust-bar-sep">|</span>
+          <span className="trust-bar-item">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            SSL Encrypted
+          </span>
+          <span className="trust-bar-sep">|</span>
+          <span className="trust-bar-item">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+            Cancel Anytime
+          </span>
+          <span className="trust-bar-sep">|</span>
+          <span className="trust-bar-item">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            PCI DSS Compliant
+          </span>
+        </div>
+        <div className="trust-bar-powered">
+          <img
+            src="https://razorpay.com/assets/razorpay-glyph.svg"
+            alt=""
+            className="trust-bar-rzp-logo"
+            onError={e => { e.target.style.display = 'none' }}
+          />
+          <span>Payments powered by Razorpay</span>
+        </div>
       </div>
 
       {/* Billing history */}
