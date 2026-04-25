@@ -554,7 +554,7 @@ function ProfileTab({ user }) {
           </div>
           <div className="profile-account-item">
             <div className="profile-account-label">User ID</div>
-            <div className="profile-account-value profile-account-uid">{user.uid}</div>
+            <div className="profile-account-value profile-account-uid">...{user.uid.slice(-8)}</div>
           </div>
         </div>
       </div>
@@ -788,36 +788,44 @@ function SubscriptionTab({ user }) {
 
       {error && <div className="inline-error">{error}</div>}
 
-      {/* Trial banner */}
-      {trialActive && (
-        <div className="trial-banner">
-          <div className="trial-text">◈ FREE TRIAL ACTIVE</div>
-          <div className="trial-days">{trialDays} day{trialDays !== 1 ? "s" : ""} remaining</div>
-        </div>
-      )}
-
-      {/* Current plan */}
-      {sub && (
-        <div className="current-plan-banner">
-          <div>
-            <div className="plan-badge">
+      {/* Current Plan section — always visible */}
+      <div className="current-plan-section">
+        <div className="current-plan-section-label">CURRENT PLAN</div>
+        <div className="current-plan-section-badge-row">
+          {trialActive ? (
+            <span className="plan-badge plan-badge-trial">
+              <span className="plan-badge-dot" style={{ background: "#d4a843" }} />
+              FREE TRIAL
+            </span>
+          ) : sub?.plan ? (
+            <span className="plan-badge">
               <span className="plan-badge-dot" />
-              {(sub.plan ?? "FREE").toUpperCase()}
-            </div>
-            {sub.renewalDate && (
-              <div className="plan-renewal" style={{ marginTop: 6 }}>
-                Renews {fmt(sub.renewalDate?.toDate?.() ?? sub.renewalDate)}
-              </div>
-            )}
-            {sub.status === "cancelled" && (
-              <div className="plan-renewal" style={{ color: "#d94f4f", marginTop: 6 }}>Cancelled — access until period end</div>
-            )}
-          </div>
-          {currentPlanId && sub.status !== "cancelled" && (
-            <button className="btn-danger" style={{ fontSize: 9 }} disabled={cancelling} onClick={handleCancel}>
-              {cancelling ? "CANCELLING…" : "CANCEL PLAN"}
-            </button>
+              {sub.plan.toUpperCase()}
+            </span>
+          ) : (
+            <span className="plan-badge plan-badge-free">
+              <span className="plan-badge-dot" style={{ background: "#888888" }} />
+              FREE
+            </span>
           )}
+          {trialActive && (
+            <span className="current-plan-section-trial-days">{trialDays} day{trialDays !== 1 ? "s" : ""} remaining</span>
+          )}
+          {sub?.renewalDate && (
+            <span className="current-plan-section-renew">Renews {fmt(sub.renewalDate?.toDate?.() ?? sub.renewalDate)}</span>
+          )}
+          {sub?.status === "cancelled" && (
+            <span className="current-plan-section-renew" style={{ color: "#d94f4f" }}>Cancelled — access until period end</span>
+          )}
+        </div>
+      </div>
+
+      {/* Cancel button for active paid plans */}
+      {sub && currentPlanId && sub.status !== "cancelled" && (
+        <div style={{ marginBottom: 24 }}>
+          <button className="btn-danger" style={{ fontSize: 9 }} disabled={cancelling} onClick={handleCancel}>
+            {cancelling ? "CANCELLING…" : "CANCEL PLAN"}
+          </button>
         </div>
       )}
 
