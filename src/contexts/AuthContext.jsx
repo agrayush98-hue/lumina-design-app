@@ -27,14 +27,25 @@ const TRIAL_DAYS = 14
 
 // ── Email helper — fire-and-forget, never blocks auth flow ─────────────────────
 async function dispatchEmail(to, subject, html) {
+  if (!to) {
+    console.error('[AuthContext] dispatchEmail — no recipient address, skipping')
+    return
+  }
+  console.log('[AuthContext] dispatchEmail — sending to:', to, '| subject:', subject?.slice(0, 60))
   try {
-    await fetch('/api/send-email', {
+    const r    = await fetch('/api/send-email', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ to, subject, html }),
     })
+    const data = await r.json().catch(() => ({}))
+    if (r.ok) {
+      console.log('[AuthContext] dispatchEmail — sent OK, id:', data.id)
+    } else {
+      console.error('[AuthContext] dispatchEmail — Resend rejected (HTTP', r.status + '):', data)
+    }
   } catch (err) {
-    console.warn('[AuthContext] email dispatch failed:', err)
+    console.error('[AuthContext] dispatchEmail — network error:', err.message)
   }
 }
 
@@ -95,11 +106,15 @@ export function AuthProvider({ children }) {
     setUserDoc(rootData)
 
     // Welcome email — fire after docs are written, don't await
+    console.log('[AuthContext] _initUserDocs — dispatching welcome email to:', email)
     dispatchEmail(
       email,
       'Welcome to Lumina Design — Your 14-day trial has started',
       emailWelcome({ name: displayName, trialEndsAt: trialEnd }),
-    ).then(() => markEmailSent(uid, 'welcome'))
+    ).then(() => {
+      console.log('[AuthContext] _initUserDocs — welcome email dispatched, marking sent')
+      markEmailSent(uid, 'welcome')
+    }).catch(err => console.error('[AuthContext] _initUserDocs — welcome email dispatch threw:', err))
   }
 
   // ── Check & send trial lifecycle emails on login ──────────────────
