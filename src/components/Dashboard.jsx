@@ -821,15 +821,15 @@ function SubscriptionTab({ user }) {
       <div className="current-plan-section">
         <div className="current-plan-section-label">CURRENT PLAN</div>
         <div className="current-plan-section-badge-row">
-          {trialActive ? (
+          {sub?.status === "active" ? (
+            <span className="plan-badge">
+              <span className="plan-badge-dot" style={{ background: "#d4a843" }} />
+              {(sub.plan ?? "PRO").toUpperCase()}
+            </span>
+          ) : trialActive ? (
             <span className="plan-badge plan-badge-trial">
               <span className="plan-badge-dot" style={{ background: "#d4a843" }} />
               FREE TRIAL
-            </span>
-          ) : sub?.plan ? (
-            <span className="plan-badge">
-              <span className="plan-badge-dot" />
-              {sub.plan.toUpperCase()}
             </span>
           ) : (
             <span className="plan-badge plan-badge-free">
@@ -849,8 +849,8 @@ function SubscriptionTab({ user }) {
         </div>
       </div>
 
-      {/* Cancel button for active paid plans */}
-      {sub && currentPlanId && sub.status !== "cancelled" && (
+      {/* Cancel button — only for active paid subscriptions */}
+      {sub?.status === "active" && (
         <div style={{ marginBottom: 24 }}>
           <button className="btn-danger" style={{ fontSize: 9 }} disabled={cancelling} onClick={handleCancel}>
             {cancelling ? "CANCELLING…" : "CANCEL PLAN"}

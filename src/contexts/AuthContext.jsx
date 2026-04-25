@@ -7,7 +7,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth'
 import {
-  doc, setDoc, getDoc,
+  doc, setDoc, getDoc, onSnapshot,
   serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
@@ -84,16 +84,6 @@ export function AuthProvider({ children }) {
     return sendPasswordResetEmail(auth, email)
   }
 
-  // ── Load user document from Firestore ───────────────────────────
-  async function fetchUserDoc(uid) {
-    try {
-      const snap = await getDoc(doc(db, 'users', uid))
-      if (snap.exists()) setUserDoc(snap.data())
-    } catch (err) {
-      console.error('fetchUserDoc:', err)
-    }
-  }
-
   // ── Derived trial / subscription status ────────────────────────
   function getTrialStatus() {
     if (!userDoc) return { status: 'loading' }
@@ -113,27 +103,42 @@ export function AuthProvider({ children }) {
     return { status: 'trial', daysLeft }
   }
 
-  // ── Listen for auth state changes ───────────────────────────────
+  // ── Listen for auth state changes + keep userDoc live ───────────
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+    let docUnsub = null
+
+    const authUnsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Tear down previous doc listener when auth user changes
+      if (docUnsub) { docUnsub(); docUnsub = null }
+
       setUser(firebaseUser)
+
       if (firebaseUser) {
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
+        const ref  = doc(db, 'users', firebaseUser.uid)
+        const snap = await getDoc(ref)
+
         if (!snap.exists()) {
-          await _initUserDocs(
-            firebaseUser.uid,
-            firebaseUser.email,
-            firebaseUser.displayName,
-          )
+          // First-ever login for this user — build both docs
+          await _initUserDocs(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName)
         } else {
-          await fetchUserDoc(firebaseUser.uid)
+          // Seed in-memory state immediately so App renders with data
+          setUserDoc(snap.data())
         }
+
+        // Real-time listener — auto-refreshes userDoc on any Firestore change
+        // (payment activation, cancellation, admin edits, etc.)
+        docUnsub = onSnapshot(ref,
+          (s) => { if (s.exists()) setUserDoc(s.data()) },
+          (err) => console.error('[AuthContext] userDoc listener:', err),
+        )
       } else {
         setUserDoc(null)
       }
+
       setLoading(false)
     })
-    return unsub
+
+    return () => { authUnsub(); if (docUnsub) docUnsub() }
   }, [])
 
   const value = {
@@ -145,7 +150,6 @@ export function AuthProvider({ children }) {
     logout,
     resetPassword,
     getTrialStatus,
-    refetchUserDoc: () => user && fetchUserDoc(user.uid),
   }
 
   return (

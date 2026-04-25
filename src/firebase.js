@@ -123,10 +123,13 @@ export async function createSubscription(userId, plan, razorpayPaymentId) {
     updatedAt: now,
   }
   await Promise.all([
-    // Subcollection (read by Dashboard getUserSubscription)
+    // Subcollection — read by Dashboard getUserSubscription
     setDoc(doc(db, "users", userId, "subscription", "current"), subData),
-    // Root doc field (read by AuthContext getTrialStatus)
-    updateDoc(doc(db, "users", userId), { "subscription.status": "active", "subscription.plan": plan, "subscription.updatedAt": now }),
+    // Root doc — read by AuthContext getTrialStatus.
+    // setDoc+merge creates the doc if missing (updateDoc would throw on missing doc).
+    setDoc(doc(db, "users", userId), {
+      subscription: { status: "active", plan, activatedAt: now, updatedAt: now },
+    }, { merge: true }),
   ])
 }
 
@@ -136,7 +139,10 @@ export async function cancelSubscription(userId) {
       status: "cancelled",
       cancelledAt: new Date(),
     }),
-    updateDoc(doc(db, "users", userId), { "subscription.status": "trial" }),
+    // setDoc+merge so this also works when root doc is missing
+    setDoc(doc(db, "users", userId), {
+      subscription: { status: "cancelled", updatedAt: new Date() },
+    }, { merge: true }),
   ])
 }
 
