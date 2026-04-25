@@ -28,31 +28,44 @@ export function AuthProvider({ children }) {
   // ── Create account ──────────────────────────────────────────────
   async function signup(email, password, name = '') {
     const cred = await createUserWithEmailAndPassword(auth, email, password)
+    await _initUserDocs(cred.user.uid, email, name)
+    return cred
+  }
 
+  // ── Create root doc + profile/data subcollection ─────────────────
+  async function _initUserDocs(uid, email, displayName) {
     const trialEnd = new Date()
     trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS)
 
-    const docData = {
-      email,
-      name,
+    const rootData = {
+      email:        email ?? '',
+      name:         displayName ?? '',
       createdAt:    serverTimestamp(),
       trialEndsAt:  Timestamp.fromDate(trialEnd),
       subscription: {
-        status:            'trial',   // trial | active | expired
-        plan:              null,
+        status:             'trial',
+        plan:               'trial',
         razorpayCustomerId: null,
         razorpaySubId:      null,
       },
       aiUsage: {
-        totalCalls:  0,
-        thisMonth:   0,
-        lastReset:   serverTimestamp(),
+        totalCalls: 0,
+        thisMonth:  0,
+        lastReset:  serverTimestamp(),
       },
     }
 
-    await setDoc(doc(db, 'users', cred.user.uid), docData)
-    setUserDoc(docData)
-    return cred
+    await setDoc(doc(db, 'users', uid), rootData)
+
+    // Write profile/data subcollection so Dashboard.jsx can read createdAt
+    await setDoc(doc(db, 'users', uid, 'profile', 'data'), {
+      createdAt:   serverTimestamp(),
+      displayName: displayName ?? '',
+      email:       email ?? '',
+      updatedAt:   serverTimestamp(),
+    })
+
+    setUserDoc(rootData)
   }
 
   // ── Sign in ─────────────────────────────────────────────────────
@@ -105,30 +118,16 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
-        const ref  = doc(db, 'users', firebaseUser.uid)
-        const snap = await getDoc(ref)
+        const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
         if (!snap.exists()) {
-          const trialEnd = new Date()
-          trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS)
-          await setDoc(ref, {
-            email:       firebaseUser.email ?? '',
-            name:        firebaseUser.displayName ?? '',
-            createdAt:   serverTimestamp(),
-            trialEndsAt: Timestamp.fromDate(trialEnd),
-            subscription: {
-              status:             'trial',
-              plan:               null,
-              razorpayCustomerId: null,
-              razorpaySubId:      null,
-            },
-            aiUsage: {
-              totalCalls: 0,
-              thisMonth:  0,
-              lastReset:  serverTimestamp(),
-            },
-          })
+          await _initUserDocs(
+            firebaseUser.uid,
+            firebaseUser.email,
+            firebaseUser.displayName,
+          )
+        } else {
+          await fetchUserDoc(firebaseUser.uid)
         }
-        await fetchUserDoc(firebaseUser.uid)
       } else {
         setUserDoc(null)
       }

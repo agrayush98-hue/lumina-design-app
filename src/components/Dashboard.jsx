@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate }         from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { signOut, updateProfile } from "firebase/auth"
 import { auth }                from "../firebase"
 import {
@@ -929,7 +929,8 @@ function SubscriptionTab({ user }) {
 
 export default function Dashboard({ user }) {
   const navigate   = useNavigate()
-  const [tab, setTab] = useState("projects")
+  const location   = useLocation()
+  const [tab, setTab] = useState(() => location.state?.openTab ?? "projects")
 
   async function handleSignOut() {
     await signOut(auth)

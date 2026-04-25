@@ -114,21 +114,30 @@ export async function createSubscription(userId, plan, razorpayPaymentId) {
   const now = new Date()
   const renewal = new Date(now)
   renewal.setMonth(renewal.getMonth() + 1)
-  await setDoc(doc(db, "users", userId, "subscription", "current"), {
+  const subData = {
     plan,
     status: "active",
     razorpayPaymentId,
     startedAt: now,
     renewalDate: renewal,
     updatedAt: now,
-  })
+  }
+  await Promise.all([
+    // Subcollection (read by Dashboard getUserSubscription)
+    setDoc(doc(db, "users", userId, "subscription", "current"), subData),
+    // Root doc field (read by AuthContext getTrialStatus)
+    updateDoc(doc(db, "users", userId), { "subscription.status": "active", "subscription.plan": plan, "subscription.updatedAt": now }),
+  ])
 }
 
 export async function cancelSubscription(userId) {
-  await updateDoc(doc(db, "users", userId, "subscription", "current"), {
-    status: "cancelled",
-    cancelledAt: new Date(),
-  })
+  await Promise.all([
+    updateDoc(doc(db, "users", userId, "subscription", "current"), {
+      status: "cancelled",
+      cancelledAt: new Date(),
+    }),
+    updateDoc(doc(db, "users", userId), { "subscription.status": "trial" }),
+  ])
 }
 
 export async function addBillingRecord(userId, { plan, amount, paymentId, description }) {
@@ -173,7 +182,22 @@ export async function createCheckoutSession(userId, planId, email) {
 // ── Trial helpers ──────────────────────────────────────────────────────────────
 const TRIAL_DAYS = 14
 
+async function _getRootUserDoc(userId) {
+  const snap = await getDoc(doc(db, "users", userId))
+  return snap.exists() ? snap.data() : null
+}
+
 export async function isTrialActive(userId) {
+  // Primary: read root user doc trialEndsAt (new schema)
+  const rootDoc = await _getRootUserDoc(userId)
+  if (rootDoc) {
+    if (rootDoc.subscription?.status === 'active') return false
+    if (rootDoc.trialEndsAt) {
+      const end = rootDoc.trialEndsAt?.toDate?.() ?? new Date(rootDoc.trialEndsAt)
+      return end > new Date()
+    }
+  }
+  // Fallback: legacy profile/data.createdAt
   const profile = await getUserProfile(userId)
   if (!profile?.createdAt) return false
   const created = profile.createdAt?.toDate?.() ?? new Date(profile.createdAt)
@@ -182,6 +206,16 @@ export async function isTrialActive(userId) {
 }
 
 export async function getTrialDaysRemaining(userId) {
+  // Primary: read root user doc trialEndsAt
+  const rootDoc = await _getRootUserDoc(userId)
+  if (rootDoc) {
+    if (rootDoc.subscription?.status === 'active') return null  // null = paid, no trial countdown
+    if (rootDoc.trialEndsAt) {
+      const end = rootDoc.trialEndsAt?.toDate?.() ?? new Date(rootDoc.trialEndsAt)
+      return Math.max(0, Math.ceil((end - Date.now()) / 86400000))
+    }
+  }
+  // Fallback: legacy profile/data.createdAt
   const profile = await getUserProfile(userId)
   if (!profile?.createdAt) return 0
   const created = profile.createdAt?.toDate?.() ?? new Date(profile.createdAt)
@@ -190,14 +224,20 @@ export async function getTrialDaysRemaining(userId) {
 }
 
 // ── Project limit ──────────────────────────────────────────────────────────────
-const PLAN_LIMITS = { free: 3, pro: 10, professional: Infinity }
+const PLAN_LIMITS = { free: 3, trial: 10, pro: 10, professional: Infinity }
 
 export async function checkProjectLimit(userId) {
-  const [sub, projects] = await Promise.all([
+  const [sub, projects, rootDoc] = await Promise.all([
     getUserSubscription(userId),
     listProjects(userId),
+    _getRootUserDoc(userId),
   ])
-  const plan  = sub?.plan ?? "free"
+  let plan = sub?.plan ?? "free"
+  // Trial users (from root doc) get pro-level project limit
+  if (rootDoc?.subscription?.status === 'trial') {
+    const trialEndsAt = rootDoc.trialEndsAt?.toDate?.() ?? null
+    if (trialEndsAt && trialEndsAt > new Date()) plan = 'trial'
+  }
   const limit = PLAN_LIMITS[plan] ?? 3
   return projects.length < limit
 }

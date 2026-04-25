@@ -4,6 +4,8 @@ import { onAuthStateChanged, signOut } from "firebase/auth"
 import { auth } from "./firebase"
 import styles from "./App.module.css"
 import AuthPage from "./components/AuthPage"
+import TrialBanner from "./components/TrialBanner"
+import { useAuth } from "./contexts/AuthContext"
 import RoomSettingsFloating from "./components/RoomSettingsFloating"
 import DesignCanvas from "./components/DesignCanvas"
 import FixturePanel from "./components/FixturePanel"
@@ -228,9 +230,22 @@ export default function App() {
   const uid           = () => nextId.current++
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
+  const { getTrialStatus } = useAuth()
 
   const [user,        setUser]        = useState(undefined)  // undefined = loading
   const [authLoading, setAuthLoading] = useState(true)
+  const [gateModal,   setGateModal]   = useState(null)  // null | { feature: string }
+
+  function requirePro(feature, action) {
+    const trial = getTrialStatus()
+    // active paid plan or within trial window: allow all
+    if (trial.status === 'active' || trial.status === 'trial' || trial.status === 'loading') {
+      action()
+      return
+    }
+    // expired or unknown: block gated feature
+    setGateModal({ feature })
+  }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => {
@@ -1785,7 +1800,7 @@ export default function App() {
           <button className={`${styles.hdrBtn} ${styles.hdrBtnSave}`} onClick={handleSave}>{saving ? "Saving…" : "Save"}</button>
           <button className={styles.hdrBtn} onClick={() => setShowLoadModal(true)}>Load</button>
           <button className={styles.hdrBtn} onClick={handleShare}>Share</button>
-          <button className={styles.hdrBtn} onClick={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}>Export</button>
+          <button className={styles.hdrBtn} onClick={() => requirePro('Export', () => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) })}>Export</button>
           <div style={{ width: 1, height: 16, background: "#222222", margin: "0 4px" }} />
           <button
             onClick={() => setShowShortcuts(true)}
@@ -1798,6 +1813,8 @@ export default function App() {
           <button className={`${styles.hdrBtn} ${styles.hdrBtnDanger}`} onClick={() => signOut(auth)}>Sign Out</button>
         </div>
       </header>
+
+      <TrialBanner />
 
       {/* ── Merged stats bar ────────────────────────────────────────────────── */}
       {(() => {
@@ -1871,7 +1888,7 @@ export default function App() {
                 style={{ width: 32, height: 32, background: leftTab === 'fixture' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'fixture' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
               >▤</button>
               <button
-                onClick={() => { setLeftSidebarCollapsed(false); setLeftTab('ai') }}
+                onClick={() => requirePro('AI Recommend', () => { setLeftSidebarCollapsed(false); setLeftTab('ai') })}
                 title="AI Suggest"
                 style={{ width: 32, height: 32, background: leftTab === 'ai' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'ai' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
               >✦</button>
@@ -1883,7 +1900,7 @@ export default function App() {
                 {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }].map(tab => (
                   <button
                     key={tab.id}
-                    onClick={() => setLeftTab(tab.id)}
+                    onClick={() => tab.id === 'ai' ? requirePro('AI Recommend', () => setLeftTab('ai')) : setLeftTab(tab.id)}
                     style={{
                       flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#111111" : "transparent",
                       border: "none", borderBottom: leftTab === tab.id ? "2px solid #d4a843" : "2px solid transparent",
@@ -1934,7 +1951,7 @@ export default function App() {
               <div className={styles.tbSeparator} />
               <button
                 title="DALI — Enable DALI 2.0 addressable lighting system. Each fixture gets a unique bus address for individual dimming control."
-                onClick={() => {
+                onClick={() => requirePro('DALI', () => {
   setDaliEnabled(prev => !prev)
   if (!daliEnabled) {
     setFloors(prevFloors => prevFloors.map(f => ({
@@ -1949,7 +1966,7 @@ export default function App() {
       }))
     })))
   }
-}}
+})}
                 style={{
                   background: daliEnabled ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
                   color: daliEnabled ? '#22c55e' : '#ef4444',
@@ -1982,7 +1999,7 @@ export default function App() {
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")} style={activeTool === "ctr" ? tbActive : {}} title="Place Contactor / Controller marker">CTR</button>
               <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}  style={activeTool === "jb"  ? tbActive : {}} title="Place Junction Box marker">JB</button>
               <button className={styles.tbBtn} onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }} style={showEmergency || activeTool === "emergency" ? tbActive : {}} title="Toggle emergency lighting mode">Emergency</button>
-              <button className={styles.tbBtn} onClick={() => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai')} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
+              <button className={styles.tbBtn} onClick={() => requirePro('AI Recommend', () => setLeftTab(t => t === 'ai' ? 'fixture' : 'ai'))} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
               <div className={styles.tbSeparator} />
               {floorPlan && (
                 <button
@@ -2548,7 +2565,7 @@ export default function App() {
               onStartDrag={startSettingsDrag}
               onClose={() => setShowSettings(false)}
               floorPlan={floorPlan}
-              onUploadFloorPlan={updateFloorPlan}
+              onUploadFloorPlan={data => requirePro('Floor plan upload', () => updateFloorPlan(data))}
               onRemoveFloorPlan={removeFloorPlan}
               activeTool={activeTool}
               onSetActiveTool={setActiveTool}
@@ -2683,6 +2700,35 @@ export default function App() {
           onLoad={handleLoadFromModal}
           onClose={() => setShowLoadModal(false)}
         />
+      )}
+
+      {/* ── Upgrade gate modal ──────────────────────────────────────────────── */}
+      {gateModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setGateModal(null)}
+        >
+          <div
+            style={{ background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6, padding: '28px 30px', width: 380, fontFamily: 'IBM Plex Mono' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', marginBottom: 14 }}>UPGRADE REQUIRED</div>
+            <div style={{ fontSize: 14, color: '#ffffff', fontWeight: 600, marginBottom: 8 }}>{gateModal.feature}</div>
+            <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
+              Your free trial has expired. Upgrade to PRO to unlock {gateModal.feature}, exports, DALI, floor plan upload, AI recommendations, and more.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { setGateModal(null); navigate('/dashboard', { state: { openTab: 'subscription' } }) }}
+                style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
+              >UPGRADE TO PRO →</button>
+              <button
+                onClick={() => setGateModal(null)}
+                style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 11, cursor: 'pointer' }}
+              >✕</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Toast notification ──────────────────────────────────────────────── */}
