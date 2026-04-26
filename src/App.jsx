@@ -249,6 +249,23 @@ export default function App() {
     return status === 'trial'
   }
 
+  function isProfessional() {
+    const sub = userDoc?.subscription
+    return sub?.status === 'active' && sub?.plan === 'professional'
+  }
+
+  function isPaidPlan() {
+    const sub = userDoc?.subscription
+    return sub?.status === 'active' && (sub?.plan === 'pro' || sub?.plan === 'professional')
+  }
+
+  function getRoomLimit() {
+    const sub = userDoc?.subscription
+    if (sub?.status === 'active' && sub?.plan === 'professional') return Infinity
+    if (sub?.status === 'active' && sub?.plan === 'pro') return 5
+    return 3
+  }
+
   function requirePro(feature, action) {
     if (isProActive()) {
       action()
@@ -723,6 +740,12 @@ export default function App() {
     const roomAlreadyDrawn = activeRoom && activeRoom.roomOffsetX != null
 
     if (roomAlreadyDrawn) {
+      // Check room limit before adding a new room
+      if ((activeFloor?.rooms?.length ?? 0) >= getRoomLimit()) {
+        notify.warning("Room limit reached. Upgrade to add more rooms.")
+        setActiveTool("fixture")
+        return
+      }
       // Create a new room inline with placement data already set — avoids async addRoom() race
       setFloors(prevFloors => prevFloors.map(f => {
         if (f.id !== activeFloorId) return f
@@ -766,6 +789,10 @@ export default function App() {
   }
 
   function addRoom() {
+    if ((activeFloor?.rooms?.length ?? 0) >= getRoomLimit()) {
+      notify.warning("Room limit reached. Upgrade to add more rooms.")
+      return
+    }
     const newId = uid()
     setFloors(prev => prev.map(f => {
       if (f.id !== activeFloorId) return f
@@ -1602,6 +1629,18 @@ export default function App() {
       footer(pageNum)
     }
 
+    // Watermark every page for non-paid users
+    if (!isPaidPlan()) {
+      const total = doc.internal.getNumberOfPages()
+      for (let p = 1; p <= total; p++) {
+        doc.setPage(p)
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(28)
+        doc.setTextColor(210, 210, 210)
+        doc.text("LUMINA DESIGN — FREE TRIAL", PW / 2, PH / 2, { align: "center", angle: 45 })
+      }
+    }
+
     doc.save(`${safeName}-report.pdf`)
   }
 
@@ -1661,6 +1700,16 @@ export default function App() {
       const status = lux === 0 || target === 0 ? "—" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
       ws3.addRow([r.floorName, r.name, areaM2.toFixed(1), target || "—", r.lights.length === 0 ? "—" : Math.round(lux), status, r.lights.length, load + " W"])
+    }
+
+    // Watermark sheet for non-paid users
+    if (!isPaidPlan()) {
+      const wsWM = wb.addWorksheet("FREE TRIAL")
+      wsWM.columns = [{ width: 50 }]
+      const wmRow = wsWM.addRow(["LUMINA DESIGN — FREE TRIAL VERSION"])
+      wmRow.font = { bold: true, size: 14, color: { argb: "FFD4A843" } }
+      wsWM.addRow(["Upgrade to PRO or PROFESSIONAL to remove this watermark."])
+      wsWM.orderNo = 0
     }
 
     const buffer = await wb.xlsx.writeBuffer()
@@ -1923,7 +1972,7 @@ export default function App() {
             <>
               {/* Tab bar with collapse toggle */}
               <div style={{ display: "flex", borderBottom: "1px solid #222222", flexShrink: 0 }}>
-                {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }].map(tab => (
+                {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }, { id: 'my-fixtures', label: 'MY FIX' }].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => tab.id === 'ai' ? openAiTab() : setLeftTab(tab.id)}
@@ -1957,6 +2006,24 @@ export default function App() {
                   onClose={() => setLeftTab('fixture')}
                   panelMode
                 />
+              </div>
+              <div style={{ flex: 1, overflow: "auto", display: leftTab === 'my-fixtures' ? "flex" : "none", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
+                {isProfessional() ? (
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: "#555", letterSpacing: "0.12em", marginBottom: 16 }}>NO CUSTOM FIXTURES YET</div>
+                    <button
+                      onClick={() => notify.warning("Custom fixture builder coming soon.")}
+                      style={{ padding: "8px 14px", background: "#d4a843", color: "#000", border: "none", fontFamily: "IBM Plex Mono", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer", borderRadius: 2 }}
+                    >+ ADD CUSTOM FIXTURE</button>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 9, color: "#d4a843", letterSpacing: "0.14em", fontWeight: 700, marginBottom: 8 }}>PROFESSIONAL ONLY</div>
+                    <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.08em", lineHeight: 1.7 }}>
+                      UPGRADE TO PROFESSIONAL<br/>TO SAVE CUSTOM FIXTURES
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
