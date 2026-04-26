@@ -84,6 +84,7 @@ function makeLight(id, x, y, fixture, lumensOverride) {
     visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
     fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
     protocol:     fixture?.protocol ?? null,
+    brand:        fixture?.brand ?? null,
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
   }
 }
@@ -2483,6 +2484,22 @@ export default function App() {
                       <div style={{ fontSize: 10, color: "#39c5cf", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {multi ? `${hl.label ?? "Fixture"} +${sel.length - 1} more` : (hl.label ?? hl.name ?? "Fixture")}
                       </div>
+
+                      {/* Protocol selector — branded fixtures only */}
+                      {hl.brand && (
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 9, color: '#555', letterSpacing: '0.06em', marginBottom: 4 }}>PROTOCOL</div>
+                          <select
+                            value={hl.protocol ?? 'PHASE-CUT'}
+                            onChange={e => batchUpdate({ protocol: e.target.value })}
+                            style={{ width: '100%', padding: '4px 6px', background: '#111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
+                          >
+                            <option value="NON-DIM">NON-DIM</option>
+                            <option value="PHASE-CUT">TRIAC</option>
+                            <option value="DALI">DALI</option>
+                          </select>
+                        </div>
+                      )}
 
                       {/* Position (first selected only) */}
                       {!multi && <>

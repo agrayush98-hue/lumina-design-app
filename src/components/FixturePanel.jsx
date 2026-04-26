@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { CATEGORY_META, CATEGORY_VISUAL, resolveFixture } from '../data/fixtureLibrary'
 import { getUserFixtures, saveUserFixture, updateUserFixture, deleteUserFixture } from '../firebase'
-import { BRANDS, ALL_BRANDED, BRAND_NAMES, BRANDED_CATEGORIES, PROTO_LABEL, PROTO_COLOR } from '../data/brandedFixtures'
+import { BRANDS, ALL_BRANDED, BRAND_NAMES, BRANDED_CATEGORIES, PROTO_OPTIONS } from '../data/brandedFixtures'
 
 const CATEGORIES = [
   'COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP',
@@ -364,7 +364,7 @@ function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
       cct:       fixture.cct,
       tunable:   fixture.cct === 'Tunable',
       voltage:   230,
-      protocol:  fixture.protocol,
+      protocol:  'PHASE-CUT',
       brand:     fixture.brand,
       fill:      vis.fill,
       stroke:    vis.stroke,
@@ -441,33 +441,29 @@ function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
         {Object.keys(grouped).length === 0 ? (
           <div style={{ padding: '32px 20px', fontSize: 11, color: '#555', textAlign: 'center' }}>No fixtures match filters.</div>
         ) : (
-          Object.entries(grouped).map(([brand, fixtures]) => (
-            <div key={brand}>
-              {/* Brand header */}
-              <div style={{
-                padding: '7px 14px', background: '#0a0a0a',
-                borderBottom: '1px solid #1e1e1e', borderTop: '1px solid #1e1e1e',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', fontWeight: 700 }}>{brand}</span>
-                <span style={{ fontSize: 9, color: '#444' }}>({fixtures.length})</span>
+          <>
+            {Object.entries(grouped).map(([brand, fixtures]) => (
+              <div key={brand}>
+                <div style={{
+                  padding: '7px 14px', background: '#0a0a0a',
+                  borderBottom: '1px solid #1e1e1e', borderTop: '1px solid #1e1e1e',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', fontWeight: 700 }}>{brand}</span>
+                  <span style={{ fontSize: 9, color: '#444' }}>({fixtures.length})</span>
+                </div>
+                {fixtures.map(f => {
+                  const vis = CATEGORY_VISUAL[f.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+                  return (
+                    <BrandedRow key={f.id} fixture={f} vis={vis} onSelect={() => handleSelect(f)} />
+                  )
+                })}
               </div>
-
-              {/* Fixture rows */}
-              {fixtures.map(f => {
-                const vis = CATEGORY_VISUAL[f.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
-                const proto = f.protocol
-                return (
-                  <BrandedRow
-                    key={f.id}
-                    fixture={f}
-                    vis={vis}
-                    onSelect={() => handleSelect(f)}
-                  />
-                )
-              })}
+            ))}
+            <div style={{ padding: '12px 14px', fontSize: 9, color: '#3a3a3a', lineHeight: 1.5, borderTop: '1px solid #1a1a1a' }}>
+              Specifications are indicative. Verify with manufacturer datasheet.
             </div>
-          ))
+          </>
         )}
       </div>
     </div>
@@ -476,10 +472,6 @@ function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
 
 function BrandedRow({ fixture, vis, onSelect }) {
   const [hovered, setHovered] = useState(false)
-  const proto = fixture.protocol
-  const protoLabel = PROTO_LABEL[proto] ?? proto
-  const protoColor = PROTO_COLOR[proto] ?? '#666'
-
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -503,7 +495,6 @@ function BrandedRow({ fixture, vis, onSelect }) {
             <span>{fixture.lumens}lm</span>
             <span>{fixture.beamAngle}°</span>
             <span>{fixture.cct}</span>
-            <span style={{ color: protoColor }}>{protoLabel}</span>
           </div>
         </div>
         {hovered && (
