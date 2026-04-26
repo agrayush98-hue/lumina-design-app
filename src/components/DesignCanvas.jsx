@@ -489,11 +489,13 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     if (activeTool === "draw-room") return
     // When no floor plan, the room-fill Rect handles clicks via its own onClick — don't double-fire
     if (!floorPlan) return
+    e.cancelBubble = true
     handleRoomClick(e)
   }
 
   // ── Regular fixture / marker click ───────────────────────────
   function handleRoomClick(e) {
+    e.cancelBubble = true
     if (isStripMode) return
     if (activeTool === "draw-room") return
     const stage = stageRef.current
