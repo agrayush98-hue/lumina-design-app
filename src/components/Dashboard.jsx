@@ -466,44 +466,75 @@ function ProjectsTab({ user }) {
                 </div>
               </div>
 
-              {/* Usage bar */}
-              <div className="dash-widget">
-                <div className="dash-widget-title">USAGE</div>
-                <div className="usage-list">
-                  <div className="usage-row">
-                    <div className="usage-row-header">
-                      <span className="usage-label">Projects</span>
-                      <span className="usage-count">
-                        {projects.length}{projectLimit === Infinity ? "" : `/${projectLimit}`}
-                        {projectLimit === Infinity && <span className="usage-unlimited">unlimited</span>}
-                      </span>
-                    </div>
-                    {projectLimit !== Infinity && (
-                      <div className="usage-bar-track">
-                        <div
-                          className="usage-bar-fill"
-                          style={{ width: `${Math.min(100, (projects.length / projectLimit) * 100)}%` }}
-                        />
+              {/* Usage section */}
+              {(() => {
+                const now        = new Date()
+                const resetDate  = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+                const resetStr   = resetDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+
+                const projPct    = projectLimit === Infinity ? 0 : Math.min(100, (projects.length / projectLimit) * 100)
+                const projAtLimit = projectLimit !== Infinity && projects.length >= projectLimit
+                const projColor  = projAtLimit ? '#ef4444' : projPct >= 80 ? '#e07b2a' : '#d4a843'
+
+                const aiPct      = aiLimit > 0 ? Math.min(100, (aiUsed / aiLimit) * 100) : 0
+                const aiAtLimit  = aiLimit > 0 && aiUsed >= aiLimit
+                const aiColor    = !isPaid ? '#ef4444' : aiAtLimit ? '#ef4444' : aiPct >= 80 ? '#e07b2a' : '#d4a843'
+
+                return (
+                  <div className="dash-widget dash-widget--usage">
+                    <div className="dash-widget-title">USAGE</div>
+                    <div className="usage-list">
+
+                      {/* Projects */}
+                      <div className="usage-row">
+                        <div className="usage-row-header">
+                          <span className="usage-label">PROJECTS</span>
+                          <span className="usage-count" style={{ color: projAtLimit ? '#ef4444' : '#cccccc' }}>
+                            {projects.length} / {projectLimit === Infinity ? "Unlimited" : projectLimit}
+                            {projectLimit !== Infinity && (
+                              <span className="usage-pct" style={{ color: projColor }}> · {Math.round(projPct)}%</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="usage-bar-track">
+                          <div className="usage-bar-fill" style={{
+                            width: projectLimit === Infinity ? '100%' : `${projPct}%`,
+                            background: projectLimit === Infinity ? 'rgba(212,168,67,0.25)' : projColor,
+                          }} />
+                        </div>
+                        {projAtLimit && <div className="usage-hint usage-hint--warn">Project limit reached. Upgrade to create more.</div>}
                       </div>
-                    )}
+
+                      {/* AI Calls */}
+                      <div className="usage-row">
+                        <div className="usage-row-header">
+                          <span className="usage-label">AI CALLS (THIS MONTH)</span>
+                          {isPaid ? (
+                            <span className="usage-count" style={{ color: aiAtLimit ? '#ef4444' : '#cccccc' }}>
+                              {aiUsed} / {aiLimit}
+                              <span className="usage-pct" style={{ color: aiColor }}> · {Math.round(aiPct)}%</span>
+                            </span>
+                          ) : (
+                            <span className="usage-count" style={{ color: '#ef4444' }}>0 / 0</span>
+                          )}
+                        </div>
+                        <div className="usage-bar-track">
+                          {isPaid ? (
+                            <div className="usage-bar-fill" style={{ width: `${aiPct}%`, background: aiColor }} />
+                          ) : (
+                            <div className="usage-bar-fill" style={{ width: '100%', background: 'rgba(239,68,68,0.25)' }} />
+                          )}
+                        </div>
+                        {isPaid
+                          ? <div className="usage-hint">Resets {resetStr}</div>
+                          : <div className="usage-hint usage-hint--warn">Upgrade to PRO to use AI</div>
+                        }
+                      </div>
+
+                    </div>
                   </div>
-                  {isPaid && (
-                    <div className="usage-row">
-                      <div className="usage-row-header">
-                        <span className="usage-label">AI Calls (this month)</span>
-                        <span className="usage-count">{aiUsed}/{aiLimit}</span>
-                      </div>
-                      <div className="usage-bar-track">
-                        <div
-                          className="usage-bar-fill"
-                          style={{ width: `${Math.min(100, (aiUsed / aiLimit) * 100)}%`,
-                                   background: aiUsed >= aiLimit ? '#ef4444' : undefined }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Upgrade block — only for non-paid users */}
               {!isPaid && (

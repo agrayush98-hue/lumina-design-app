@@ -455,10 +455,15 @@
 }
 .btn-upgrade:hover { opacity: 0.85; }
 
-/* ── Usage bar ───────────────────────────────────────────────────────────────── */
-.usage-list { display: flex; flex-direction: column; gap: 14px; }
+/* ── Usage section ───────────────────────────────────────────────────────────── */
+.dash-widget--usage {
+  border: 1px solid rgba(212, 168, 67, 0.18) !important;
+  background: #0a0a0a;
+}
 
-.usage-row { display: flex; flex-direction: column; gap: 6px; }
+.usage-list { display: flex; flex-direction: column; gap: 16px; }
+
+.usage-row { display: flex; flex-direction: column; gap: 7px; }
 
 .usage-row-header {
   display: flex;
@@ -466,30 +471,43 @@
   align-items: baseline;
 }
 
-.usage-label { font-size: 9px; color: #666; letter-spacing: 0.08em; }
+.usage-label {
+  font-size: 9px;
+  color: #555;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
 
 .usage-count { font-size: 10px; color: #cccccc; font-weight: 600; }
 
-.usage-unlimited {
-  font-size: 8px;
-  color: #d4a843;
-  letter-spacing: 0.06em;
-  margin-left: 4px;
+.usage-pct {
+  font-size: 9px;
   font-weight: 500;
 }
 
 .usage-bar-track {
-  height: 3px;
-  background: #1a1a1a;
-  border-radius: 2px;
+  height: 5px;
+  background: #181818;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .usage-bar-fill {
   height: 100%;
   background: #d4a843;
-  border-radius: 2px;
-  transition: width 0.4s ease;
+  border-radius: 3px;
+  transition: width 0.4s ease, background 0.3s ease;
+}
+
+.usage-hint {
+  font-size: 8px;
+  color: #444;
+  letter-spacing: 0.06em;
+  margin-top: -2px;
+}
+
+.usage-hint--warn {
+  color: #ef4444;
 }
 
 /* ── Pro active indicator ────────────────────────────────────────────────────── */
