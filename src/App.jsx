@@ -580,6 +580,7 @@ export default function App() {
   // ── Light handlers ────────────────────────────────────────────────────────
 
   function addLight(lightData) {
+    console.trace("addLight called")
     if (activeFixtureCategory === "LED_STRIP") {
       const vis = CATEGORY_VISUAL.LED_STRIP
       const len = lightData.lengthM ?? 1
