@@ -10,16 +10,26 @@ export const FIXTURE_LIBRARY = [
 
 // ── Category → canvas visual defaults ────────────────────────────────────────
 export const CATEGORY_VISUAL = {
-  COB_DOWNLIGHT: { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.10)',  visualRadius: 7  },
-  SPOTLIGHT:     { fill: '#ffd0a0', stroke: '#ff7c00', glowColor: 'rgba(255,124,0,0.10)',  visualRadius: 5  },
-  PANEL:         { fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.10)', visualRadius: 13 },
-  LINEAR:        { fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.10)', visualRadius: 10 },
-  WALL_WASHER:   { fill: '#c8f0ff', stroke: '#20c0f0', glowColor: 'rgba(32,192,240,0.10)', visualRadius: 9  },
-  LED_STRIP:     { fill: '#f0d0ff', stroke: '#cc60ff', glowColor: 'rgba(200,96,255,0.10)', visualRadius: 10 },
+  // ── Standard ───────────────────────────────────────────────────────────────
+  COB_DOWNLIGHT: { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.10)',  visualRadius: 7,  fixtureShape: 'circle'    },
+  SPOTLIGHT:     { fill: '#ffd0a0', stroke: '#ff7c00', glowColor: 'rgba(255,124,0,0.10)',  visualRadius: 5,  fixtureShape: 'circle'    },
+  PANEL:         { fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.10)', visualRadius: 13, fixtureShape: 'square'    },
+  LINEAR:        { fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.10)', visualRadius: 10, fixtureShape: 'rectangle' },
+  WALL_WASHER:   { fill: '#c8f0ff', stroke: '#20c0f0', glowColor: 'rgba(32,192,240,0.10)', visualRadius: 9,  fixtureShape: 'rectangle' },
+  LED_STRIP:     { fill: '#f0d0ff', stroke: '#cc60ff', glowColor: 'rgba(200,96,255,0.10)', visualRadius: 10, fixtureShape: 'rectangle' },
+  // ── Professional ───────────────────────────────────────────────────────────
+  CHANDELIER:    { fill: '#d4a8f0', stroke: '#9b59b6', glowColor: 'rgba(155,89,182,0.14)',  visualRadius: 10, fixtureShape: 'star6'   },
+  PENDANT:       { fill: '#f8a8d4', stroke: '#e91e8c', glowColor: 'rgba(233,30,140,0.12)',  visualRadius: 8,  fixtureShape: 'pendant' },
+  TRACK_LIGHT:   { fill: '#a8d4f8', stroke: '#2196f3', glowColor: 'rgba(33,150,243,0.12)',  visualRadius: 9,  fixtureShape: 'track'   },
+  COVE_LIGHT:    { fill: '#a8f0f8', stroke: '#00bcd4', glowColor: 'rgba(0,188,212,0.12)',   visualRadius: 11, fixtureShape: 'cove'    },
+  BOLLARD:       { fill: '#a8f0a8', stroke: '#4caf50', glowColor: 'rgba(76,175,80,0.12)',   visualRadius: 8,  fixtureShape: 'hexagon' },
+  FLOOD_LIGHT:   { fill: '#f8a8a8', stroke: '#f44336', glowColor: 'rgba(244,67,54,0.12)',   visualRadius: 12, fixtureShape: 'flood'   },
+  SURFACE_PANEL: { fill: '#f8d4a8', stroke: '#ff9800', glowColor: 'rgba(255,152,0,0.12)',   visualRadius: 12, fixtureShape: 'square'  },
 }
 
 // ── Category metadata — drives modal UI ───────────────────────────────────────
 export const CATEGORY_META = {
+  // ── Standard ──────────────────────────────────────────────────────────────
   COB_DOWNLIGHT: {
     label: 'COB Downlight',
     beamAngles: [36, 24, 60],          // 36° standard COB default
@@ -87,10 +97,82 @@ export const CATEGORY_META = {
   },
   LED_STRIP: {
     label: 'LED Strip',
-    beamAngles: [120],                  // 120° standard LED strip
+    beamAngles: [120],
     cctOptions: ['3000K', '4000K', '6500K', 'Tunable'],
     voltageOptions: [12, 24, 48],
-    variants: [], // watt/lm per metre are manual inputs
+    variants: [],
+  },
+
+  // ── Professional-only ─────────────────────────────────────────────────────
+  CHANDELIER: {
+    label: 'Chandelier', professionalOnly: true,
+    beamAngles: [120],
+    cctOptions: ['2700K', '3000K'],
+    variants: [
+      { watt: 30,  lumens: 2700, beamAngle: 120, label: '6-arm'  },
+      { watt: 45,  lumens: 4050, beamAngle: 120, label: '8-arm'  },
+      { watt: 60,  lumens: 5400, beamAngle: 120, label: '12-arm' },
+    ],
+  },
+  PENDANT: {
+    label: 'Pendant', professionalOnly: true,
+    beamAngles: [60],
+    cctOptions: ['2700K', '3000K'],
+    variants: [
+      { watt: 12, lumens: 1080, beamAngle: 60, label: 'Small'  },
+      { watt: 20, lumens: 1800, beamAngle: 60, label: 'Medium' },
+      { watt: 30, lumens: 2700, beamAngle: 60, label: 'Large'  },
+    ],
+  },
+  TRACK_LIGHT: {
+    label: 'Track Light', professionalOnly: true,
+    beamAngles: [36],
+    cctOptions: ['3000K', '4000K'],
+    variants: [
+      { watt: 10, lumens: 850,  beamAngle: 36 },
+      { watt: 20, lumens: 1700, beamAngle: 36 },
+      { watt: 30, lumens: 2550, beamAngle: 36 },
+    ],
+  },
+  COVE_LIGHT: {
+    label: 'Cove Light', professionalOnly: true,
+    beamAngles: [120],
+    cctOptions: ['3000K', '4000K'],
+    variants: [
+      { watt: 10, lumens: 900,  beamAngle: 120, label: '10W/m' },
+      { watt: 15, lumens: 1350, beamAngle: 120, label: '15W/m' },
+    ],
+  },
+  BOLLARD: {
+    label: 'Bollard', professionalOnly: true,
+    beamAngles: [120],
+    cctOptions: ['4000K'],
+    variants: [
+      { watt: 8,  lumens: 720,  beamAngle: 120 },
+      { watt: 15, lumens: 1350, beamAngle: 120 },
+      { watt: 25, lumens: 2250, beamAngle: 120 },
+    ],
+  },
+  FLOOD_LIGHT: {
+    label: 'Flood Light', professionalOnly: true,
+    beamAngles: [120],
+    cctOptions: ['6500K', '4000K'],
+    variants: [
+      { watt: 20,  lumens: 1800, beamAngle: 120 },
+      { watt: 30,  lumens: 2700, beamAngle: 120 },
+      { watt: 50,  lumens: 4500, beamAngle: 120 },
+      { watt: 100, lumens: 9000, beamAngle: 120 },
+    ],
+  },
+  SURFACE_PANEL: {
+    label: 'Surface Panel', professionalOnly: true,
+    beamAngles: [120],
+    cctOptions: ['4000K', '3000K'],
+    variants: [
+      { watt: 12, lumens: 1080, beamAngle: 120, label: '12W Round'  },
+      { watt: 18, lumens: 1620, beamAngle: 120, label: '18W Square' },
+      { watt: 24, lumens: 2160, beamAngle: 120, label: '24W Square' },
+    ],
   },
 }
 

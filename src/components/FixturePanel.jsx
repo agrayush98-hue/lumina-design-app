@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { CATEGORY_META, CATEGORY_VISUAL, resolveFixture } from '../data/fixtureLibrary'
 import { getUserFixtures, saveUserFixture, updateUserFixture, deleteUserFixture } from '../firebase'
 
-const CATEGORIES = ['COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP']
+const CATEGORIES = [
+  'COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP',
+  'CHANDELIER', 'PENDANT', 'TRACK_LIGHT', 'COVE_LIGHT', 'BOLLARD', 'FLOOD_LIGHT', 'SURFACE_PANEL',
+]
 
 const CAT_SHORT = {
   COB_DOWNLIGHT: 'Downlight',
@@ -11,6 +14,13 @@ const CAT_SHORT = {
   LINEAR:        'Linear',
   WALL_WASHER:   'Wall Washer',
   LED_STRIP:     'LED Strip',
+  CHANDELIER:    'Chandelier',
+  PENDANT:       'Pendant',
+  TRACK_LIGHT:   'Track Light',
+  COVE_LIGHT:    'Cove Light',
+  BOLLARD:       'Bollard',
+  FLOOD_LIGHT:   'Flood Light',
+  SURFACE_PANEL: 'Surface Panel',
 }
 
 const PROTOCOL_OPTIONS = [
@@ -63,7 +73,7 @@ function PanelInput({ label, value, onChange, placeholder, type = 'number' }) {
 }
 
 // ── Accordion standard tab ────────────────────────────────────────────────────
-function StandardTab({ onSelect }) {
+function StandardTab({ onSelect, isProfessional, onProfessionalGate }) {
   const [openCat,    setOpenCat]    = useState('COB_DOWNLIGHT')
   const [picked,     setPicked]     = useState(null)   // { cat, watt }
   const [pickedWatt, setPickedWatt] = useState(null)
@@ -71,6 +81,10 @@ function StandardTab({ onSelect }) {
   const [stripCfg,   setStripCfg]  = useState({ wattPerMtr: 10, lumensPerMtr: 800, length: 1, voltage: 24 })
 
   function handleCatClick(cat) {
+    if (CATEGORY_META[cat]?.professionalOnly && !isProfessional) {
+      onProfessionalGate?.()
+      return
+    }
     if (openCat === cat) {
       setOpenCat(null)
       setPicked(null)
@@ -90,20 +104,18 @@ function StandardTab({ onSelect }) {
   }
 
   function handleSelect(cat) {
+    if (CATEGORY_META[cat]?.professionalOnly && !isProfessional) {
+      onProfessionalGate?.()
+      return
+    }
     const meta     = CATEGORY_META[cat]
     const watt     = pickedWatt
     const variant  = meta.variants.find(v => v.watt === watt) ?? meta.variants[0]
     const beamAngle = pickedBeam ?? variant.beamAngle ?? meta.beamAngles[0]
-    console.log(
-      '[FixturePanel] Selected:',
-      `${meta.label} ${variant.watt}W`,
-      `${variant.lumens}lm`,
-      `${beamAngle}° beam`
-    )
     onSelect(resolveFixture({
       id:        `lib-${Date.now()}`,
       category:  cat,
-      name:      `${meta.label} ${variant.watt}W`,
+      name:      variant.label ? `${meta.label} ${variant.label}` : `${meta.label} ${variant.watt}W`,
       watt:      variant.watt,
       lumens:    variant.lumens,
       beamAngle,
@@ -148,14 +160,27 @@ function StandardTab({ onSelect }) {
 
   return (
     <div style={{ flex: 1, overflowY: 'auto' }}>
-      {CATEGORIES.map(cat => {
-        const meta   = CATEGORY_META[cat]
-        const vis    = CATEGORY_VISUAL[cat]
-        const isOpen = openCat === cat
-        const isStrip = cat === 'LED_STRIP'
+      {CATEGORIES.map((cat, idx) => {
+        const meta     = CATEGORY_META[cat]
+        const vis      = CATEGORY_VISUAL[cat]
+        const isOpen   = openCat === cat
+        const isStrip  = cat === 'LED_STRIP'
+        const isPro    = !!meta?.professionalOnly
+        const locked   = isPro && !isProfessional
+        const prevMeta = idx > 0 ? CATEGORY_META[CATEGORIES[idx - 1]] : null
+        const showDivider = isPro && !prevMeta?.professionalOnly
 
         return (
           <div key={cat}>
+            {/* PROFESSIONAL section divider */}
+            {showDivider && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px 6px' }}>
+                <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
+                <span style={{ fontSize: 8, color: '#d4a843', letterSpacing: '0.14em', fontWeight: 600 }}>PROFESSIONAL</span>
+                <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
+              </div>
+            )}
+
             {/* Category header row */}
             <button
               onClick={() => handleCatClick(cat)}
@@ -164,18 +189,21 @@ function StandardTab({ onSelect }) {
                 width: '100%', height: 36, padding: '0 14px',
                 background: isOpen ? '#191919' : 'transparent',
                 border: 'none', borderBottom: '1px solid #2e2e2e',
-                borderLeft: `2px solid ${isOpen ? '#d4a843' : 'transparent'}`,
-                color: isOpen ? '#f0f0f0' : '#888',
+                borderLeft: `2px solid ${isOpen ? (isPro ? '#9b59b6' : '#d4a843') : 'transparent'}`,
+                color: isOpen ? '#f0f0f0' : (locked ? '#666' : '#888'),
                 fontFamily: 'IBM Plex Mono', fontSize: 12,
                 cursor: 'pointer', textAlign: 'left',
                 transition: 'background 0.1s, color 0.1s',
               }}
               onMouseEnter={e => { if (!isOpen) { e.currentTarget.style.color = '#ccc' } }}
-              onMouseLeave={e => { if (!isOpen) { e.currentTarget.style.color = '#888' } }}
+              onMouseLeave={e => { if (!isOpen) { e.currentTarget.style.color = locked ? '#666' : '#888' } }}
             >
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: vis.fill, border: `1.5px solid ${vis.stroke}`, flexShrink: 0 }} />
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: vis?.fill ?? '#888', border: `1.5px solid ${vis?.stroke ?? '#888'}`, flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{CAT_SHORT[cat]}</span>
-              <span style={{ fontSize: 9, color: '#444' }}>{isOpen ? '▲' : '▼'}</span>
+              {locked
+                ? <span style={{ fontSize: 8, color: '#d4a843', letterSpacing: '0.08em' }}>PRO+</span>
+                : <span style={{ fontSize: 9, color: '#444' }}>{isOpen ? '▲' : '▼'}</span>
+              }
             </button>
 
             {/* Expanded content */}
@@ -415,7 +443,7 @@ function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
 }
 
 // ── Main panel ────────────────────────────────────────────────────────────────
-export default function FixturePanel({ activeFixtureId, onSelect, userId }) {
+export default function FixturePanel({ activeFixtureId, onSelect, userId, isProfessional, onProfessionalGate }) {
   const [tab,           setTab]           = useState('standard')
   const [myFixtures,    setMyFixtures]    = useState([])
   const [loadingMy,     setLoadingMy]     = useState(false)
@@ -521,7 +549,7 @@ export default function FixturePanel({ activeFixtureId, onSelect, userId }) {
       {/* ── STANDARD tab ──────────────────────────────────────────────────── */}
       {tab === 'standard' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <StandardTab onSelect={onSelect} />
+          <StandardTab onSelect={onSelect} isProfessional={isProfessional} onProfessionalGate={onProfessionalGate} />
         </div>
       )}
 

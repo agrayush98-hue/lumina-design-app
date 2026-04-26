@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useMemo, forwardRef, useImperativeHandle } from "react"
 import { createPortal } from "react-dom"
-import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star } from "react-konva"
+import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star, Wedge } from "react-konva"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
 import { useToast } from "./Toast"
 
@@ -976,18 +976,34 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             onDblClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id); }
           }
 
-          if (shape === 'circle') return <Circle radius={shapeRadius} {...shapeProps} />
-          if (shape === 'square') return <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} {...shapeProps} />
-          if (shape === 'diamond') return <RegularPolygon sides={4} radius={shapeRadius} rotation={45} {...shapeProps} />
-          if (shape === 'triangle') return <RegularPolygon sides={3} radius={shapeRadius} {...shapeProps} />
-          if (shape === 'hexagon') return <RegularPolygon sides={6} radius={shapeRadius} {...shapeProps} />
-          if (shape === 'star') return <Star numPoints={5} innerRadius={shapeRadius*0.4} outerRadius={shapeRadius} {...shapeProps} />
-          if (shape === 'rectangle') return <Rect x={-shapeRadius*1.2} y={-shapeRadius*0.8} width={shapeRadius*2.4} height={shapeRadius*1.6} {...shapeProps} />
+          if (shape === 'circle')    return <Circle radius={shapeRadius} {...shapeProps} />
+          if (shape === 'square')    return <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} {...shapeProps} />
+          if (shape === 'diamond')   return <RegularPolygon sides={4} radius={shapeRadius} rotation={45} {...shapeProps} />
+          if (shape === 'triangle')  return <RegularPolygon sides={3} radius={shapeRadius} {...shapeProps} />
+          if (shape === 'hexagon')   return <RegularPolygon sides={6} radius={shapeRadius} {...shapeProps} />
+          if (shape === 'star')      return <Star numPoints={5} innerRadius={shapeRadius*0.4} outerRadius={shapeRadius} {...shapeProps} />
+          if (shape === 'rectangle') return <Rect x={-shapeRadius*1.6} y={-shapeRadius*0.6} width={shapeRadius*3.2} height={shapeRadius*1.2} {...shapeProps} />
           if (shape === 'cross') return (
             <>
               <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} fill="transparent" listening={true} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
               <Line points={[-shapeRadius, 0, shapeRadius, 0]} stroke={stroke} strokeWidth={1.5} listening={false} />
               <Line points={[0, -shapeRadius, 0, shapeRadius]} stroke={stroke} strokeWidth={1.5} listening={false} />
+            </>
+          )
+          // ── Professional fixture shapes ────────────────────────────────────
+          if (shape === 'star6')  return <Star numPoints={6} innerRadius={shapeRadius*0.42} outerRadius={shapeRadius} {...shapeProps} />
+          if (shape === 'flood')  return <Wedge radius={shapeRadius*1.3} angle={80} rotation={-40} {...shapeProps} />
+          if (shape === 'cove')   return <Rect x={-shapeRadius*2.2} y={-shapeRadius*0.3} width={shapeRadius*4.4} height={shapeRadius*0.6} {...shapeProps} />
+          if (shape === 'pendant') return (
+            <>
+              <Line points={[0, -shapeRadius*2.4, 0, -shapeRadius]} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={1.5} listening={false} />
+              <Circle radius={shapeRadius} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
+            </>
+          )
+          if (shape === 'track') return (
+            <>
+              <Rect x={-shapeRadius*2} y={-shapeRadius*0.45} width={shapeRadius*4} height={shapeRadius*0.9} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
+              <Circle radius={shapeRadius*0.55} fill={stroke} stroke="transparent" strokeWidth={0} listening={false} />
             </>
           )
           return <Circle radius={shapeRadius} {...shapeProps} />

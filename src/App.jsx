@@ -82,6 +82,7 @@ function makeLight(id, x, y, fixture, lumensOverride) {
     stroke:       fixture?.stroke      ?? vis.stroke      ?? "#ffb300",
     glowColor:    fixture?.glowColor   ?? vis.glowColor   ?? "rgba(255,179,0,0.08)",
     visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
+    fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
   }
 }
@@ -1996,6 +1997,8 @@ export default function App() {
                   activeFixtureId={activeFixtureId}
                   onSelect={handleLibrarySelect}
                   userId={user?.uid ?? null}
+                  isProfessional={isProfessional()}
+                  onProfessionalGate={() => setGateModal({ feature: 'Professional Fixtures', professionalOnly: true })}
                 />
               </div>
               <div style={{ flex: 1, overflow: "auto", display: leftTab === 'ai' ? "flex" : "none", flexDirection: "column" }}>
@@ -2810,14 +2813,20 @@ export default function App() {
           >
             <div style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', marginBottom: 14 }}>UPGRADE REQUIRED</div>
             <div style={{ fontSize: 14, color: '#ffffff', fontWeight: 600, marginBottom: 8 }}>{gateModal.feature}</div>
-            <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
-              Your free trial has expired. Upgrade to PRO to unlock {gateModal.feature}, exports, DALI, floor plan upload, AI recommendations, and more.
-            </div>
+            {gateModal.professionalOnly ? (
+              <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
+                Chandeliers, Pendants, Track Lights, Cove Lights, Bollards, Flood Lights, and Surface Panels are exclusive to the Professional plan.
+              </div>
+            ) : (
+              <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
+                Your free trial has expired. Upgrade to PRO to unlock {gateModal.feature}, exports, DALI, floor plan upload, AI recommendations, and more.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => { setGateModal(null); navigate('/dashboard', { state: { openTab: 'subscription' } }) }}
                 style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
-              >UPGRADE TO PRO →</button>
+              >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL →' : 'UPGRADE TO PRO →'}</button>
               <button
                 onClick={() => setGateModal(null)}
                 style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 11, cursor: 'pointer' }}
