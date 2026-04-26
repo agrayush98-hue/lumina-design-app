@@ -223,7 +223,25 @@ function ProjectsTab({ user }) {
   const lastProject  = sorted[0] ?? null
   const recentThree  = sorted.slice(0, 3)
 
-  const trialColor = trialDays == null ? "#cccccc" : trialDays <= 0 ? "#ef4444" : "#d4a843"
+  // Last stat: plan status (paid) or trial countdown
+  let planStatValue, planStatLabel, planStatColor
+  if (isPro) {
+    planStatValue = "PRO"
+    planStatLabel = "PLAN ACTIVE"
+    planStatColor = "#d4a843"
+  } else if (isProfessional) {
+    planStatValue = "PRO+"
+    planStatLabel = "PLAN ACTIVE"
+    planStatColor = "#d4a843"
+  } else if (trialDays != null && trialDays > 0) {
+    planStatValue = Math.max(0, trialDays)
+    planStatLabel = "TRIAL DAYS LEFT"
+    planStatColor = "#d4a843"
+  } else {
+    planStatValue = "0"
+    planStatLabel = "TRIAL EXPIRED"
+    planStatColor = "#ef4444"
+  }
 
   return (
     <>
@@ -254,10 +272,8 @@ function ProjectsTab({ user }) {
             </div>
             <div className="dash-stat-divider" />
             <div className="dash-stat">
-              <div className="dash-stat-value" style={{ color: trialColor }}>
-                {trialDays != null ? Math.max(0, trialDays) : "—"}
-              </div>
-              <div className="dash-stat-label">Trial Days Left</div>
+              <div className="dash-stat-value" style={{ color: planStatColor }}>{planStatValue}</div>
+              <div className="dash-stat-label">{planStatLabel}</div>
             </div>
             <div style={{ flex: 1 }} />
             <button className="btn-primary" onClick={handleNewProject}>+ NEW PROJECT</button>
