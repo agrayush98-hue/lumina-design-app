@@ -131,13 +131,25 @@ const CATEGORY_MAP = {
   LINEAR:           "LINEAR",
   WALL_WASHER:      "WALL_WASHER",
   LED_STRIP:        "LED_STRIP",
+  // Professional types
+  CHANDELIER:       "CHANDELIER",
+  PENDANT:          "PENDANT",
+  TRACK_LIGHT:      "TRACK_LIGHT",
+  COVE_LIGHT:       "COVE_LIGHT",
+  BOLLARD:          "BOLLARD",
+  FLOOD_LIGHT:      "FLOOD_LIGHT",
+  SURFACE_PANEL:    "SURFACE_PANEL",
   // Common aliases Claude may use
   DOWNLIGHT:        "COB_DOWNLIGHT",
   STRIP:            "LED_STRIP",
   WASHER:           "WALL_WASHER",
-  TRACK:            "SPOTLIGHT",
+  TRACK:            "TRACK_LIGHT",
   BATTEN:           "LINEAR",
-  COVE:             "LED_STRIP",
+  COVE:             "COVE_LIGHT",
+  CHANDELIER_LIGHT: "CHANDELIER",
+  PENDANT_LIGHT:    "PENDANT",
+  FLOOD:            "FLOOD_LIGHT",
+  SURFACE:          "SURFACE_PANEL",
 }
 
 // ── Per-type accent colours ───────────────────────────────────────────────────
@@ -149,6 +161,14 @@ const TYPE_COLOR = {
   LINEAR:        "#3dba74",
   WALL_WASHER:   "#a78bfa",
   LED_STRIP:     "#e879f9",
+  // Professional types
+  CHANDELIER:    "#9b59b6",
+  PENDANT:       "#e91e8c",
+  TRACK_LIGHT:   "#2196f3",
+  COVE_LIGHT:    "#00bcd4",
+  BOLLARD:       "#4caf50",
+  FLOOD_LIGHT:   "#f44336",
+  SURFACE_PANEL: "#ff9800",
 }
 
 // ── Build a placeable fixture object from an AI zone record ──────────────────

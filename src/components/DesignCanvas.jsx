@@ -771,6 +771,14 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     PANEL:         "#e8f4ff",
     LINEAR:        "#e8f4ff",
     WALL_WASHER:   "#7ec8e3",
+    // Professional types
+    CHANDELIER:    "#d4a8f0",
+    PENDANT:       "#f8a8d4",
+    TRACK_LIGHT:   "#a8d4f8",
+    COVE_LIGHT:    "#a8f0f8",
+    BOLLARD:       "#a8f0a8",
+    FLOOD_LIGHT:   "#f8a8a8",
+    SURFACE_PANEL: "#f8d4a8",
   }
 
   function beamColor(light) {
