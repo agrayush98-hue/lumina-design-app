@@ -17,6 +17,7 @@ import EmergencyPanel from "./components/EmergencyPanel"
 import ReportPanel from "./components/ReportPanel"
 import LoadProjectModal from "./components/LoadProjectModal"
 import AIRecommender from "./components/AIRecommender"
+import ConnectionStatus from "./components/ConnectionStatus"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
@@ -287,7 +288,7 @@ export default function App() {
         notify.warning(`AI call limit reached (${used}/${limit} this month). Resets on the 1st.`)
         return
       }
-    } catch { /* non-fatal — allow through if check fails */ }
+    } catch (e) { console.error('Failed to check AI limit:', e) /* non-fatal — allow through if check fails */ }
     setLeftSidebarCollapsed(false)
     setLeftTab('ai')
   }
@@ -951,9 +952,15 @@ export default function App() {
     const pid  = searchParams.get("projectId")
     const name = searchParams.get("new")
     if (pid) {
-      loadProject(pid).then(data => {
-        handleLoadFromModal(pid, data)
-      }).catch(e => showToast(`Failed to load project: ${e.message}`))
+      ;(async () => {
+        try {
+          const data = await loadProject(pid)
+          handleLoadFromModal(pid, data)
+        } catch (e) {
+          console.error('Failed to load project:', e)
+          showToast(`Failed to load project: ${e.message}`)
+        }
+      })()
     } else if (name) {
       setProjectName(decodeURIComponent(name))
       // Check if a template was queued by NewProjectWizard
@@ -2979,6 +2986,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <ConnectionStatus />
     </div>
   )
 }

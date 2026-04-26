@@ -3,7 +3,19 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(curl -s http://localhost:5173)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(gh pr *)",
+      "Bash(where gh *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(sed -i 's/\"#0f0f0f\"/\"#090c10\"/g' src/App.jsx)",
+      "Bash(sed -i 's/\"#141414\"/\"#0d1520\"/g' src/App.jsx)",
+      "Bash(sed -i 's/\"#0a0a0a\"/\"#090c10\"/g' src/App.jsx)",
+      "Bash(sed -i 's/\"#111111\"/\"#0a1018\"/g' src/App.jsx)",
+      "Bash(sed -i 's/\"#1a1a1a\"/\"#0f1e2e\"/g' src/App.jsx)",
+      "Bash(git push *)",
+      "Bash(vercel --prod)",
+      "Bash(npm install *)"
     ]
   }
 }
