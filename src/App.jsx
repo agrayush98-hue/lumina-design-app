@@ -328,6 +328,7 @@ export default function App() {
   const [showExportModal,    setShowExportModal]    = useState(false)
   const [exportRoomIds,      setExportRoomIds]      = useState([])
   const canvasRef = useRef(null)
+  const lastAddLightTime = useRef(0)
   const [showLoadModal,      setShowLoadModal]      = useState(false)
   const [toast,              setToast]              = useState(null)   // string | null
   const [recentCustom,       setRecentCustom]       = useState([])
@@ -580,6 +581,9 @@ export default function App() {
   // ── Light handlers ────────────────────────────────────────────────────────
 
   function addLight(lightData) {
+    const now = Date.now()
+    if (now - lastAddLightTime.current < 100) return
+    lastAddLightTime.current = now
     console.trace("addLight called")
     if (activeFixtureCategory === "LED_STRIP") {
       const vis = CATEGORY_VISUAL.LED_STRIP
