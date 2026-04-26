@@ -503,11 +503,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const raw = stage.getPointerPosition()
     if (!raw) return
     const pos = toWorld(raw)
-    if (floorPlan && floorPlanDisplayRef.current) {
-      const { imgX, imgY, scaleX, scaleY } = floorPlanDisplayRef.current
-      pos.x = (pos.x - imgX) / scaleX
-      pos.y = (pos.y - imgY) / scaleY
-    }
     const x = snap(pos.x, ROOM_X, ROOM_PX_W)
     const y = snap(pos.y, ROOM_Y, ROOM_PX_H)
     if (activeTool === "fixture") {
