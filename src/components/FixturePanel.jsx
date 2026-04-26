@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { CATEGORY_META, CATEGORY_VISUAL, resolveFixture } from '../data/fixtureLibrary'
 import { getUserFixtures, saveUserFixture, updateUserFixture, deleteUserFixture } from '../firebase'
+import { BRANDS, ALL_BRANDED, BRAND_NAMES, BRANDED_CATEGORIES, PROTO_LABEL, PROTO_COLOR } from '../data/brandedFixtures'
 
 const CATEGORIES = [
   'COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP',
@@ -313,6 +314,215 @@ function StandardTab({ onSelect, isProfessional, onProfessionalGate }) {
   )
 }
 
+// ── Branded tab ───────────────────────────────────────────────────────────────
+function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
+  const [search,      setSearch]      = useState('')
+  const [filterBrand, setFilterBrand] = useState('ALL')
+  const [filterCat,   setFilterCat]   = useState('ALL')
+  const [filterCCT,   setFilterCCT]   = useState('ALL')
+  const [minW,        setMinW]        = useState('')
+  const [maxW,        setMaxW]        = useState('')
+
+  const cctOptions = useMemo(() => {
+    const s = new Set(ALL_BRANDED.map(f => f.cct))
+    return ['ALL', ...Array.from(s).sort()]
+  }, [])
+
+  const filtered = useMemo(() => {
+    return ALL_BRANDED.filter(f => {
+      if (filterBrand !== 'ALL' && f.brand !== filterBrand) return false
+      if (filterCat   !== 'ALL' && f.category !== filterCat) return false
+      if (filterCCT   !== 'ALL' && f.cct !== filterCCT) return false
+      if (minW && f.watt < Number(minW)) return false
+      if (maxW && f.watt > Number(maxW)) return false
+      if (search) {
+        const q = search.toLowerCase()
+        if (!f.name.toLowerCase().includes(q) && !f.brand.toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+  }, [search, filterBrand, filterCat, filterCCT, minW, maxW])
+
+  const grouped = useMemo(() => {
+    const map = {}
+    for (const f of filtered) {
+      if (!map[f.brand]) map[f.brand] = []
+      map[f.brand].push(f)
+    }
+    return map
+  }, [filtered])
+
+  function handleSelect(fixture) {
+    const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+    onSelect(resolveFixture({
+      id:        `branded-${fixture.id}-${Date.now()}`,
+      category:  fixture.category,
+      name:      fixture.name,
+      watt:      fixture.watt,
+      lumens:    fixture.lumens,
+      beamAngle: fixture.beamAngle,
+      cct:       fixture.cct,
+      tunable:   fixture.cct === 'Tunable',
+      voltage:   230,
+      protocol:  fixture.protocol,
+      brand:     fixture.brand,
+      fill:      vis.fill,
+      stroke:    vis.stroke,
+      glowColor: vis.glowColor,
+      visualRadius: vis.visualRadius,
+      fixtureShape: vis.fixtureShape ?? 'circle',
+    }))
+  }
+
+  if (!isProfessional) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px', textAlign: 'center' }}>
+        <div style={{ fontSize: 20, marginBottom: 12, color: '#d4a843' }}>🔒</div>
+        <div style={{ fontSize: 12, color: '#f0f0f0', marginBottom: 8, letterSpacing: '0.04em' }}>PROFESSIONAL ONLY</div>
+        <div style={{ fontSize: 11, color: '#555', lineHeight: 1.6, marginBottom: 20 }}>
+          Indian branded fixtures from Philips, Havells, Wipro & more require the Professional plan.
+        </div>
+        <button
+          onClick={onProfessionalGate}
+          style={{
+            height: 32, padding: '0 16px',
+            background: '#d4a843', border: 'none', borderRadius: 4,
+            color: '#0f0f0f', fontFamily: 'IBM Plex Mono', fontSize: 11,
+            fontWeight: 600, cursor: 'pointer', letterSpacing: '0.06em',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#e0b84e' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#d4a843' }}
+        >UPGRADE TO PROFESSIONAL →</button>
+      </div>
+    )
+  }
+
+  const filterSt = {
+    width: '100%', background: '#181818', border: '1px solid #2e2e2e', borderRadius: 3,
+    color: '#ccc', fontFamily: 'IBM Plex Mono', fontSize: 11, padding: '4px 7px',
+    outline: 'none', boxSizing: 'border-box',
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Filter bar */}
+      <div style={{ padding: '10px 12px', borderBottom: '1px solid #2e2e2e', flexShrink: 0, background: '#0f0f0f' }}>
+        <input
+          type="text"
+          placeholder="Search fixtures…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ ...filterSt, marginBottom: 7 }}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6 }}>
+          <select value={filterBrand} onChange={e => setFilterBrand(e.target.value)} style={{ ...filterSt, cursor: 'pointer' }}>
+            <option value="ALL">All Brands</option>
+            {BRAND_NAMES.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value)} style={{ ...filterSt, cursor: 'pointer' }}>
+            <option value="ALL">All Types</option>
+            {BRANDED_CATEGORIES.map(c => <option key={c} value={c}>{CATEGORY_META[c]?.label ?? c}</option>)}
+          </select>
+          <select value={filterCCT} onChange={e => setFilterCCT(e.target.value)} style={{ ...filterSt, cursor: 'pointer' }}>
+            {cctOptions.map(c => <option key={c} value={c}>{c === 'ALL' ? 'All CCT' : c}</option>)}
+          </select>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <input type="number" placeholder="Min W" value={minW} onChange={e => setMinW(e.target.value)}
+              style={{ ...filterSt, width: '50%' }} />
+            <input type="number" placeholder="Max W" value={maxW} onChange={e => setMaxW(e.target.value)}
+              style={{ ...filterSt, width: '50%' }} />
+          </div>
+        </div>
+        <div style={{ fontSize: 10, color: '#444' }}>{filtered.length} fixture{filtered.length !== 1 ? 's' : ''}</div>
+      </div>
+
+      {/* Fixture list */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {Object.keys(grouped).length === 0 ? (
+          <div style={{ padding: '32px 20px', fontSize: 11, color: '#555', textAlign: 'center' }}>No fixtures match filters.</div>
+        ) : (
+          Object.entries(grouped).map(([brand, fixtures]) => (
+            <div key={brand}>
+              {/* Brand header */}
+              <div style={{
+                padding: '7px 14px', background: '#0a0a0a',
+                borderBottom: '1px solid #1e1e1e', borderTop: '1px solid #1e1e1e',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', fontWeight: 700 }}>{brand}</span>
+                <span style={{ fontSize: 9, color: '#444' }}>({fixtures.length})</span>
+              </div>
+
+              {/* Fixture rows */}
+              {fixtures.map(f => {
+                const vis = CATEGORY_VISUAL[f.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+                const proto = f.protocol
+                return (
+                  <BrandedRow
+                    key={f.id}
+                    fixture={f}
+                    vis={vis}
+                    onSelect={() => handleSelect(f)}
+                  />
+                )
+              })}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+function BrandedRow({ fixture, vis, onSelect }) {
+  const [hovered, setHovered] = useState(false)
+  const proto = fixture.protocol
+  const protoLabel = PROTO_LABEL[proto] ?? proto
+  const protoColor = PROTO_COLOR[proto] ?? '#666'
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '7px 14px',
+        background: hovered ? '#1a1a1a' : 'transparent',
+        borderBottom: '1px solid #1e1e1e',
+        transition: 'background 0.1s',
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: vis.fill, border: `1.5px solid ${vis.stroke}`, flexShrink: 0, marginTop: 3 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: '#e0e0e0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {fixture.name}
+          </div>
+          <div style={{ fontSize: 10, color: '#555', marginTop: 2, display: 'flex', flexWrap: 'wrap', gap: '2px 6px' }}>
+            <span>{fixture.watt}W</span>
+            <span>{fixture.lumens}lm</span>
+            <span>{fixture.beamAngle}°</span>
+            <span>{fixture.cct}</span>
+            <span style={{ color: protoColor }}>{protoLabel}</span>
+          </div>
+        </div>
+        {hovered && (
+          <button
+            onClick={e => { e.stopPropagation(); onSelect() }}
+            style={{
+              height: 22, padding: '0 8px', background: '#d4a843', border: 'none', borderRadius: 3,
+              color: '#0f0f0f', fontFamily: 'IBM Plex Mono', fontSize: 10, fontWeight: 600,
+              cursor: 'pointer', flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#e0b84e' }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#d4a843' }}
+          >SELECT</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── My Fixtures row ───────────────────────────────────────────────────────────
 function FixtureRow({ fixture, isActive, onSelect, onEdit, onDelete }) {
   const [hovered, setHovered] = useState(false)
@@ -543,13 +753,21 @@ export default function FixturePanel({ activeFixtureId, onSelect, userId, isProf
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #2e2e2e', flexShrink: 0 }}>
         {tabBtn('standard', 'STANDARD')}
-        {tabBtn('my', 'MY FIXTURES')}
+        {tabBtn('branded', 'BRANDED')}
+        {tabBtn('my', 'MY FIX')}
       </div>
 
       {/* ── STANDARD tab ──────────────────────────────────────────────────── */}
       {tab === 'standard' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <StandardTab onSelect={onSelect} isProfessional={isProfessional} onProfessionalGate={onProfessionalGate} />
+        </div>
+      )}
+
+      {/* ── BRANDED tab ───────────────────────────────────────────────────── */}
+      {tab === 'branded' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <BrandedTab onSelect={onSelect} isProfessional={isProfessional} onProfessionalGate={onProfessionalGate} />
         </div>
       )}
 

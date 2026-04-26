@@ -83,6 +83,7 @@ function makeLight(id, x, y, fixture, lumensOverride) {
     glowColor:    fixture?.glowColor   ?? vis.glowColor   ?? "rgba(255,179,0,0.08)",
     visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
     fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
+    protocol:     fixture?.protocol ?? null,
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
   }
 }
