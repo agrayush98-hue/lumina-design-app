@@ -1653,210 +1653,174 @@ export default function App() {
       footer(pageNum++)
     }
 
-    // ── Final page: Layout Snapshot ────────────────────────────────────────────
+    // ── Final page: Layout Snapshot ──────────────────────────────────────────
     const stage = canvasRef.current?.getStage()
     if (stage) {
+      // 1. Hide overlays before capture
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
       if (wasBeam) setShowBeam(false)
       if (wasHeatmap) setShowHeatmap(false)
-      await new Promise(r => setTimeout(r, 100))
+      await new Promise(r => setTimeout(r, 300))
 
+      // 2. Get room bounds and crop tightly
       const bounds = canvasRef.current?.getRoomBounds?.()
-      const padding = 20
-      const cropX = bounds ? Math.max(0, bounds.x - padding) : 0
-      const cropY = bounds ? Math.max(0, bounds.y - padding) : 0
-      const cropW = bounds ? bounds.width + padding * 2 : stage.width()
-      const cropH = bounds ? bounds.height + padding * 4 : stage.height()
+      const pad = 30
+      const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
+      const cropY = bounds ? Math.max(0, bounds.y - pad) : 0
+      const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
+      const cropH = bounds ? bounds.height + pad * 2 : stage.height()
 
-      const dataUrl = stage.toDataURL({
-        pixelRatio: 3,
-        x: cropX,
-        y: cropY,
-        width: cropW,
-        height: cropH,
-      })
+      const dataUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
 
+      // 3. Restore overlays
+      if (wasBeam) setShowBeam(true)
+      if (wasHeatmap) setShowHeatmap(true)
+
+      // 4. Add new page with dark theme
       doc.addPage()
-
-      // Full black background
       doc.setFillColor(10, 10, 10)
       doc.rect(0, 0, PW, PH, "F")
-
-      // Gold top bar
       doc.setFillColor(212, 175, 55)
       doc.rect(0, 0, PW, 3, "F")
-
-      // Gold left stripe
       doc.setFillColor(212, 175, 55)
       doc.rect(0, 0, 6, PH, "F")
-
-      // Gold bottom bar
       doc.setFillColor(212, 175, 55)
       doc.rect(0, PH - 3, PW, 3, "F")
 
-      // Small label top left
+      // 5. Header labels
       doc.setFont("helvetica", "bold"); doc.setFontSize(8)
       doc.setTextColor(212, 175, 55)
       doc.text("LAYOUT SNAPSHOT", M + 8, 14)
       doc.setFont("helvetica", "normal"); doc.setFontSize(7)
       doc.setTextColor(150, 150, 150)
-      doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 20)
-
-      // LUMINA DESIGN top right
+      doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
       doc.setFont("helvetica", "bold"); doc.setFontSize(8)
       doc.setTextColor(212, 175, 55)
       doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
 
-      const imgRatio = cropH / cropW
-      const finalW = PW - 2 * M - 8
-      const finalH = finalW * imgRatio
-      const finalX = (PW - finalW) / 2
-      const finalY = 28
+      // 6. Image sizing — full width, correct aspect ratio
+      const availW = PW - 2 * M - 8
+      const aspectRatio = cropH / cropW
+      const imgW = availW
+      const imgH = imgW * aspectRatio
+      const imgX = (PW - imgW) / 2
+      const imgY = 26
 
-      doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
+      doc.addImage(dataUrl, "PNG", imgX, imgY, imgW, imgH)
 
-      // ── Draw fixture distances on PDF ──────────────────────────
-      const CANVAS_W_PDF = 1400
-      const CANVAS_H_PDF = 750
-      const SCALE_PDF = Math.min((CANVAS_W_PDF - 260) / roomWidth, (CANVAS_H_PDF - 220) / roomHeight)
+      // 7. Distance annotations — derive scale
+      const CANVAS_W = 1400
+      const CANVAS_H = 750
+      const SCALE_PDF = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
       const ROOM_X_PDF = roomOffsetX != null ? roomOffsetX : 20
       const ROOM_Y_PDF = roomOffsetY != null ? roomOffsetY : 30
-      const ROOM_PX_W_PDF = drawnWidthPx != null ? drawnWidthPx : roomWidth * SCALE_PDF
+      const ROOM_PX_W_PDF = drawnWidthPx  != null ? drawnWidthPx  : roomWidth  * SCALE_PDF
       const ROOM_PX_H_PDF = drawnHeightPx != null ? drawnHeightPx : roomHeight * SCALE_PDF
 
-      // Convert world px coords to PDF coords
-      const toPdfX = (wx) => finalX + ((wx - cropX) / cropW) * finalW
-      const toPdfY = (wy) => finalY + ((wy - cropY) / cropH) * finalH
+      // Convert canvas coords to PDF coords
+      const toPdfX = wx => imgX + ((wx - cropX) / cropW) * imgW
+      const toPdfY = wy => imgY + ((wy - cropY) / cropH) * imgH
 
-      // Sort lights by position for distance lines
-      const sortedByX = [...lights].sort((a, b) => a.x - b.x)
-      const sortedByY = [...lights].sort((a, b) => a.y - b.y)
-
-      // Group lights by row (similar Y) and column (similar X)
-      const ROW_THRESHOLD = ROOM_PX_H_PDF / (roomHeight * 2)
+      // Group lights into rows and columns
+      const threshold = ROOM_PX_H_PDF / (roomHeight * 2)
       const rows = []
-      sortedByY.forEach(light => {
-        const existing = rows.find(r => Math.abs(r[0].y - light.y) < ROW_THRESHOLD)
-        if (existing) existing.push(light)
-        else rows.push([light])
-      })
-
       const cols = []
-      sortedByX.forEach(light => {
-        const existing = cols.find(c => Math.abs(c[0].x - light.x) < ROW_THRESHOLD)
-        if (existing) existing.push(light)
-        else cols.push([light])
+      ;[...lights].sort((a, b) => a.y - b.y).forEach(l => {
+        const r = rows.find(r => Math.abs(r[0].y - l.y) < threshold)
+        r ? r.push(l) : rows.push([l])
+      })
+      ;[...lights].sort((a, b) => a.x - b.x).forEach(l => {
+        const c = cols.find(c => Math.abs(c[0].x - l.x) < threshold)
+        c ? c.push(l) : cols.push([l])
       })
 
-      doc.setDrawColor(255, 200, 0)
+      // Draw gold fixture-to-fixture distances
+      doc.setLineDashPattern([1, 1], 0)
       doc.setLineWidth(0.3)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(6)
-      doc.setTextColor(255, 200, 0)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(6)
 
-      // Draw horizontal distances (between fixtures in same row)
+      // Horizontal distances (per row)
       rows.forEach(row => {
         const sorted = [...row].sort((a, b) => a.x - b.x)
         for (let i = 0; i < sorted.length - 1; i++) {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
-          const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distMH = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
-          const midX = (ax + bx) / 2
-          const midY = (ay + by) / 2
-          const lineY = ay - 8
-          doc.setLineDashPattern([1, 1], 0)
+          const bx = toPdfX(b.x)
+          const lineY = ay - 6
+          const dist = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
+          doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
           doc.line(ax, lineY, bx, lineY)
           doc.line(ax, lineY - 2, ax, lineY + 2)
           doc.line(bx, lineY - 2, bx, lineY + 2)
-          doc.text(`${distMH}m`, midX, lineY - 2, { align: "center" })
+          doc.text(`${dist}m`, (ax + bx) / 2, lineY - 2, { align: "center" })
         }
       })
 
-      // Draw vertical distances (between fixtures in same column)
+      // Vertical distances (per column)
       cols.forEach(col => {
         const sorted = [...col].sort((a, b) => a.y - b.y)
         for (let i = 0; i < sorted.length - 1; i++) {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
-          const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distMV = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
-          const midX = (ax + bx) / 2
-          const midY = (ay + by) / 2
-          const lineX = ax + 8
-          doc.setLineDashPattern([1, 1], 0)
+          const by = toPdfY(b.y)
+          const lineX = ax + 6
+          const dist = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
+          doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
           doc.line(lineX, ay, lineX, by)
           doc.line(lineX - 2, ay, lineX + 2, ay)
           doc.line(lineX - 2, by, lineX + 2, by)
-          doc.text(`${distMV}m`, lineX + 2, midY, { align: "left" })
+          doc.text(`${dist}m`, lineX + 2, (ay + by) / 2, { align: "left" })
         }
       })
 
-      // Wall to first/last fixture distances (horizontal) - only first row
-      const firstRow = rows.reduce((a, b) => a[0].y < b[0].y ? a : b)
-      const sortedFirstRow = [...firstRow].sort((a, b) => a.x - b.x)
-      const firstRowFirst = sortedFirstRow[0]
-      const firstRowLast = sortedFirstRow[sortedFirstRow.length - 1]
-
-      // Left wall to first fixture
-      const wallLeftX = toPdfX(ROOM_X_PDF)
-      const firstRowFirstX = toPdfX(firstRowFirst.x)
-      const firstRowY = toPdfY(firstRowFirst.y)
-      const distLeft = ((firstRowFirst.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
-      doc.setDrawColor(100, 200, 255)
-      doc.line(wallLeftX, firstRowY - 8, firstRowFirstX, firstRowY - 8)
-      doc.line(wallLeftX, firstRowY - 10, wallLeftX, firstRowY - 6)
-      doc.line(firstRowFirstX, firstRowY - 10, firstRowFirstX, firstRowY - 6)
-      doc.setTextColor(100, 200, 255)
-      doc.text(`${distLeft}m`, (wallLeftX + firstRowFirstX) / 2, firstRowY - 10, { align: "center" })
-
-      // Last fixture to right wall
-      const wallRightX = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
-      const firstRowLastX = toPdfX(firstRowLast.x)
-      const distRight = ((ROOM_X_PDF + ROOM_PX_W_PDF - firstRowLast.x) / SCALE_PDF / 1000).toFixed(2)
-      doc.line(firstRowLastX, firstRowY - 8, wallRightX, firstRowY - 8)
-      doc.line(firstRowLastX, firstRowY - 10, firstRowLastX, firstRowY - 6)
-      doc.line(wallRightX, firstRowY - 10, wallRightX, firstRowY - 6)
-      doc.text(`${distRight}m`, (firstRowLastX + wallRightX) / 2, firstRowY - 10, { align: "center" })
-
-      // Wall to first/last fixture distances (vertical) - only first column
-      const firstCol = cols[0]
-      if (firstCol) {
-        const sorted = [...firstCol].sort((a, b) => a.y - b.y)
-        const first = sorted[0]
-        const last = sorted[sorted.length - 1]
-        const colX = toPdfX(first.x) - 10
-
-        // Top wall to first fixture
-        const wallTopY = toPdfY(ROOM_Y_PDF)
-        const firstFY = toPdfY(first.y)
-        const distTop = ((first.y - ROOM_Y_PDF) / SCALE_PDF / 1000).toFixed(2)
-        doc.line(colX, wallTopY, colX, firstFY)
-        doc.line(colX - 2, wallTopY, colX + 2, wallTopY)
-        doc.line(colX - 2, firstFY, colX + 2, firstFY)
-        doc.text(`${distTop}m`, colX - 2, (wallTopY + firstFY) / 2, { align: "right" })
-
-        // Last fixture to bottom wall
-        const wallBotY = toPdfY(ROOM_Y_PDF + ROOM_PX_H_PDF)
-        const lastFY = toPdfY(last.y)
-        const distBot = ((ROOM_Y_PDF + ROOM_PX_H_PDF - last.y) / SCALE_PDF / 1000).toFixed(2)
-        doc.line(colX, lastFY, colX, wallBotY)
-        doc.line(colX - 2, lastFY, colX + 2, lastFY)
-        doc.line(colX - 2, wallBotY, colX + 2, wallBotY)
-        doc.text(`${distBot}m`, colX - 2, (lastFY + wallBotY) / 2, { align: "right" })
+      // Cyan wall-to-fixture distances — top row only (horizontal)
+      const topRow = [...rows].sort((a, b) => a[0].y - b[0].y)[0]
+      if (topRow) {
+        const sorted = [...topRow].sort((a, b) => a.x - b.x)
+        const first = sorted[0], last = sorted[sorted.length - 1]
+        const topY = toPdfY(first.y) - 12
+        const wallL = toPdfX(ROOM_X_PDF)
+        const wallR = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
+        const firstX = toPdfX(first.x)
+        const lastX  = toPdfX(last.x)
+        const distL = ((first.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
+        const distR = ((ROOM_X_PDF + ROOM_PX_W_PDF - last.x) / SCALE_PDF / 1000).toFixed(2)
+        doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
+        doc.line(wallL, topY, firstX, topY)
+        doc.line(wallL, topY - 2, wallL, topY + 2)
+        doc.line(firstX, topY - 2, firstX, topY + 2)
+        doc.text(`${distL}m`, (wallL + firstX) / 2, topY - 2, { align: "center" })
+        doc.line(lastX, topY, wallR, topY)
+        doc.line(lastX, topY - 2, lastX, topY + 2)
+        doc.line(wallR, topY - 2, wallR, topY + 2)
+        doc.text(`${distR}m`, (lastX + wallR) / 2, topY - 2, { align: "center" })
       }
 
-      // Reset colors
-      doc.setDrawColor(255, 200, 0)
-      doc.setTextColor(255, 200, 0)
+      // Cyan wall-to-fixture distances — left column only (vertical)
+      const leftCol = [...cols].sort((a, b) => a[0].x - b[0].x)[0]
+      if (leftCol) {
+        const sorted = [...leftCol].sort((a, b) => a.y - b.y)
+        const first = sorted[0], last = sorted[sorted.length - 1]
+        const leftX = toPdfX(first.x) - 10
+        const wallT = toPdfY(ROOM_Y_PDF)
+        const wallB = toPdfY(ROOM_Y_PDF + ROOM_PX_H_PDF)
+        const firstY = toPdfY(first.y)
+        const lastY  = toPdfY(last.y)
+        const distT = ((first.y - ROOM_Y_PDF) / SCALE_PDF / 1000).toFixed(2)
+        const distB = ((ROOM_Y_PDF + ROOM_PX_H_PDF - last.y) / SCALE_PDF / 1000).toFixed(2)
+        doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
+        doc.line(leftX, wallT, leftX, firstY)
+        doc.line(leftX - 2, wallT, leftX + 2, wallT)
+        doc.line(leftX - 2, firstY, leftX + 2, firstY)
+        doc.text(`${distT}m`, leftX - 2, (wallT + firstY) / 2, { align: "right" })
+        doc.line(leftX, lastY, leftX, wallB)
+        doc.line(leftX - 2, lastY, leftX + 2, lastY)
+        doc.line(leftX - 2, wallB, leftX + 2, wallB)
+        doc.text(`${distB}m`, leftX - 2, (lastY + wallB) / 2, { align: "right" })
+      }
 
-      // Reset dash pattern
       doc.setLineDashPattern([], 0)
-
-      if (wasBeam) setShowBeam(true)
-      if (wasHeatmap) setShowHeatmap(true)
-
       footer(pageNum)
     }
 
