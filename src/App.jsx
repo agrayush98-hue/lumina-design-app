@@ -1657,6 +1657,11 @@ export default function App() {
     const stage = canvasRef.current?.getStage()
     if (stage) {
       const bounds = canvasRef.current?.getRoomBounds?.()
+      const wasBeam = showBeam
+      const wasHeatmap = showHeatmap
+      if (wasBeam) setShowBeam(false)
+      if (wasHeatmap) setShowHeatmap(false)
+      await new Promise(r => setTimeout(r, 100))
       const pixelRatio = 2
       const dataUrl = stage.toDataURL({
         pixelRatio,
@@ -1699,16 +1704,18 @@ export default function App() {
       doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
 
       // Full page canvas image with small padding
-      const availW = PW - 2 * M - 8
-      const availH = PH - 42 - 8
+      const availW = PW - 2 * M - 4
+      const availH = PH - 42 - 4
       const ratio = stageH / stageW
       let finalW = availW
       let finalH = availW * ratio
       if (finalH > availH) { finalH = availH; finalW = finalH / ratio }
       const finalX = (PW - finalW) / 2
-      const finalY = 38 + (availH - finalH) / 2
+      const finalY = 36 + (availH - finalH) / 2
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
+      if (wasBeam) setShowBeam(true)
+      if (wasHeatmap) setShowHeatmap(true)
 
       footer(pageNum)
     }
