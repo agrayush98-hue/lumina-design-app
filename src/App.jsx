@@ -1314,14 +1314,6 @@ export default function App() {
     doc.setFillColor(10, 10, 10)
     doc.rect(0, 0, PW, PH, "F")
 
-    // Gold top accent bar
-    doc.setFillColor(212, 175, 55)
-    doc.rect(0, 0, PW, 3, "F")
-
-    // Left gold vertical stripe
-    doc.setFillColor(212, 175, 55)
-    doc.rect(0, 0, 6, PH, "F")
-
     // LUMINA DESIGN branding top right
     doc.setFont("helvetica", "bold"); doc.setFontSize(9)
     doc.setTextColor(212, 175, 55)
@@ -1329,6 +1321,14 @@ export default function App() {
     doc.setFont("helvetica", "normal"); doc.setFontSize(7)
     doc.setTextColor(150, 150, 150)
     doc.text("PROFESSIONAL LIGHTING DESIGN SUITE", PW - M, 22, { align: "right" })
+
+    // Gold top accent bar
+    doc.setFillColor(212, 175, 55)
+    doc.rect(0, 0, PW, 3, "F")
+
+    // Left gold vertical stripe
+    doc.setFillColor(212, 175, 55)
+    doc.rect(0, 0, 6, PH, "F")
 
     // Big project name center
     doc.setFont("helvetica", "bold"); doc.setFontSize(32)
@@ -1362,7 +1362,7 @@ export default function App() {
       ["ADDRESS",        exportMeta.address || "—"],
       ["PREPARED BY",    exportMeta.preparedBy || user?.email || "—"],
       ["DATE",           date],
-      ["",               ""],
+      ["DESCRIPTION",    exportMeta.description || "—"],
     ]
     const colW = (PW - 2 * M - 8) / 2
     const rowH = 20
