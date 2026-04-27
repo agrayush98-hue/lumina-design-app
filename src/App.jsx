@@ -328,6 +328,7 @@ export default function App() {
   const [showExportModal,    setShowExportModal]    = useState(false)
   const [exportRoomIds,      setExportRoomIds]      = useState([])
   const [exportMeta,         setExportMeta]         = useState({ customerName: "", address: "", description: "", preparedBy: "", company: "" })
+  const [exportCanvasOptions, setExportCanvasOptions] = useState({ placement: true, beam: false, heatmap: false })
   const canvasRef = useRef(null)
   const lastAddLightTime = useRef(0)
   const [showLoadModal,      setShowLoadModal]      = useState(false)
@@ -1240,7 +1241,7 @@ export default function App() {
 
   const PROTOCOL_LBL = { "NON-DIM": "Non-dim", "PHASE-CUT": "Triac/Phase-cut", "0-10V": "0-10V Analog", "DALI": "DALI", "ZIGBEE": "Zigbee" }
 
-  async function handleExportPDF(exportMeta = {}) {
+  async function handleExportPDF(exportMeta = {}, exportCanvasOptions = { placement: true, beam: false, heatmap: false }) {
     const { jsPDF }   = await import("jspdf")
     const autoTable   = (await import("jspdf-autotable")).default
     const doc         = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
@@ -1653,17 +1654,13 @@ export default function App() {
       footer(pageNum++)
     }
 
-    // ── Final page: Layout Snapshot ──────────────────────────────────────────
+    // ── Final page(s): Canvas Snapshots ──────────────────────────────────────
     const stage = canvasRef.current?.getStage()
     if (stage) {
-      // 1. Hide overlays before capture
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
-      if (wasBeam) setShowBeam(false)
-      if (wasHeatmap) setShowHeatmap(false)
-      await new Promise(r => setTimeout(r, 300))
 
-      // 2. Get room bounds and crop tightly
+      // Shared crop + image sizing (used by all three optional pages)
       const bounds = canvasRef.current?.getRoomBounds?.()
       const pad = 30
       const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
@@ -1671,35 +1668,6 @@ export default function App() {
       const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
       const cropH = bounds ? bounds.height + pad * 2 : stage.height()
 
-      const dataUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
-
-      // 3. Restore overlays
-      if (wasBeam) setShowBeam(true)
-      if (wasHeatmap) setShowHeatmap(true)
-
-      // 4. Add new page with dark theme
-      doc.addPage()
-      doc.setFillColor(10, 10, 10)
-      doc.rect(0, 0, PW, PH, "F")
-      doc.setFillColor(212, 175, 55)
-      doc.rect(0, 0, PW, 3, "F")
-      doc.setFillColor(212, 175, 55)
-      doc.rect(0, 0, 6, PH, "F")
-      doc.setFillColor(212, 175, 55)
-      doc.rect(0, PH - 3, PW, 3, "F")
-
-      // 5. Header labels
-      doc.setFont("helvetica", "bold"); doc.setFontSize(8)
-      doc.setTextColor(212, 175, 55)
-      doc.text("LAYOUT SNAPSHOT", M + 8, 14)
-      doc.setFont("helvetica", "normal"); doc.setFontSize(7)
-      doc.setTextColor(150, 150, 150)
-      doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(8)
-      doc.setTextColor(212, 175, 55)
-      doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
-
-      // 6. Image sizing — full width, correct aspect ratio
       const availW = PW - 2 * M - 8
       const aspectRatio = cropH / cropW
       const imgW = availW
@@ -1707,121 +1675,188 @@ export default function App() {
       const imgX = (PW - imgW) / 2
       const imgY = 26
 
-      doc.addImage(dataUrl, "PNG", imgX, imgY, imgW, imgH)
+      // Placement page
+      if (exportCanvasOptions.placement) {
+        if (wasBeam) setShowBeam(false)
+        if (wasHeatmap) setShowHeatmap(false)
+        await new Promise(r => setTimeout(r, 300))
+        const dataUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
+        if (wasBeam) setShowBeam(true)
+        if (wasHeatmap) setShowHeatmap(true)
 
-      // 7. Distance annotations — derive scale
-      const CANVAS_W = 1400
-      const CANVAS_H = 750
-      const SCALE_PDF = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
-      const ROOM_X_PDF = roomOffsetX != null ? roomOffsetX : 20
-      const ROOM_Y_PDF = roomOffsetY != null ? roomOffsetY : 30
-      const ROOM_PX_W_PDF = drawnWidthPx  != null ? drawnWidthPx  : roomWidth  * SCALE_PDF
-      const ROOM_PX_H_PDF = drawnHeightPx != null ? drawnHeightPx : roomHeight * SCALE_PDF
+        doc.addPage()
+        doc.setFillColor(10, 10, 10)
+        doc.rect(0, 0, PW, PH, "F")
+        doc.setFillColor(212, 175, 55)
+        doc.rect(0, 0, PW, 3, "F")
+        doc.setFillColor(212, 175, 55)
+        doc.rect(0, 0, 6, PH, "F")
+        doc.setFillColor(212, 175, 55)
+        doc.rect(0, PH - 3, PW, 3, "F")
 
-      // Convert canvas coords to PDF coords
-      const toPdfX = wx => imgX + ((wx - cropX) / cropW) * imgW
-      const toPdfY = wy => imgY + ((wy - cropY) / cropH) * imgH
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8)
+        doc.setTextColor(212, 175, 55)
+        doc.text("LAYOUT SNAPSHOT", M + 8, 14)
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7)
+        doc.setTextColor(150, 150, 150)
+        doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8)
+        doc.setTextColor(212, 175, 55)
+        doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
 
-      // Group lights into rows and columns
-      const threshold = ROOM_PX_H_PDF / (roomHeight * 2)
-      const rows = []
-      const cols = []
-      ;[...lights].sort((a, b) => a.y - b.y).forEach(l => {
-        const r = rows.find(r => Math.abs(r[0].y - l.y) < threshold)
-        r ? r.push(l) : rows.push([l])
-      })
-      ;[...lights].sort((a, b) => a.x - b.x).forEach(l => {
-        const c = cols.find(c => Math.abs(c[0].x - l.x) < threshold)
-        c ? c.push(l) : cols.push([l])
-      })
+        doc.addImage(dataUrl, "PNG", imgX, imgY, imgW, imgH)
 
-      // Draw gold fixture-to-fixture distances
-      doc.setLineDashPattern([1, 1], 0)
-      doc.setLineWidth(0.3)
-      doc.setFont("helvetica", "normal"); doc.setFontSize(6)
+        // Distance annotations — derive scale
+        const CANVAS_W = 1400
+        const CANVAS_H = 750
+        const SCALE_PDF = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
+        const ROOM_X_PDF = roomOffsetX != null ? roomOffsetX : 20
+        const ROOM_Y_PDF = roomOffsetY != null ? roomOffsetY : 30
+        const ROOM_PX_W_PDF = drawnWidthPx  != null ? drawnWidthPx  : roomWidth  * SCALE_PDF
+        const ROOM_PX_H_PDF = drawnHeightPx != null ? drawnHeightPx : roomHeight * SCALE_PDF
 
-      // Horizontal distances (per row)
-      rows.forEach(row => {
-        const sorted = [...row].sort((a, b) => a.x - b.x)
-        for (let i = 0; i < sorted.length - 1; i++) {
-          const a = sorted[i], b = sorted[i + 1]
-          const ax = toPdfX(a.x), ay = toPdfY(a.y)
-          const bx = toPdfX(b.x)
-          const lineY = ay - 6
-          const dist = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
-          doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
-          doc.line(ax, lineY, bx, lineY)
-          doc.line(ax, lineY - 2, ax, lineY + 2)
-          doc.line(bx, lineY - 2, bx, lineY + 2)
-          doc.text(`${dist}m`, (ax + bx) / 2, lineY - 2, { align: "center" })
+        const toPdfX = wx => imgX + ((wx - cropX) / cropW) * imgW
+        const toPdfY = wy => imgY + ((wy - cropY) / cropH) * imgH
+
+        const threshold = ROOM_PX_H_PDF / (roomHeight * 2)
+        const rows = []
+        const cols = []
+        ;[...lights].sort((a, b) => a.y - b.y).forEach(l => {
+          const r = rows.find(r => Math.abs(r[0].y - l.y) < threshold)
+          r ? r.push(l) : rows.push([l])
+        })
+        ;[...lights].sort((a, b) => a.x - b.x).forEach(l => {
+          const c = cols.find(c => Math.abs(c[0].x - l.x) < threshold)
+          c ? c.push(l) : cols.push([l])
+        })
+
+        doc.setLineDashPattern([1, 1], 0)
+        doc.setLineWidth(0.3)
+        doc.setFont("helvetica", "normal"); doc.setFontSize(6)
+
+        rows.forEach(row => {
+          const sorted = [...row].sort((a, b) => a.x - b.x)
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const a = sorted[i], b = sorted[i + 1]
+            const ax = toPdfX(a.x), ay = toPdfY(a.y)
+            const bx = toPdfX(b.x)
+            const lineY = ay - 6
+            const dist = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
+            doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
+            doc.line(ax, lineY, bx, lineY)
+            doc.line(ax, lineY - 2, ax, lineY + 2)
+            doc.line(bx, lineY - 2, bx, lineY + 2)
+            doc.text(`${dist}m`, (ax + bx) / 2, lineY - 2, { align: "center" })
+          }
+        })
+
+        cols.forEach(col => {
+          const sorted = [...col].sort((a, b) => a.y - b.y)
+          for (let i = 0; i < sorted.length - 1; i++) {
+            const a = sorted[i], b = sorted[i + 1]
+            const ax = toPdfX(a.x), ay = toPdfY(a.y)
+            const by = toPdfY(b.y)
+            const lineX = ax + 6
+            const dist = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
+            doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
+            doc.line(lineX, ay, lineX, by)
+            doc.line(lineX - 2, ay, lineX + 2, ay)
+            doc.line(lineX - 2, by, lineX + 2, by)
+            doc.text(`${dist}m`, lineX + 2, (ay + by) / 2, { align: "left" })
+          }
+        })
+
+        const topRow = [...rows].sort((a, b) => a[0].y - b[0].y)[0]
+        if (topRow) {
+          const sorted = [...topRow].sort((a, b) => a.x - b.x)
+          const first = sorted[0], last = sorted[sorted.length - 1]
+          const topY = toPdfY(first.y) - 12
+          const wallL = toPdfX(ROOM_X_PDF)
+          const wallR = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
+          const firstX = toPdfX(first.x)
+          const lastX  = toPdfX(last.x)
+          const distL = ((first.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
+          const distR = ((ROOM_X_PDF + ROOM_PX_W_PDF - last.x) / SCALE_PDF / 1000).toFixed(2)
+          doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
+          doc.line(wallL, topY, firstX, topY)
+          doc.line(wallL, topY - 2, wallL, topY + 2)
+          doc.line(firstX, topY - 2, firstX, topY + 2)
+          doc.text(`${distL}m`, (wallL + firstX) / 2, topY - 2, { align: "center" })
+          doc.line(lastX, topY, wallR, topY)
+          doc.line(lastX, topY - 2, lastX, topY + 2)
+          doc.line(wallR, topY - 2, wallR, topY + 2)
+          doc.text(`${distR}m`, (lastX + wallR) / 2, topY - 2, { align: "center" })
         }
-      })
 
-      // Vertical distances (per column)
-      cols.forEach(col => {
-        const sorted = [...col].sort((a, b) => a.y - b.y)
-        for (let i = 0; i < sorted.length - 1; i++) {
-          const a = sorted[i], b = sorted[i + 1]
-          const ax = toPdfX(a.x), ay = toPdfY(a.y)
-          const by = toPdfY(b.y)
-          const lineX = ax + 6
-          const dist = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
-          doc.setDrawColor(212, 175, 55); doc.setTextColor(212, 175, 55)
-          doc.line(lineX, ay, lineX, by)
-          doc.line(lineX - 2, ay, lineX + 2, ay)
-          doc.line(lineX - 2, by, lineX + 2, by)
-          doc.text(`${dist}m`, lineX + 2, (ay + by) / 2, { align: "left" })
+        const leftCol = [...cols].sort((a, b) => a[0].x - b[0].x)[0]
+        if (leftCol) {
+          const sorted = [...leftCol].sort((a, b) => a.y - b.y)
+          const first = sorted[0], last = sorted[sorted.length - 1]
+          const leftX = toPdfX(first.x) - 10
+          const wallT = toPdfY(ROOM_Y_PDF)
+          const wallB = toPdfY(ROOM_Y_PDF + ROOM_PX_H_PDF)
+          const firstY = toPdfY(first.y)
+          const lastY  = toPdfY(last.y)
+          const distT = ((first.y - ROOM_Y_PDF) / SCALE_PDF / 1000).toFixed(2)
+          const distB = ((ROOM_Y_PDF + ROOM_PX_H_PDF - last.y) / SCALE_PDF / 1000).toFixed(2)
+          doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
+          doc.line(leftX, wallT, leftX, firstY)
+          doc.line(leftX - 2, wallT, leftX + 2, wallT)
+          doc.line(leftX - 2, firstY, leftX + 2, firstY)
+          doc.text(`${distT}m`, leftX - 2, (wallT + firstY) / 2, { align: "right" })
+          doc.line(leftX, lastY, leftX, wallB)
+          doc.line(leftX - 2, lastY, leftX + 2, lastY)
+          doc.line(leftX - 2, wallB, leftX + 2, wallB)
+          doc.text(`${distB}m`, leftX - 2, (lastY + wallB) / 2, { align: "right" })
         }
-      })
 
-      // Cyan wall-to-fixture distances — top row only (horizontal)
-      const topRow = [...rows].sort((a, b) => a[0].y - b[0].y)[0]
-      if (topRow) {
-        const sorted = [...topRow].sort((a, b) => a.x - b.x)
-        const first = sorted[0], last = sorted[sorted.length - 1]
-        const topY = toPdfY(first.y) - 12
-        const wallL = toPdfX(ROOM_X_PDF)
-        const wallR = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
-        const firstX = toPdfX(first.x)
-        const lastX  = toPdfX(last.x)
-        const distL = ((first.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
-        const distR = ((ROOM_X_PDF + ROOM_PX_W_PDF - last.x) / SCALE_PDF / 1000).toFixed(2)
-        doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
-        doc.line(wallL, topY, firstX, topY)
-        doc.line(wallL, topY - 2, wallL, topY + 2)
-        doc.line(firstX, topY - 2, firstX, topY + 2)
-        doc.text(`${distL}m`, (wallL + firstX) / 2, topY - 2, { align: "center" })
-        doc.line(lastX, topY, wallR, topY)
-        doc.line(lastX, topY - 2, lastX, topY + 2)
-        doc.line(wallR, topY - 2, wallR, topY + 2)
-        doc.text(`${distR}m`, (lastX + wallR) / 2, topY - 2, { align: "center" })
+        doc.setLineDashPattern([], 0)
+        footer(pageNum)
       }
 
-      // Cyan wall-to-fixture distances — left column only (vertical)
-      const leftCol = [...cols].sort((a, b) => a[0].x - b[0].x)[0]
-      if (leftCol) {
-        const sorted = [...leftCol].sort((a, b) => a.y - b.y)
-        const first = sorted[0], last = sorted[sorted.length - 1]
-        const leftX = toPdfX(first.x) - 10
-        const wallT = toPdfY(ROOM_Y_PDF)
-        const wallB = toPdfY(ROOM_Y_PDF + ROOM_PX_H_PDF)
-        const firstY = toPdfY(first.y)
-        const lastY  = toPdfY(last.y)
-        const distT = ((first.y - ROOM_Y_PDF) / SCALE_PDF / 1000).toFixed(2)
-        const distB = ((ROOM_Y_PDF + ROOM_PX_H_PDF - last.y) / SCALE_PDF / 1000).toFixed(2)
-        doc.setDrawColor(100, 200, 255); doc.setTextColor(100, 200, 255)
-        doc.line(leftX, wallT, leftX, firstY)
-        doc.line(leftX - 2, wallT, leftX + 2, wallT)
-        doc.line(leftX - 2, firstY, leftX + 2, firstY)
-        doc.text(`${distT}m`, leftX - 2, (wallT + firstY) / 2, { align: "right" })
-        doc.line(leftX, lastY, leftX, wallB)
-        doc.line(leftX - 2, lastY, leftX + 2, lastY)
-        doc.line(leftX - 2, wallB, leftX + 2, wallB)
-        doc.text(`${distB}m`, leftX - 2, (lastY + wallB) / 2, { align: "right" })
+      // Beam page
+      if (exportCanvasOptions.beam) {
+        setShowBeam(true)
+        setShowHeatmap(false)
+        await new Promise(r => setTimeout(r, 300))
+        const beamUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
+        setShowBeam(wasBeam)
+        doc.addPage()
+        doc.setFillColor(10, 10, 10); doc.rect(0, 0, PW, PH, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, 0, PW, 3, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, 0, 6, PH, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, PH - 3, PW, 3, "F")
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(212, 175, 55)
+        doc.text("BEAM ANGLE VIEW", M + 8, 14)
+        doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(150, 150, 150)
+        doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
+        doc.addImage(beamUrl, "PNG", imgX, imgY, imgW, imgH)
+        pageNum++
+        footer(pageNum)
       }
 
-      doc.setLineDashPattern([], 0)
-      footer(pageNum)
+      // Heatmap page
+      if (exportCanvasOptions.heatmap) {
+        setShowHeatmap(true)
+        setShowBeam(false)
+        await new Promise(r => setTimeout(r, 300))
+        const heatUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
+        setShowHeatmap(wasHeatmap)
+        doc.addPage()
+        doc.setFillColor(10, 10, 10); doc.rect(0, 0, PW, PH, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, 0, PW, 3, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, 0, 6, PH, "F")
+        doc.setFillColor(212, 175, 55); doc.rect(0, PH - 3, PW, 3, "F")
+        doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(212, 175, 55)
+        doc.text("HEATMAP VIEW", M + 8, 14)
+        doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(150, 150, 150)
+        doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
+        doc.addImage(heatUrl, "PNG", imgX, imgY, imgW, imgH)
+        pageNum++
+        footer(pageNum)
+      }
     }
 
     // Watermark every page for non-paid users
@@ -2938,6 +2973,44 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Canvas Page Options */}
+                <div style={{ marginBottom: 22 }}>
+                  <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>CANVAS PAGES TO EXPORT</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+                    {[
+                      { key: "placement", label: "Fixture Placement + Distances", desc: "Shows fixture positions with spacing measurements" },
+                      { key: "beam",      label: "Beam Angle View",               desc: "Shows beam spread overlays for each fixture" },
+                      { key: "heatmap",   label: "Heatmap View",                  desc: "Shows lux distribution across the room" },
+                    ].map(({ key, label, desc }) => {
+                      const checked = exportCanvasOptions[key]
+                      return (
+                        <label key={key} style={{
+                          display: "flex", alignItems: "flex-start", gap: 10,
+                          padding: "10px 12px", background: "#141414",
+                          border: `1px solid ${checked ? "#d4a843" : "#2e2e2e"}`,
+                          borderRadius: 3, cursor: "pointer",
+                        }}>
+                          <div style={{
+                            width: 14, height: 14, border: `1px solid ${checked ? "#d4a843" : "#444"}`,
+                            borderRadius: 2, background: checked ? "#d4a843" : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0, marginTop: 1,
+                          }}>
+                            {checked && <span style={{ fontSize: 9, color: "#000", fontWeight: 700 }}>✓</span>}
+                          </div>
+                          <input type="checkbox" checked={checked}
+                            onChange={() => setExportCanvasOptions(prev => ({ ...prev, [key]: !prev[key] }))}
+                            style={{ display: "none" }} />
+                          <div>
+                            <div style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: checked ? "#f0f0f0" : "#666" }}>{label}</div>
+                            <div style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#555", marginTop: 2 }}>{desc}</div>
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 {/* Room selector */}
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -2989,7 +3062,7 @@ export default function App() {
 
                 {/* Export buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF(exportMeta) }}>
+                  <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF(exportMeta, exportCanvasOptions) }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#d4a843", letterSpacing: "0.08em" }}>Export PDF Report</span>
                     <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>
                       Summary + {exportRoomIds.length} room detail page{exportRoomIds.length !== 1 ? "s" : ""} + layout snapshot
