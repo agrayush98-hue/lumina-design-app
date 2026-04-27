@@ -1772,14 +1772,14 @@ export default function App() {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
           const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distM = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
+          const distMH = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
           doc.setLineDashPattern([1, 1], 0)
           doc.line(ax, ay - 4, bx, by - 4)
           doc.line(ax, ay - 6, ax, ay - 2)
           doc.line(bx, by - 6, bx, by - 2)
-          doc.text(`${distM}m`, midX, midY - 6, { align: "center" })
+          doc.text(`${distMH}m`, midX, midY - 6, { align: "center" })
         }
       })
 
@@ -1790,14 +1790,14 @@ export default function App() {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
           const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distM = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
+          const distMV = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
           doc.setLineDashPattern([1, 1], 0)
           doc.line(ax + 4, ay, bx + 4, by)
           doc.line(ax + 2, ay, ax + 6, ay)
           doc.line(bx + 2, by, bx + 6, by)
-          doc.text(`${distM}m`, midX + 8, midY, { align: "left" })
+          doc.text(`${distMV}m`, midX + 8, midY, { align: "left" })
         }
       })
 
