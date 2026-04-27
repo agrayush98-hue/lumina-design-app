@@ -1716,16 +1716,6 @@ export default function App() {
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
 
-      console.log("DEBUG distances:", {
-        roomWidth,
-        roomHeight,
-        SCALE: SCALE_PDF,
-        ROOM_PX_W: ROOM_PX_W_PDF,
-        ROOM_PX_H: ROOM_PX_H_PDF,
-        firstLight: lights[0],
-        secondLight: lights[1],
-      })
-
       // ── Draw fixture distances on PDF ──────────────────────────
       const CANVAS_W_PDF = 1400
       const CANVAS_H_PDF = 750
