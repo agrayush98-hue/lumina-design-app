@@ -1712,7 +1712,7 @@ export default function App() {
       const finalW = PW - 2 * M - 8
       const finalH = finalW * imgRatio
       const finalX = (PW - finalW) / 2
-      const finalY = Math.max(30, (PH - finalH) / 2)
+      const finalY = 28
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
 
