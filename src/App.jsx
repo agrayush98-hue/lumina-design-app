@@ -1715,6 +1715,85 @@ export default function App() {
       const finalY = Math.max(30, (PH - finalH) / 2)
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
+
+      // ── Draw fixture distances on PDF ──────────────────────────
+      const CANVAS_W_PDF = 1400
+      const CANVAS_H_PDF = 750
+      const SCALE_PDF = Math.min((CANVAS_W_PDF - 260) / roomWidth, (CANVAS_H_PDF - 220) / roomHeight)
+      const ROOM_X_PDF = roomOffsetX != null ? roomOffsetX : 20
+      const ROOM_Y_PDF = roomOffsetY != null ? roomOffsetY : 30
+      const ROOM_PX_W_PDF = drawnWidthPx != null ? drawnWidthPx : roomWidth * SCALE_PDF
+      const ROOM_PX_H_PDF = drawnHeightPx != null ? drawnHeightPx : roomHeight * SCALE_PDF
+
+      // Convert world px coords to PDF coords
+      const toPdfX = (wx) => finalX + ((wx - cropX) / cropW) * finalW
+      const toPdfY = (wy) => finalY + ((wy - cropY) / cropH) * finalH
+
+      // Sort lights by position for distance lines
+      const sortedByX = [...lights].sort((a, b) => a.x - b.x)
+      const sortedByY = [...lights].sort((a, b) => a.y - b.y)
+
+      // Group lights by row (similar Y) and column (similar X)
+      const ROW_THRESHOLD = ROOM_PX_H_PDF / (roomHeight * 2)
+      const rows = []
+      sortedByY.forEach(light => {
+        const existing = rows.find(r => Math.abs(r[0].y - light.y) < ROW_THRESHOLD)
+        if (existing) existing.push(light)
+        else rows.push([light])
+      })
+
+      const cols = []
+      sortedByX.forEach(light => {
+        const existing = cols.find(c => Math.abs(c[0].x - light.x) < ROW_THRESHOLD)
+        if (existing) existing.push(light)
+        else cols.push([light])
+      })
+
+      doc.setDrawColor(255, 200, 0)
+      doc.setLineWidth(0.3)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(6)
+      doc.setTextColor(255, 200, 0)
+
+      // Draw horizontal distances (between fixtures in same row)
+      rows.forEach(row => {
+        const sorted = [...row].sort((a, b) => a.x - b.x)
+        for (let i = 0; i < sorted.length - 1; i++) {
+          const a = sorted[i], b = sorted[i + 1]
+          const ax = toPdfX(a.x), ay = toPdfY(a.y)
+          const bx = toPdfX(b.x), by = toPdfY(b.y)
+          const distM = ((b.x - a.x) / ROOM_PX_W_PDF * roomWidth).toFixed(2)
+          const midX = (ax + bx) / 2
+          const midY = (ay + by) / 2
+          doc.setLineDashPattern([1, 1], 0)
+          doc.line(ax, ay - 4, bx, by - 4)
+          doc.line(ax, ay - 6, ax, ay - 2)
+          doc.line(bx, by - 6, bx, by - 2)
+          doc.text(`${distM}m`, midX, midY - 6, { align: "center" })
+        }
+      })
+
+      // Draw vertical distances (between fixtures in same column)
+      cols.forEach(col => {
+        const sorted = [...col].sort((a, b) => a.y - b.y)
+        for (let i = 0; i < sorted.length - 1; i++) {
+          const a = sorted[i], b = sorted[i + 1]
+          const ax = toPdfX(a.x), ay = toPdfY(a.y)
+          const bx = toPdfX(b.x), by = toPdfY(b.y)
+          const distM = ((b.y - a.y) / ROOM_PX_H_PDF * roomHeight).toFixed(2)
+          const midX = (ax + bx) / 2
+          const midY = (ay + by) / 2
+          doc.setLineDashPattern([1, 1], 0)
+          doc.line(ax + 4, ay, bx + 4, by)
+          doc.line(ax + 2, ay, ax + 6, ay)
+          doc.line(bx + 2, by, bx + 6, by)
+          doc.text(`${distM}m`, midX + 8, midY, { align: "left" })
+        }
+      })
+
+      // Reset dash pattern
+      doc.setLineDashPattern([], 0)
+
       if (wasBeam) setShowBeam(true)
       if (wasHeatmap) setShowHeatmap(true)
 
