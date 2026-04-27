@@ -327,6 +327,7 @@ export default function App() {
   const [showReport,         setShowReport]         = useState(false)
   const [showExportModal,    setShowExportModal]    = useState(false)
   const [exportRoomIds,      setExportRoomIds]      = useState([])
+  const [exportMeta,         setExportMeta]         = useState({ customerName: "", address: "", description: "", preparedBy: "", company: "" })
   const canvasRef = useRef(null)
   const lastAddLightTime = useRef(0)
   const [showLoadModal,      setShowLoadModal]      = useState(false)
@@ -1239,7 +1240,7 @@ export default function App() {
 
   const PROTOCOL_LBL = { "NON-DIM": "Non-dim", "PHASE-CUT": "Triac/Phase-cut", "0-10V": "0-10V Analog", "DALI": "DALI", "ZIGBEE": "Zigbee" }
 
-  async function handleExportPDF() {
+  async function handleExportPDF(exportMeta = {}) {
     const { jsPDF }   = await import("jspdf")
     const autoTable   = (await import("jspdf-autotable")).default
     const doc         = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
@@ -1344,13 +1345,22 @@ export default function App() {
     doc.setTextColor(180, 180, 180)
     doc.text("LIGHTING DESIGN REPORT", PW / 2, PH / 2 - 14, { align: "center" })
 
+    if (exportMeta.description) {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(9)
+      doc.setTextColor(140, 140, 140)
+      doc.text(exportMeta.description, PW / 2, PH / 2 - 4, { align: "center", maxWidth: PW - 60 })
+    }
+
     // Summary grid — dark cards with gold labels
     const gridItems = [
       ["FLOORS",         String(floors.length)],
       ["ROOMS",          String(allR.length)],
       ["TOTAL FIXTURES", String(totalFix)],
       ["TOTAL LOAD",     totalLoad + " W"],
-      ["PREPARED BY",    user?.email ?? "—"],
+      ["CUSTOMER",       exportMeta.customerName || "—"],
+      ["COMPANY",        exportMeta.company || "—"],
+      ["ADDRESS",        exportMeta.address || "—"],
+      ["PREPARED BY",    exportMeta.preparedBy || user?.email || "—"],
       ["DATE",           date],
     ]
     const colW = (PW - 2 * M - 8) / 2
@@ -2746,6 +2756,35 @@ export default function App() {
               {/* Scrollable body */}
               <div style={{ overflowY: "auto", flex: 1, padding: "18px 22px" }}>
 
+                {/* Project Details Form */}
+                <div style={{ marginBottom: 22 }}>
+                  <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>PROJECT DETAILS</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                    {[
+                      { key: "customerName", label: "Customer Name" },
+                      { key: "company",      label: "Company / Firm" },
+                      { key: "address",      label: "Project Address" },
+                      { key: "description",  label: "Project Description" },
+                      { key: "preparedBy",   label: "Prepared By" },
+                    ].map(({ key, label }) => (
+                      <div key={key} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#555", letterSpacing: "0.1em" }}>{label.toUpperCase()}</span>
+                        <input
+                          type="text"
+                          value={exportMeta[key]}
+                          onChange={e => setExportMeta(prev => ({ ...prev, [key]: e.target.value }))}
+                          placeholder={label}
+                          style={{
+                            background: "#141414", border: "1px solid #2e2e2e", borderRadius: 3,
+                            padding: "8px 10px", fontFamily: "IBM Plex Mono", fontSize: 10,
+                            color: "#f0f0f0", outline: "none", width: "100%", boxSizing: "border-box"
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Room selector */}
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -2797,7 +2836,7 @@ export default function App() {
 
                 {/* Export buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF() }}>
+                  <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF(exportMeta) }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#d4a843", letterSpacing: "0.08em" }}>Export PDF Report</span>
                     <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>
                       Summary + {exportRoomIds.length} room detail page{exportRoomIds.length !== 1 ? "s" : ""} + layout snapshot
