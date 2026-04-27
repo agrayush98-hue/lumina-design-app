@@ -1656,22 +1656,27 @@ export default function App() {
     // ── Final page: Layout Snapshot ────────────────────────────────────────────
     const stage = canvasRef.current?.getStage()
     if (stage) {
-      const bounds = canvasRef.current?.getRoomBounds?.()
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
       if (wasBeam) setShowBeam(false)
       if (wasHeatmap) setShowHeatmap(false)
       await new Promise(r => setTimeout(r, 100))
-      const pixelRatio = 2
+
+      const bounds = canvasRef.current?.getRoomBounds?.()
+      const padding = 20
+      const cropX = bounds ? Math.max(0, bounds.x - padding) : 0
+      const cropY = bounds ? Math.max(0, bounds.y - padding) : 0
+      const cropW = bounds ? bounds.width + padding * 2 : stage.width()
+      const cropH = bounds ? bounds.height + padding * 2 : stage.height()
+
       const dataUrl = stage.toDataURL({
-        pixelRatio,
-        x: bounds ? bounds.x - 10 : 0,
-        y: bounds ? bounds.y - 10 : 0,
-        width: bounds ? bounds.width + 20 : stage.width(),
-        height: bounds ? bounds.height + 20 : stage.height(),
+        pixelRatio: 3,
+        x: cropX,
+        y: cropY,
+        width: cropW,
+        height: cropH,
       })
-      const stageW = bounds ? bounds.width + 20 : stage.width()
-      const stageH = bounds ? bounds.height + 20 : stage.height()
+
       doc.addPage()
 
       // Full black background
@@ -1703,15 +1708,11 @@ export default function App() {
       doc.setTextColor(212, 175, 55)
       doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
 
-      // Full page canvas image with small padding
-      const availW = PW - 2 * M - 4
-      const availH = PH - 42 - 4
-      const ratio = stageH / stageW
-      let finalW = availW
-      let finalH = availW * ratio
-      if (finalH > availH) { finalH = availH; finalW = finalH / ratio }
+      const imgRatio = cropH / cropW
+      const finalW = PW - 2 * M - 8
+      const finalH = finalW * imgRatio
       const finalX = (PW - finalW) / 2
-      const finalY = 36 + (availH - finalH) / 2
+      const finalY = Math.max(30, (PH - finalH) / 2)
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
       if (wasBeam) setShowBeam(true)
