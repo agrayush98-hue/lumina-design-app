@@ -1362,10 +1362,11 @@ export default function App() {
       ["ADDRESS",        exportMeta.address || "—"],
       ["PREPARED BY",    exportMeta.preparedBy || user?.email || "—"],
       ["DATE",           date],
+      ["",               ""],
     ]
     const colW = (PW - 2 * M - 8) / 2
-    const rowH = 24
-    let gx = M + 10, gy = PH / 2 + 5
+    const rowH = 20
+    let gx = M + 10, gy = PH / 2
     gridItems.forEach(([lbl, val], i) => {
       const bx = i % 2 === 0 ? M + 10 : M + 10 + colW + 8
       if (i > 0 && i % 2 === 0) gy += rowH + 5
