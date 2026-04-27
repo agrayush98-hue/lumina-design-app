@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app"
-import { getFirestore, enableIndexedDbPersistence, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp, serverTimestamp, increment } from "firebase/firestore"
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, setDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, orderBy, query, where, Timestamp, serverTimestamp, increment } from "firebase/firestore"
 import { getAuth } from "firebase/auth"
 
 const firebaseConfig = {
@@ -12,22 +12,10 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
-export const db   = getFirestore(app)
+export const db   = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+})
 export const auth = getAuth(app)
-
-// Enable offline persistence
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === 'failed-precondition') {
-    // Multiple tabs open, persistence can only be enabled in one tab at a time.
-    console.warn('Firebase: Offline persistence failed - multiple tabs open');
-  } else if (err.code === 'unimplemented') {
-    // The current browser doesn't support persistence
-    console.warn('Firebase: Offline persistence not supported in this browser');
-  } else {
-    console.error('Firebase: Offline persistence error:', err);
-  }
-  // App will continue to work without persistence
-});
 
 export async function saveProject(projectId, projectData, userId) {
   const data = { ...projectData, userId, updatedAt: new Date() }
