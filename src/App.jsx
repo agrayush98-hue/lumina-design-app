@@ -1762,7 +1762,7 @@ export default function App() {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
           const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distM = ((b.x - a.x) / ROOM_PX_W_PDF * roomWidth).toFixed(2)
+          const distM = ((b.x - a.x) / SCALE_PDF / 100).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
           doc.setLineDashPattern([1, 1], 0)
@@ -1780,7 +1780,7 @@ export default function App() {
           const a = sorted[i], b = sorted[i + 1]
           const ax = toPdfX(a.x), ay = toPdfY(a.y)
           const bx = toPdfX(b.x), by = toPdfY(b.y)
-          const distM = ((b.y - a.y) / ROOM_PX_H_PDF * roomHeight).toFixed(2)
+          const distM = ((b.y - a.y) / SCALE_PDF / 100).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
           doc.setLineDashPattern([1, 1], 0)
