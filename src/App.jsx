@@ -1658,17 +1658,55 @@ export default function App() {
     if (stage) {
       const dataUrl = stage.toDataURL({ pixelRatio: 2 })
       doc.addPage()
-      curY = sectionHeader(`${pageNum} · LAYOUT SNAPSHOT`, 18)
 
-      const usableW = PW - 2 * M
-      const usableH = PH - curY - 20
-      const nativeRatio = 750 / 1400
-      let imgW = usableW
-      let imgH = imgW * nativeRatio
-      if (imgH > usableH) { imgH = usableH; imgW = imgH / nativeRatio }
-      const imgX = M + (usableW - imgW) / 2
-      const imgY = curY + (usableH - imgH) / 2
-      doc.addImage(dataUrl, "PNG", imgX, imgY, imgW, imgH)
+      // Full black background
+      doc.setFillColor(10, 10, 10)
+      doc.rect(0, 0, PW, PH, "F")
+
+      // Gold top bar
+      doc.setFillColor(212, 175, 55)
+      doc.rect(0, 0, PW, 3, "F")
+
+      // Gold left stripe
+      doc.setFillColor(212, 175, 55)
+      doc.rect(0, 0, 6, PH, "F")
+
+      // Gold bottom bar
+      doc.setFillColor(212, 175, 55)
+      doc.rect(0, PH - 3, PW, 3, "F")
+
+      // Small label top left
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8)
+      doc.setTextColor(212, 175, 55)
+      doc.text("LAYOUT SNAPSHOT", M + 8, 14)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7)
+      doc.setTextColor(150, 150, 150)
+      doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 20)
+
+      // LUMINA DESIGN top right
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8)
+      doc.setTextColor(212, 175, 55)
+      doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
+
+      // Full page canvas image with small padding
+      const pad = 12
+      const imgX = M + pad
+      const imgY = 28
+      const imgW = PW - 2 * M - pad * 2
+      const imgH = PH - imgY - 12
+
+      // Get actual stage dimensions for correct ratio
+      const stageW = stage.width()
+      const stageH = stage.height()
+      const ratio = stageH / stageW
+      let finalW = imgW
+      let finalH = imgW * ratio
+      if (finalH > imgH) { finalH = imgH; finalW = imgH / ratio }
+      const finalX = M + pad + (imgW - finalW) / 2
+      const finalY = imgY + (imgH - finalH) / 2
+
+      doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
+
       footer(pageNum)
     }
 
