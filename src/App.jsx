@@ -584,7 +584,6 @@ export default function App() {
     const now = Date.now()
     if (now - lastAddLightTime.current < 100) return
     lastAddLightTime.current = now
-    console.trace("addLight called")
     if (activeFixtureCategory === "LED_STRIP") {
       const vis = CATEGORY_VISUAL.LED_STRIP
       const len = lightData.lengthM ?? 1
