@@ -1699,19 +1699,14 @@ export default function App() {
       doc.text("LUMINA DESIGN", PW - M, 14, { align: "right" })
 
       // Full page canvas image with small padding
-      const pad = 12
-      const imgX = M + pad
-      const imgY = 28
-      const imgW = PW - 2 * M - pad * 2
-      const imgH = PH - imgY - 12
-
-      // Get actual stage dimensions for correct ratio
+      const availW = PW - 2 * M - 16
+      const availH = PH - 35 - 16
       const ratio = stageH / stageW
-      let finalW = imgW
-      let finalH = imgW * ratio
-      if (finalH > imgH) { finalH = imgH; finalW = imgH / ratio }
-      const finalX = M + pad + (imgW - finalW) / 2
-      const finalY = imgY + (imgH - finalH) / 2
+      let finalW = availW
+      let finalH = availW * ratio
+      if (finalH > availH) { finalH = availH; finalW = finalH / ratio }
+      const finalX = (PW - finalW) / 2
+      const finalY = 32 + (availH - finalH) / 2
 
       doc.addImage(dataUrl, "PNG", finalX, finalY, finalW, finalH)
 
