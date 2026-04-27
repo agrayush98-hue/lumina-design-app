@@ -1658,8 +1658,10 @@ export default function App() {
     if (stage) {
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
+      const wasDali = daliEnabled
       if (wasBeam) setShowBeam(false)
       if (wasHeatmap) setShowHeatmap(false)
+      if (wasDali) setDaliEnabled(false)
       await new Promise(r => setTimeout(r, 100))
 
       const bounds = canvasRef.current?.getRoomBounds?.()
@@ -1796,6 +1798,7 @@ export default function App() {
 
       if (wasBeam) setShowBeam(true)
       if (wasHeatmap) setShowHeatmap(true)
+      if (wasDali) setDaliEnabled(true)
 
       footer(pageNum)
     }
