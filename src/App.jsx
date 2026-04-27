@@ -1308,53 +1308,71 @@ export default function App() {
       return doc.lastAutoTable.finalY + 4
     }
 
-    // ── PAGE 1: Cover ──────────────────────────────────────────────────────────
-    // Cyan header bar
-    doc.setFillColor(...CYAN)
-    doc.rect(0, 0, PW, 22, "F")
-    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-    doc.text("LUMINA DESIGN", M, 14)
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9)
-    doc.text(date, PW - M, 14, { align: "right" })
+    // ── PAGE 1: Cover ──────────────────────────────────────────
+    // Full black background
+    doc.setFillColor(10, 10, 10)
+    doc.rect(0, 0, PW, PH, "F")
 
-    // Project name centered + underline
-    doc.setFont("helvetica", "bold"); doc.setFontSize(28); doc.setTextColor(...DARK)
-    doc.text(projectName, PW / 2, 48, { align: "center" })
-    const nameW = doc.getTextWidth(projectName)
-    doc.setDrawColor(...DARK); doc.setLineWidth(0.5)
-    doc.line(PW / 2 - nameW / 2, 51, PW / 2 + nameW / 2, 51)
+    // Gold top accent bar
+    doc.setFillColor(212, 175, 55)
+    doc.rect(0, 0, PW, 3, "F")
+
+    // Left gold vertical stripe
+    doc.setFillColor(212, 175, 55)
+    doc.rect(0, 0, 6, PH, "F")
+
+    // LUMINA DESIGN branding top right
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9)
+    doc.setTextColor(212, 175, 55)
+    doc.text("LUMINA DESIGN", PW - M, 16, { align: "right" })
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7)
+    doc.setTextColor(150, 150, 150)
+    doc.text("PROFESSIONAL LIGHTING DESIGN SUITE", PW - M, 22, { align: "right" })
+
+    // Big project name center
+    doc.setFont("helvetica", "bold"); doc.setFontSize(32)
+    doc.setTextColor(255, 255, 255)
+    doc.text(projectName.toUpperCase(), PW / 2, PH / 2 - 30, { align: "center" })
+
+    // Gold underline
+    const nameW = doc.getTextWidth(projectName.toUpperCase())
+    doc.setDrawColor(212, 175, 55); doc.setLineWidth(1.5)
+    doc.line(PW / 2 - nameW / 2, PH / 2 - 24, PW / 2 + nameW / 2, PH / 2 - 24)
 
     // Subtitle
-    doc.setFont("helvetica", "normal"); doc.setFontSize(12); doc.setTextColor(102, 102, 102)
-    doc.text("LIGHTING DESIGN REPORT", PW / 2, 61, { align: "center" })
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11)
+    doc.setTextColor(180, 180, 180)
+    doc.text("LIGHTING DESIGN REPORT", PW / 2, PH / 2 - 14, { align: "center" })
 
-    // Summary grid — 2 cols × 3 rows
+    // Summary grid — dark cards with gold labels
     const gridItems = [
-      ["FLOORS",          String(floors.length)],
-      ["ROOMS",           String(allR.length)],
-      ["TOTAL FIXTURES",  String(totalFix)],
-      ["TOTAL LOAD",      totalLoad + " W"],
-      ["PREPARED BY",     user?.email ?? "—"],
-      ["DATE",            date],
+      ["FLOORS",         String(floors.length)],
+      ["ROOMS",          String(allR.length)],
+      ["TOTAL FIXTURES", String(totalFix)],
+      ["TOTAL LOAD",     totalLoad + " W"],
+      ["PREPARED BY",    user?.email ?? "—"],
+      ["DATE",           date],
     ]
-    const colW = (PW - 2 * M - 6) / 2
-    const rowH = 22
-    let gx = M, gy = 72
+    const colW = (PW - 2 * M - 8) / 2
+    const rowH = 24
+    let gx = M + 10, gy = PH / 2 + 5
     gridItems.forEach(([lbl, val], i) => {
-      if (i > 0 && i % 2 === 0) { gx = M; gy += rowH + 4 }
-      const bx = i % 2 === 0 ? M : M + colW + 6
-      doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2)
+      const bx = i % 2 === 0 ? M + 10 : M + 10 + colW + 8
+      if (i > 0 && i % 2 === 0) gy += rowH + 5
+      doc.setFillColor(30, 30, 30)
+      doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.3)
       doc.roundedRect(bx, gy, colW, rowH, 2, 2, "FD")
-      doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(153, 153, 153)
-      doc.text(lbl, bx + 5, gy + 8)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(...DARK)
-      doc.text(val, bx + 5, gy + 18)
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7)
+      doc.setTextColor(212, 175, 55)
+      doc.text(lbl, bx + 6, gy + 8)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(12)
+      doc.setTextColor(255, 255, 255)
+      doc.text(val, bx + 6, gy + 19)
     })
 
-    // Bottom cyan accent
-    const accentY = gy + rowH + 10
-    doc.setDrawColor(...CYAN); doc.setLineWidth(1)
-    doc.line(M, accentY, PW - M, accentY)
+    // Bottom gold bar
+    doc.setFillColor(212, 175, 55)
+    doc.rect(0, PH - 3, PW, 3, "F")
 
     footer(1)
 
