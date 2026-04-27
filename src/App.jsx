@@ -1765,11 +1765,12 @@ export default function App() {
           const distMH = ((b.x - a.x) / SCALE_PDF / 1000).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
+          const lineY = ay - 8
           doc.setLineDashPattern([1, 1], 0)
-          doc.line(ax, ay - 4, bx, by - 4)
-          doc.line(ax, ay - 6, ax, ay - 2)
-          doc.line(bx, by - 6, bx, by - 2)
-          doc.text(`${distMH}m`, midX, midY - 6, { align: "center" })
+          doc.line(ax, lineY, bx, lineY)
+          doc.line(ax, lineY - 2, ax, lineY + 2)
+          doc.line(bx, lineY - 2, bx, lineY + 2)
+          doc.text(`${distMH}m`, midX, lineY - 2, { align: "center" })
         }
       })
 
@@ -1783,13 +1784,73 @@ export default function App() {
           const distMV = ((b.y - a.y) / SCALE_PDF / 1000).toFixed(2)
           const midX = (ax + bx) / 2
           const midY = (ay + by) / 2
+          const lineX = ax + 8
           doc.setLineDashPattern([1, 1], 0)
-          doc.line(ax + 4, ay, bx + 4, by)
-          doc.line(ax + 2, ay, ax + 6, ay)
-          doc.line(bx + 2, by, bx + 6, by)
-          doc.text(`${distMV}m`, midX + 8, midY, { align: "left" })
+          doc.line(lineX, ay, lineX, by)
+          doc.line(lineX - 2, ay, lineX + 2, ay)
+          doc.line(lineX - 2, by, lineX + 2, by)
+          doc.text(`${distMV}m`, lineX + 2, midY, { align: "left" })
         }
       })
+
+      // Wall to first/last fixture distances (horizontal)
+      rows.forEach(row => {
+        const sorted = [...row].sort((a, b) => a.x - b.x)
+        const first = sorted[0]
+        const last = sorted[sorted.length - 1]
+
+        // Left wall to first fixture
+        const wallLeftX = toPdfX(ROOM_X_PDF)
+        const firstX = toPdfX(first.x)
+        const firstY = toPdfY(first.y)
+        const distLeft = ((first.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
+        doc.setDrawColor(100, 200, 255)
+        doc.line(wallLeftX, firstY - 8, firstX, firstY - 8)
+        doc.line(wallLeftX, firstY - 10, wallLeftX, firstY - 6)
+        doc.line(firstX, firstY - 10, firstX, firstY - 6)
+        doc.setTextColor(100, 200, 255)
+        doc.text(`${distLeft}m`, (wallLeftX + firstX) / 2, firstY - 10, { align: "center" })
+
+        // Last fixture to right wall
+        const wallRightX = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
+        const lastX = toPdfX(last.x)
+        const distRight = ((ROOM_X_PDF + ROOM_PX_W_PDF - last.x) / SCALE_PDF / 1000).toFixed(2)
+        doc.line(lastX, firstY - 8, wallRightX, firstY - 8)
+        doc.line(lastX, firstY - 10, lastX, firstY - 6)
+        doc.line(wallRightX, firstY - 10, wallRightX, firstY - 6)
+        doc.text(`${distRight}m`, (lastX + wallRightX) / 2, firstY - 10, { align: "center" })
+      })
+
+      // Wall to first/last fixture distances (vertical) - only first column
+      const firstCol = cols[0]
+      if (firstCol) {
+        const sorted = [...firstCol].sort((a, b) => a.y - b.y)
+        const first = sorted[0]
+        const last = sorted[sorted.length - 1]
+        const colX = toPdfX(first.x) - 10
+
+        // Top wall to first fixture
+        const wallTopY = toPdfY(ROOM_Y_PDF)
+        const firstFY = toPdfY(first.y)
+        const distTop = ((first.y - ROOM_Y_PDF) / SCALE_PDF / 1000).toFixed(2)
+        doc.line(colX, wallTopY, colX, firstFY)
+        doc.line(colX - 2, wallTopY, colX + 2, wallTopY)
+        doc.line(colX - 2, firstFY, colX + 2, firstFY)
+        doc.text(`${distTop}m`, colX - 2, (wallTopY + firstFY) / 2, { align: "right" })
+
+        // Last fixture to bottom wall
+        const wallBotY = toPdfY(ROOM_Y_PDF + ROOM_PX_H_PDF)
+        const lastFY = toPdfY(last.y)
+        const distBot = ((ROOM_Y_PDF + ROOM_PX_H_PDF - last.y) / SCALE_PDF / 1000).toFixed(2)
+        doc.line(colX, lastFY, colX, wallBotY)
+        doc.line(colX - 2, lastFY, colX + 2, lastFY)
+        doc.line(colX - 2, wallBotY, colX + 2, wallBotY)
+        doc.text(`${distBot}m`, colX - 2, (lastFY + wallBotY) / 2, { align: "right" })
+      }
+
+      // Reset colors
+      doc.setDrawColor(255, 200, 0)
+      doc.setTextColor(255, 200, 0)
 
       // Reset dash pattern
       doc.setLineDashPattern([], 0)
