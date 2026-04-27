@@ -1667,7 +1667,7 @@ export default function App() {
       const cropX = bounds ? Math.max(0, bounds.x - padding) : 0
       const cropY = bounds ? Math.max(0, bounds.y - padding) : 0
       const cropW = bounds ? bounds.width + padding * 2 : stage.width()
-      const cropH = bounds ? bounds.height + padding * 2 : stage.height()
+      const cropH = bounds ? bounds.height + padding * 4 : stage.height()
 
       const dataUrl = stage.toDataURL({
         pixelRatio: 3,
@@ -1793,33 +1793,32 @@ export default function App() {
         }
       })
 
-      // Wall to first/last fixture distances (horizontal)
-      rows.forEach(row => {
-        const sorted = [...row].sort((a, b) => a.x - b.x)
-        const first = sorted[0]
-        const last = sorted[sorted.length - 1]
+      // Wall to first/last fixture distances (horizontal) - only first row
+      const firstRow = rows.reduce((a, b) => a[0].y < b[0].y ? a : b)
+      const sortedFirstRow = [...firstRow].sort((a, b) => a.x - b.x)
+      const firstRowFirst = sortedFirstRow[0]
+      const firstRowLast = sortedFirstRow[sortedFirstRow.length - 1]
 
-        // Left wall to first fixture
-        const wallLeftX = toPdfX(ROOM_X_PDF)
-        const firstX = toPdfX(first.x)
-        const firstY = toPdfY(first.y)
-        const distLeft = ((first.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
-        doc.setDrawColor(100, 200, 255)
-        doc.line(wallLeftX, firstY - 8, firstX, firstY - 8)
-        doc.line(wallLeftX, firstY - 10, wallLeftX, firstY - 6)
-        doc.line(firstX, firstY - 10, firstX, firstY - 6)
-        doc.setTextColor(100, 200, 255)
-        doc.text(`${distLeft}m`, (wallLeftX + firstX) / 2, firstY - 10, { align: "center" })
+      // Left wall to first fixture
+      const wallLeftX = toPdfX(ROOM_X_PDF)
+      const firstRowFirstX = toPdfX(firstRowFirst.x)
+      const firstRowY = toPdfY(firstRowFirst.y)
+      const distLeft = ((firstRowFirst.x - ROOM_X_PDF) / SCALE_PDF / 1000).toFixed(2)
+      doc.setDrawColor(100, 200, 255)
+      doc.line(wallLeftX, firstRowY - 8, firstRowFirstX, firstRowY - 8)
+      doc.line(wallLeftX, firstRowY - 10, wallLeftX, firstRowY - 6)
+      doc.line(firstRowFirstX, firstRowY - 10, firstRowFirstX, firstRowY - 6)
+      doc.setTextColor(100, 200, 255)
+      doc.text(`${distLeft}m`, (wallLeftX + firstRowFirstX) / 2, firstRowY - 10, { align: "center" })
 
-        // Last fixture to right wall
-        const wallRightX = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
-        const lastX = toPdfX(last.x)
-        const distRight = ((ROOM_X_PDF + ROOM_PX_W_PDF - last.x) / SCALE_PDF / 1000).toFixed(2)
-        doc.line(lastX, firstY - 8, wallRightX, firstY - 8)
-        doc.line(lastX, firstY - 10, lastX, firstY - 6)
-        doc.line(wallRightX, firstY - 10, wallRightX, firstY - 6)
-        doc.text(`${distRight}m`, (lastX + wallRightX) / 2, firstY - 10, { align: "center" })
-      })
+      // Last fixture to right wall
+      const wallRightX = toPdfX(ROOM_X_PDF + ROOM_PX_W_PDF)
+      const firstRowLastX = toPdfX(firstRowLast.x)
+      const distRight = ((ROOM_X_PDF + ROOM_PX_W_PDF - firstRowLast.x) / SCALE_PDF / 1000).toFixed(2)
+      doc.line(firstRowLastX, firstRowY - 8, wallRightX, firstRowY - 8)
+      doc.line(firstRowLastX, firstRowY - 10, firstRowLastX, firstRowY - 6)
+      doc.line(wallRightX, firstRowY - 10, wallRightX, firstRowY - 6)
+      doc.text(`${distRight}m`, (firstRowLastX + wallRightX) / 2, firstRowY - 10, { align: "center" })
 
       // Wall to first/last fixture distances (vertical) - only first column
       const firstCol = cols[0]
