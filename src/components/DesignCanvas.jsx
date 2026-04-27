@@ -108,7 +108,15 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 }, ref) {
   const toast = useToast()
   const stageRef = useRef(null)
-  useImperativeHandle(ref, () => ({ getStage: () => stageRef.current }))
+  useImperativeHandle(ref, () => ({
+    getStage: () => stageRef.current,
+    getRoomBounds: () => ({
+      x: ROOM_X,
+      y: ROOM_Y,
+      width: ROOM_PX_W,
+      height: ROOM_PX_H,
+    }),
+  }))
   const floorPlanDisplayRef = useRef({ imgX: 0, imgY: 0, displayW: 0, displayH: 0, scaleX: 1, scaleY: 1 })
   const hasFloorPlan = !!floorPlan?.url
 

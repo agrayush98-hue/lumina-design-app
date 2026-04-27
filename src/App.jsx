@@ -1656,7 +1656,17 @@ export default function App() {
     // ── Final page: Layout Snapshot ────────────────────────────────────────────
     const stage = canvasRef.current?.getStage()
     if (stage) {
-      const dataUrl = stage.toDataURL({ pixelRatio: 2 })
+      const bounds = canvasRef.current?.getRoomBounds?.()
+      const pixelRatio = 2
+      const dataUrl = stage.toDataURL({
+        pixelRatio,
+        x: bounds ? bounds.x - 10 : 0,
+        y: bounds ? bounds.y - 10 : 0,
+        width: bounds ? bounds.width + 20 : stage.width(),
+        height: bounds ? bounds.height + 20 : stage.height(),
+      })
+      const stageW = bounds ? bounds.width + 20 : stage.width()
+      const stageH = bounds ? bounds.height + 20 : stage.height()
       doc.addPage()
 
       // Full black background
@@ -1696,8 +1706,6 @@ export default function App() {
       const imgH = PH - imgY - 12
 
       // Get actual stage dimensions for correct ratio
-      const stageW = stage.width()
-      const stageH = stage.height()
       const ratio = stageH / stageW
       let finalW = imgW
       let finalH = imgW * ratio
