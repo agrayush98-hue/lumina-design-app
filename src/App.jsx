@@ -2114,7 +2114,6 @@ export default function App() {
                 <button
                   className={styles.tbBtn}
                   onClick={() => {
-                    console.log('[TOOLBAR DRAW ROOM CLICKED]')
                     setActiveTool(activeTool === 'draw-room' ? 'fixture' : 'draw-room')
                   }}
                   style={activeTool === 'draw-room' ? tbActive : {}}
