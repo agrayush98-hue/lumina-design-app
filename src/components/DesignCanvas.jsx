@@ -1388,7 +1388,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                       x={rX} y={rY} width={rpxW} height={rpxH}
                       fill="rgba(255,255,255,0.025)"
                       onClick={isStripMode || floorPlan ? undefined : handleRoomClick}
-                      listening={true}
+                      listening={!floorPlan}
                     />
                   )}
 
