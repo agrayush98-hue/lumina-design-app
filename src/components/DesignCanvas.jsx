@@ -503,7 +503,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const raw = stage.getPointerPosition()
     if (!raw) return
     const pos = toWorld(raw)
-    console.log("raw click:", raw, "world pos:", pos, "ROOM_X:", ROOM_X, "ROOM_Y:", ROOM_Y, "ROOM_PX_W:", ROOM_PX_W, "ROOM_PX_H:", ROOM_PX_H)
     const x = snap(pos.x, ROOM_X, ROOM_PX_W)
     const y = snap(pos.y, ROOM_Y, ROOM_PX_H)
     if (activeTool === "fixture") {
@@ -1403,7 +1402,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     cornerRadius={3}
                     listening={!isActive}
                     onClick={() => {
-                      if (!isActive && !isStripMode) {
+                      if (!isActive && !isStripMode && activeTool === "select") {
                         onSelectRoom?.(r.id)
                       }
                     }}
