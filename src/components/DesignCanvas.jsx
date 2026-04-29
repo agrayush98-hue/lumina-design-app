@@ -982,7 +982,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           onMouseLeave={() => { setHoveredLightId(null);     onHoverLight?.(null)  }}
           onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); }}
           onContextMenu={handleContextMenu}
-          listening={activeTool !== "fixture" && activeTool !== "draw-room" && activeTool !== "emergency"}
+          listening={true}
         />
         {(() => {
           const shape = light.fixtureShape ?? 'circle'
@@ -994,7 +994,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             strokeWidth: isSelected ? 2.5 : 1.5,
             onClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); },
             onDblClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id); },
-            listening: activeTool === "select",
+            listening: true,
           }
 
           if (shape === 'circle')    return <Circle radius={shapeRadius} {...shapeProps} />
@@ -1006,7 +1006,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           if (shape === 'rectangle') return <Rect x={-shapeRadius*1.6} y={-shapeRadius*0.6} width={shapeRadius*3.2} height={shapeRadius*1.2} {...shapeProps} />
           if (shape === 'cross') return (
             <>
-              <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} fill="transparent" listening={activeTool !== "fixture" && activeTool !== "draw-room" && activeTool !== "emergency"} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
+              <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} fill="transparent" listening={true} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
               <Line points={[-shapeRadius, 0, shapeRadius, 0]} stroke={stroke} strokeWidth={1.5} listening={false} />
               <Line points={[0, -shapeRadius, 0, shapeRadius]} stroke={stroke} strokeWidth={1.5} listening={false} />
             </>
@@ -1018,12 +1018,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           if (shape === 'pendant') return (
             <>
               <Line points={[0, -shapeRadius*2.4, 0, -shapeRadius]} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={1.5} listening={false} />
-              <Circle radius={shapeRadius} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={activeTool !== "fixture" && activeTool !== "draw-room" && activeTool !== "emergency"} />
+              <Circle radius={shapeRadius} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={true} />
             </>
           )
           if (shape === 'track') return (
             <>
-              <Rect x={-shapeRadius*2} y={-shapeRadius*0.45} width={shapeRadius*4} height={shapeRadius*0.9} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={activeTool !== "fixture" && activeTool !== "draw-room" && activeTool !== "emergency"} />
+              <Rect x={-shapeRadius*2} y={-shapeRadius*0.45} width={shapeRadius*4} height={shapeRadius*0.9} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={true} />
               <Circle radius={shapeRadius*0.55} fill={stroke} stroke="transparent" strokeWidth={0} listening={false} />
             </>
           )
