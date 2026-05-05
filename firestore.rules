@@ -2,22 +2,55 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User doc + all subcollections (profile, fixtures, subscription, billingHistory)
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Projects — create requires auth + userId matches; read/update/delete requires ownership
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ── Users root document ────────────────────────────────────────────────────
+    // Split from subcollections so we can block subscription writes from clients.
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      // Signup: AuthContext._initUserDocs writes the root doc — allow create.
+      allow create: if isOwner(userId);
+
+      // Updates allowed for everything EXCEPT the subscription field.
+      // subscription is written exclusively by the Firebase Admin SDK in
+      // api/verify-payment.js (server-side, bypasses these rules).
+      // This closes VULN-001 — client-side createSubscription() bypass.
+      allow update: if isOwner(userId) &&
+                       !request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasAny(['subscription']);
+    }
+
+    // ── Users subcollections (profile, fixtures, billingHistory, etc.) ─────────
+    // Full owner access — none of these subcollections hold subscription data.
+    match /users/{userId}/{subcollection}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ── Projects ───────────────────────────────────────────────────────────────
     match /projects/{projectId} {
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
-      // Shared projects readable by any authenticated user
-      allow read: if request.auth != null && resource.data.isShared == true;
+      // Owner always has full read; shared projects are readable by any auth user.
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid ||
+                      resource.data.isShared == true);
+
+      // Only the owner can create (userId field must match the caller).
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Only the owner can update or delete.
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.userId == request.auth.uid;
     }
 
-    // Deny everything else
+    // ── Default deny ───────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }
