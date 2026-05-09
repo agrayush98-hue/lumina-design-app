@@ -18,6 +18,7 @@ import ReportPanel from "./components/ReportPanel"
 import LoadProjectModal from "./components/LoadProjectModal"
 import AIRecommender from "./components/AIRecommender"
 import ConnectionStatus from "./components/ConnectionStatus"
+import { FixtureLibraryPanel } from "./components/FixtureLibraryPanel"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
@@ -371,7 +372,15 @@ export default function App() {
   const roomWidth   = Number(room.roomWidth)
   const roomHeight  = Number(room.roomHeight)
   const areaM2      = (roomWidth / 1000) * (roomHeight / 1000)
-  const mh          = Number(room.ceilingHeight) - Number(room.falseCeiling) - Number(room.workingPlane)
+  // Auto-adjust ceiling height based on fixture category
+  const dominantCategory = lights.length > 0 ? lights[0].category : null
+  const autoCeiling =
+    dominantCategory === 'High_Bay'     ? 8.0 :
+    dominantCategory === 'Street_Light' ? 10.0 :
+    dominantCategory === 'Flood_Light'  ? 6.0 :
+    dominantCategory === 'Outdoor'      ? 6.0 :
+    Number(room.ceilingHeight) || 2.8
+  const mh          = autoCeiling - Number(room.falseCeiling || 0) - Number(room.workingPlane || 0.8)
   const rcr         = calcRCR(roomWidth, roomHeight, mh)
   const uf          = calcUF(rcr)
   const totalLumens = lights.reduce((s, l) => s + (l.lumens ?? 0), 0)
@@ -604,7 +613,7 @@ export default function App() {
       }))
     } else {
       patchActiveRoom(r => {
-        const newLight = makeLight(lightData.id, lightData.x, lightData.y, activeFixture, Number(room.fixtureLumens))
+        const newLight = makeLight(lightData.id, lightData.x, lightData.y, activeFixture, activeFixture?.lumens ?? Number(room.fixtureLumens))
         const lightWithProtocol = daliEnabled ? { ...newLight, protocol: 'DALI' } : newLight
         const lightWithVisuals = {
           ...lightWithProtocol,
@@ -1668,12 +1677,14 @@ export default function App() {
       const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
       const cropH = bounds ? bounds.height + pad * 2 : stage.height()
 
-      const availW = PW - 2 * M - 8
+      const availW    = PW - 2 * M - 8
       const aspectRatio = cropH / cropW
-      const imgW = availW
-      const imgH = imgW * aspectRatio
-      const imgX = (PW - imgW) / 2
-      const imgY = 26
+      const imgY      = 26
+      const maxH      = PH - imgY - 16          // 255mm safe area before footer
+      const scale     = Math.min(1, maxH / (availW * aspectRatio))
+      const imgW      = availW * scale
+      const imgH      = imgW * aspectRatio
+      const imgX      = (PW - imgW) / 2
 
       // Placement page
       if (exportCanvasOptions.placement) {
@@ -2050,122 +2061,451 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#000000", overflow: "hidden", fontFamily: "IBM Plex Mono" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header style={{ height: 48, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", background: "#000000", borderBottom: "1px solid #2e2e2e", flexShrink: 0, position: "relative", zIndex: 600 }}>
-        {/* Left: logo + project name */}
+      <header style={{
+        height: 56,
+        background: "#0a0a0a",
+        borderBottom: "1px solid #2a2a2a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 20px",
+        flexShrink: 0,
+        fontFamily: "IBM Plex Mono, monospace"
+      }}>
+        {/* ── Left: Logo + Back + Project Name ──────────────────────── */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#ffffff", letterSpacing: "0.06em" }}>LUMINA</span>
-            <span style={{ fontSize: 15, fontWeight: 400, color: "#555555", letterSpacing: "0.06em" }}>DESIGN</span>
+          {/* Logo */}
+          <div style={{
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            color: "#ffffff"
+          }}>
+            LUMINA <span style={{ color: "#666666", fontWeight: 400 }}>DESIGN</span>
           </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+
+          {/* Back to Projects Button */}
           <button
             onClick={() => navigate("/dashboard")}
-            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: 4, color: "#d4a843", fontFamily: "IBM Plex Mono", fontSize: 11, fontWeight: 500, padding: "3px 10px", cursor: "pointer", letterSpacing: "0.04em", transition: "border-color 0.1s, color 0.1s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#f0d080" }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222222"; e.currentTarget.style.color = "#d4a843" }}
-          >← Projects</button>
-          <div style={{ width: 1, height: 16, background: "#222222" }} />
-          {editingName ? (
-            <input
-              autoFocus
-              value={projectName}
-              onChange={e => setProjectName(e.target.value)}
-              onBlur={() => setEditingName(false)}
-              onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") setEditingName(false) }}
-              style={{ background: "transparent", border: "none", borderBottom: "1px solid #d4a843", outline: "none", color: "#ffffff", fontFamily: "IBM Plex Mono", fontSize: 16, fontWeight: 600, width: 200, padding: "1px 2px" }}
-            />
-          ) : (
-            <span
-              onClick={() => setEditingName(true)}
-              title="Click to rename project"
-              style={{ fontSize: 16, fontWeight: 600, color: "#ffffff", cursor: "text", letterSpacing: "0.01em", transition: "color 0.1s" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#d4a843" }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#f0f0f0" }}
-            >{projectName}</span>
-          )}
-          <span style={{ fontSize: 11, color: "#555555" }}>{projectId ? `${projectId.slice(0, 8)}…` : "unsaved"}</span>
+            style={{
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              color: "#888888",
+              padding: "6px 14px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#3a3a3a"
+              e.currentTarget.style.color = "#ffffff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#2a2a2a"
+              e.currentTarget.style.color = "#888888"
+            }}
+          >
+            ← Projects
+          </button>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+
+          {/* Project Name (Editable) */}
+          <input
+            type="text"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#ffffff",
+              fontSize: 13,
+              fontWeight: 600,
+              outline: "none",
+              padding: "6px 12px",
+              borderRadius: 4,
+              minWidth: 150,
+              maxWidth: 300,
+              fontFamily: "IBM Plex Mono, monospace"
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.background = "#1a1a1a"
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.background = "transparent"
+            }}
+            placeholder="Untitled Project"
+          />
+
+          {/* Project ID */}
+          <span style={{ fontSize: 10, color: "#555555", letterSpacing: "0.05em" }}>
+            {projectId?.slice(0, 8)}
+          </span>
         </div>
 
-        {/* Center: quick stat chips */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {[
-            { label: "FIXTURES", value: projectTotalFixtures },
-            { label: "LOAD",     value: `${projectTotalWatt}W` },
-            { label: "LUX",      value: lights.length ? Math.round(totalLux) : "—" },
-            { label: "SIZE",     value: (() => { const u = getStoredUnit(); const w = fromMM(roomWidth, u); const h = fromMM(roomHeight, u); return w && h ? `${w}×${h}${u}` : "—" })() },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 10px", height: 28, borderRadius: 4, background: "#0a0a0a", border: "1px solid #222222" }}>
-              <span style={{ fontSize: 9, color: "#888888", letterSpacing: "0.08em" }}>{label}</span>
-              <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 500 }}>{value}</span>
-            </div>
-          ))}
+        {/* ── Center: Quick Stats Chips ──────────────────────────────── */}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {/* Fixtures Chip */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>FIXTURES</span>
+            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{projectTotalFixtures}</span>
+          </div>
+
+          {/* Load Chip */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>LOAD</span>
+            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{projectTotalWatt}W</span>
+          </div>
+
+          {/* Lux Chip */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>LUX</span>
+            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{lights.length ? Math.round(totalLux) : "—"}</span>
+          </div>
+
+          {/* Size Chip */}
+          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>SIZE</span>
+            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>
+              {(() => {
+                const dimUnit = getStoredUnit()
+                const wDisp = fromMM(roomWidth, dimUnit)
+                const hDisp = fromMM(roomHeight, dimUnit)
+                return wDisp && hDisp ? `${wDisp}×${hDisp}${dimUnit}` : "—"
+              })()}
+            </span>
+          </div>
         </div>
 
-        {/* Right: actions + user */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button className={`${styles.hdrBtn} ${styles.hdrBtnSave}`} onClick={handleSave}>{saving ? "Saving…" : "Save"}</button>
-          <button className={styles.hdrBtn} onClick={() => setShowLoadModal(true)}>Load</button>
-          <button className={styles.hdrBtn} onClick={handleShare}>Share</button>
-          <button className={styles.hdrBtn} onClick={() => requirePro('Export', () => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) })}>Export</button>
-          <div style={{ width: 1, height: 16, background: "#222222", margin: "0 4px" }} />
+        {/* ── Right: Action Buttons + User ───────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            style={{
+              background: "#1a1a1a",
+              border: "1px solid #2a2a2a",
+              color: "#ffffff",
+              padding: "7px 16px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: "IBM Plex Mono, monospace",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#2a2a2a"
+              e.currentTarget.style.borderColor = "#3a3a3a"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#1a1a1a"
+              e.currentTarget.style.borderColor = "#2a2a2a"
+            }}
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+
+          {/* Load Button */}
+          <button
+            onClick={() => setShowLoadModal(true)}
+            style={{
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              color: "#888888",
+              padding: "7px 16px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: "IBM Plex Mono, monospace",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#3a3a3a"
+              e.currentTarget.style.color = "#ffffff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#2a2a2a"
+              e.currentTarget.style.color = "#888888"
+            }}
+          >
+            Load
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            style={{
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              color: "#888888",
+              padding: "7px 16px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: "IBM Plex Mono, monospace",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#3a3a3a"
+              e.currentTarget.style.color = "#ffffff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#2a2a2a"
+              e.currentTarget.style.color = "#888888"
+            }}
+          >
+            Share
+          </button>
+
+          {/* Export Button */}
+          <button
+            onClick={() => requirePro('Export', () => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) })}
+            style={{
+              background: "#d4a843",
+              border: "1px solid #d4a843",
+              color: "#0a0a0a",
+              padding: "7px 16px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 700,
+              fontFamily: "IBM Plex Mono, monospace",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#e0b855"
+              e.currentTarget.style.borderColor = "#e0b855"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#d4a843"
+              e.currentTarget.style.borderColor = "#d4a843"
+            }}
+          >
+            Export
+          </button>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+
+          {/* Keyboard Shortcuts Button */}
           <button
             onClick={() => setShowShortcuts(true)}
-            title="Keyboard shortcuts (?)"
-            style={{ background: "transparent", border: "1px solid #2e2e2e", borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "#555555", fontFamily: "IBM Plex Mono", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, transition: "border-color 0.1s, color 0.1s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#d4a843"; e.currentTarget.style.color = "#d4a843" }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#222222"; e.currentTarget.style.color = "#555" }}
-          >?</button>
-          <span style={{ fontSize: 11, color: "#555555", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
-          <button className={`${styles.hdrBtn} ${styles.hdrBtnDanger}`} onClick={() => signOut(auth)}>Sign Out</button>
+            style={{
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              color: "#888888",
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#3a3a3a"
+              e.currentTarget.style.color = "#ffffff"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#2a2a2a"
+              e.currentTarget.style.color = "#888888"
+            }}
+            title="Keyboard Shortcuts"
+          >
+            ?
+          </button>
+
+          {/* User Email */}
+          <span style={{
+            fontSize: 11,
+            color: "#666666",
+            maxWidth: 150,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}>
+            {user?.email}
+          </span>
+
+          {/* Sign Out Button */}
+          <button
+            onClick={() => signOut(auth)}
+            style={{
+              background: "transparent",
+              border: "1px solid #2a2a2a",
+              color: "#888888",
+              padding: "7px 14px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 11,
+              fontWeight: 600,
+              fontFamily: "IBM Plex Mono, monospace",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#ef4444"
+              e.currentTarget.style.color = "#ef4444"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#2a2a2a"
+              e.currentTarget.style.color = "#888888"
+            }}
+          >
+            Sign Out
+          </button>
         </div>
       </header>
 
       <TrialBanner />
 
-      {/* ── Merged stats bar ────────────────────────────────────────────────── */}
+      {/* ── Top Stats Bar ────────────────────────────────────────────────── */}
       {(() => {
-        const luxVal    = lights.length ? Math.round(totalLux) : null
-        const tgtLux    = Number(room.targetLux)
+        // Calculate lux value and status
+        const luxVal = lights.length ? Math.round(totalLux) : null
+        const tgtLux = Number(room.targetLux)
         const luxStatus = luxVal == null ? null
           : luxVal > tgtLux * 1.25 ? "OVERLIT"
           : luxVal >= tgtLux * 0.9  ? "GOOD"
           : "DIM"
-        const sc  = { GOOD: "#4caf7d", OVERLIT: "#e07b2a", DIM: "#888888" }[luxStatus] ?? "#888"
-        const sb  = { GOOD: "#0a1a0f", OVERLIT: "#1a0f00", DIM: "#0a0a0a" }[luxStatus] ?? "#0a0a0a"
+
+        // Status colors - more vibrant
+        const statusColors = {
+          GOOD:    { text: "#4ade80", bg: "#052e16" },  // Green
+          OVERLIT: { text: "#fb923c", bg: "#431407" },  // Orange
+          DIM:     { text: "#94a3b8", bg: "#0f172a" }   // Blue-gray
+        }
+        const statusColor = statusColors[luxStatus] || { text: "#888888", bg: "#0a0a0a" }
+
+        // Unit conversion for room size
         const dimUnit = getStoredUnit()
-        const wDisp   = fromMM(roomWidth,  dimUnit)
-        const hDisp   = fromMM(roomHeight, dimUnit)
+        const wDisp = fromMM(roomWidth, dimUnit)
+        const hDisp = fromMM(roomHeight, dimUnit)
         const sizeStr = wDisp && hDisp ? `${wDisp}×${hDisp}${dimUnit}` : "—"
-        const div = <div style={{ width: 1, height: 16, background: "#222222", flexShrink: 0 }} />
-        const S = (label, val) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
-            <span style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>{label}</span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: "#ffffff" }}>{val}</span>
+
+        // Reusable divider
+        const Divider = () => (
+          <div style={{
+            width: 1,
+            height: 18,
+            background: "#2a2a2a",
+            flexShrink: 0
+          }} />
+        )
+
+        // Reusable stat component
+        const Stat = ({ label, value }) => (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "0 16px"
+          }}>
+            <span style={{
+              fontSize: 10,
+              color: "#666666",
+              letterSpacing: "0.08em",
+              fontWeight: 500,
+              textTransform: "uppercase"
+            }}>
+              {label}
+            </span>
+            <span style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#ffffff"
+            }}>
+              {value}
+            </span>
           </div>
         )
+
         return (
-          <div style={{ height: 36, display: "flex", alignItems: "center", background: "#0a0a0a", borderBottom: "1px solid #2e2e2e", fontFamily: "IBM Plex Mono", flexShrink: 0, overflow: "hidden" }}>
-            {S("FLOORS",   floors.length)}
-            {div}
-            {S("ROOMS",    allRooms.length)}
-            {div}
-            {S("FIXTURES", projectTotalFixtures)}
-            {div}
-            {S("LOAD",     `${projectTotalWatt}W`)}
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-              {div}
-              {S("SIZE", sizeStr)}
-              {div}
-              {S("MH",  `${mh.toFixed(2)}m`)}
-              {div}
-              {S("RCR", rcr.toFixed(2))}
-              {div}
-              {S("UF",  uf.toFixed(2))}
-              {div}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
-                <span style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>LUX</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: "#ffffff" }}>{luxVal ?? "—"}</span>
+          <div style={{
+            height: 44,
+            display: "flex",
+            alignItems: "center",
+            background: "#0a0a0a",
+            borderBottom: "1px solid #2a2a2a",
+            fontFamily: "IBM Plex Mono, monospace",
+            flexShrink: 0,
+            overflow: "hidden"
+          }}>
+            {/* Left Group - Project Stats */}
+            <Stat label="FLOORS" value={floors.length} />
+            <Divider />
+            <Stat label="ROOMS" value={allRooms.length} />
+            <Divider />
+            <Stat label="FIXTURES" value={projectTotalFixtures} />
+            <Divider />
+            <Stat label="LOAD" value={`${projectTotalWatt}W`} />
+
+            {/* Right Group - Room Metrics */}
+            <div style={{
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center"
+            }}>
+              <Divider />
+              <Stat label="SIZE" value={sizeStr} />
+              <Divider />
+              <Stat label="MH" value={`${mh.toFixed(2)}m`} />
+              <Divider />
+              <Stat label="RCR" value={rcr.toFixed(2)} />
+              <Divider />
+              <Stat label="UF" value={uf.toFixed(2)} />
+              <Divider />
+
+              {/* Lux with Status Badge */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "0 16px"
+              }}>
+                <span style={{
+                  fontSize: 10,
+                  color: "#666666",
+                  letterSpacing: "0.08em",
+                  fontWeight: 500,
+                  textTransform: "uppercase"
+                }}>
+                  LUX
+                </span>
+                <span style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#ffffff"
+                }}>
+                  {luxVal ?? "—"}
+                </span>
                 {luxStatus && (
-                  <span style={{ padding: "1px 7px", borderRadius: 3, fontSize: 10, fontWeight: 500, background: sb, color: sc, letterSpacing: "0.04em" }}>{luxStatus}</span>
+                  <span style={{
+                    padding: "3px 10px",
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    background: statusColor.bg,
+                    color: statusColor.text,
+                    letterSpacing: "0.05em",
+                    border: `1px solid ${statusColor.text}33`
+                  }}>
+                    {luxStatus}
+                  </span>
                 )}
               </div>
             </div>
@@ -2222,7 +2562,7 @@ export default function App() {
               </div>
               {/* Tab content */}
               <div style={{ flex: 1, overflow: "hidden", display: leftTab === 'fixture' ? "flex" : "none", flexDirection: "column" }}>
-                <FixturePanel
+                <FixtureLibraryPanel
                   activeFixtureId={activeFixtureId}
                   onSelect={handleLibrarySelect}
                   userId={user?.uid ?? null}
@@ -2265,84 +2605,157 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
           {/* Centered floating toolbar */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", background: "#000000", borderBottom: "1px solid #1e1e1e", height: 44, flexShrink: 0 }}>
-            <div className={styles.toolbar} style={{ height: 44, padding: "0 4px" }}>
-              <button className={styles.tbBtn} onClick={autoPlaceLights} title="Auto Place — Automatically distribute fixtures in an optimal grid based on target lux and room size">Auto Place</button>
-              <button className={styles.tbBtn} onClick={() => setSnapToGrid(p => !p)} style={snapToGrid ? tbActive : {}} title={snapToGrid ? "Snap to grid: ON — fixtures align to grid points" : "Snap to grid: OFF — free placement"}>Snap {snapToGrid ? "On" : "Off"}</button>
-              <button className={`${styles.tbBtn} ${styles.tbBtnDestructive}`} onClick={() => patchActiveRoom(() => ({ lights: [] }))} title="Clear all fixtures from this room">Clear</button>
-              <div className={styles.tbSeparator} />
-              <button className={styles.tbBtn} onClick={() => setShowBeam(p => !p)} style={showBeam ? tbActive : {}} title="Beam — Visualize beam spread cones for each fixture on the canvas">Beam</button>
-              <button className={styles.tbBtn} onClick={() => setShowHeatmap(p => !p)} style={showHeatmap ? tbActive : {}} title="Heatmap — Show false-colour lux intensity map across the room floor">Heatmap</button>
-              <div className={styles.tbSeparator} />
+          {/* ── Toolbar ──────────────────────────────────────────────────────── */}
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            background: "#0a0a0a",
+            borderBottom: "1px solid #2a2a2a",
+            height: 48,
+            flexShrink: 0,
+            fontFamily: "IBM Plex Mono, monospace",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px" }}>
+
+              {/* ── Group 1: Canvas Tools ─────────────────────────────────────── */}
               <button
-                title="DALI — Enable DALI 2.0 addressable lighting system. Each fixture gets a unique bus address for individual dimming control."
+                onClick={autoPlaceLights}
+                title="Auto-place fixtures in room"
+                style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" }}
+              >Auto Place</button>
+
+              <button
+                onClick={() => setSnapToGrid(p => !p)}
+                title="Toggle snap to grid"
+                style={{ background: snapToGrid ? "#2a2010" : "#1a1a1a", border: snapToGrid ? "1px solid #d4a843" : "1px solid #2a2a2a", color: snapToGrid ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
+                onMouseLeave={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+              >Snap {snapToGrid ? "On" : "Off"}</button>
+
+              <button
+                onClick={() => patchActiveRoom(() => ({ lights: [] }))}
+                title="Clear all fixtures from room"
+                style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#ef4444", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.background = "#450a0a" }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.background = "transparent" }}
+              >Clear</button>
+
+              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+
+              {/* ── Group 2: Visualization ────────────────────────────────────── */}
+              <button
+                onClick={() => setShowBeam(p => !p)}
+                title="Toggle beam angle visualization"
+                style={{ background: showBeam ? "#2a2010" : "#1a1a1a", border: showBeam ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showBeam ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { if (!showBeam)    { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
+                onMouseLeave={(e) => { if (!showBeam)    { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+              >Beam</button>
+
+              <button
+                onClick={() => setShowHeatmap(p => !p)}
+                title="Toggle lux heatmap"
+                style={{ background: showHeatmap ? "#2a2010" : "#1a1a1a", border: showHeatmap ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showHeatmap ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
+                onMouseLeave={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+              >Heatmap</button>
+
+              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+
+              {/* ── Group 3: Electrical / DALI ───────────────────────────────── */}
+              <button
                 onClick={() => requirePro('DALI', () => {
-  setDaliEnabled(prev => !prev)
-  if (!daliEnabled) {
-    setFloors(prevFloors => prevFloors.map(f => ({
-      ...f,
-      rooms: f.rooms.map(r => ({
-        ...r,
-        lights: r.lights.map(l =>
-          (!l.protocol || l.protocol === 'Room Default')
-            ? { ...l, protocol: 'DALI' }
-            : l
-        )
-      }))
-    })))
-  }
-})}
-                style={{
-                  background: daliEnabled ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
-                  color: daliEnabled ? '#22c55e' : '#ef4444',
-                  border: `1px solid ${daliEnabled ? '#22c55e55' : '#ef444455'}`,
-                  padding: '3px 10px',
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  fontSize: 11,
-                  fontFamily: 'IBM Plex Mono',
-                  fontWeight: 600,
-                  letterSpacing: '0.04em',
-                  transition: 'background 0.2s, color 0.2s, border-color 0.2s',
-                  display: 'flex', alignItems: 'center', gap: 5,
-                }}
+                  setDaliEnabled(prev => !prev)
+                  if (!daliEnabled) {
+                    setFloors(prevFloors => prevFloors.map(f => ({
+                      ...f,
+                      rooms: f.rooms.map(r => ({
+                        ...r,
+                        lights: r.lights.map(l =>
+                          (!l.protocol || l.protocol === 'Room Default') ? { ...l, protocol: 'DALI' } : l
+                        ),
+                      })),
+                    })))
+                  }
+                })}
+                title="Toggle DALI protocol system"
+                style={{ display: "flex", alignItems: "center", gap: 6, background: daliEnabled ? "#052e16" : "#450a0a", border: daliEnabled ? "1px solid #4ade80" : "1px solid #ef4444", color: daliEnabled ? "#4ade80" : "#ef4444", padding: "7px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: daliEnabled ? '#22c55e' : '#ef4444', flexShrink: 0, transition: 'background 0.2s' }} />
-                DALI {daliEnabled ? 'ON' : 'OFF'}
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: daliEnabled ? "#4ade80" : "#ef4444", flexShrink: 0 }} />
+                DALI {daliEnabled ? "ON" : "OFF"}
               </button>
+
               {daliActive && (
                 <select
                   value={daliNodeLimit}
-                  onChange={e => setDaliNodeLimit(Number(e.target.value))}
-                  style={{ background: '#111111', border: '1px solid #2a2a2a', color: '#d4a843', fontSize: 11, padding: '3px 6px', borderRadius: 3 }}
+                  onChange={(e) => setDaliNodeLimit(Number(e.target.value))}
+                  title="DALI node limit per bus"
+                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ffffff", padding: "7px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", outline: "none" }}
                 >
                   <option value={64}>64 nodes</option>
                   <option value={128}>128 nodes</option>
                 </select>
               )}
-              <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "db"  ? "fixture" : "db")}  style={activeTool === "db"  ? tbActive : {}} title="Place Distribution Board marker">DB</button>
-              <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")} style={activeTool === "ctr" ? tbActive : {}} title="Place Contactor / Controller marker">CTR</button>
-              <button className={styles.tbBtn} onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}  style={activeTool === "jb"  ? tbActive : {}} title="Place Junction Box marker">JB</button>
-              <button className={styles.tbBtn} onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }} style={showEmergency || activeTool === "emergency" ? tbActive : {}} title="Toggle emergency lighting mode">Emergency</button>
-              <button className={styles.tbBtn} onClick={() => leftTab === 'ai' ? setLeftTab('fixture') : openAiTab()} style={leftTab === 'ai' ? tbActive : {}} title="AI Recommend — Get AI-powered fixture suggestions optimised for your room type, size, and target lux level">AI RECOMMEND</button>
-              <div className={styles.tbSeparator} />
+
+              <button
+                onClick={() => setActiveTool(activeTool === "db"  ? "fixture" : "db")}
+                title="Place Distribution Board marker"
+                style={{ background: activeTool === "db"  ? "#2a2010" : "#1a1a1a", border: activeTool === "db"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "db"  ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >DB</button>
+
+              <button
+                onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")}
+                title="Place Contactor / Controller marker"
+                style={{ background: activeTool === "ctr" ? "#2a2010" : "#1a1a1a", border: activeTool === "ctr" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "ctr" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >CTR</button>
+
+              <button
+                onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}
+                title="Place Junction Box marker"
+                style={{ background: activeTool === "jb"  ? "#2a2010" : "#1a1a1a", border: activeTool === "jb"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "jb"  ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >JB</button>
+
+              <button
+                onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }}
+                title="Toggle emergency lighting mode"
+                style={{ background: (showEmergency || activeTool === "emergency") ? "#2a2010" : "#1a1a1a", border: (showEmergency || activeTool === "emergency") ? "1px solid #d4a843" : "1px solid #2a2a2a", color: (showEmergency || activeTool === "emergency") ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >Emergency</button>
+
+              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+
+              {/* ── Group 4: Project Tools ────────────────────────────────────── */}
               {floorPlan && (
                 <button
-                  className={styles.tbBtn}
-                  onClick={() => {
-                    setActiveTool(activeTool === 'draw-room' ? 'fixture' : 'draw-room')
-                  }}
-                  style={activeTool === 'draw-room' ? tbActive : {}}
+                  onClick={() => setActiveTool(activeTool === "draw-room" ? "fixture" : "draw-room")}
                   title="Draw room boundary on the floor plan"
+                  style={{ background: activeTool === "draw-room" ? "#2a2010" : "#1a1a1a", border: activeTool === "draw-room" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "draw-room" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
                 >Draw Room</button>
               )}
-              <button className={styles.tbBtn} onClick={() => setShowSettings(p => !p)} style={showSettings ? tbActive : {}} title="Configure room dimensions, target lux, and mounting height">Settings</button>
-              <button className={styles.tbBtn} onClick={() => setShowVisualEditor(p => !p)} style={showVisualEditor ? tbActive : {}} title="Edit fixture size, color, and shape">Visual Editor</button>
 
-              {/* Protocol dropdown - only show when fixtures selected */}
+              <button
+                onClick={() => leftTab === 'ai' ? setLeftTab('fixture') : openAiTab()}
+                title="AI Recommend — Get AI-powered fixture suggestions"
+                style={{ background: leftTab === "ai" ? "#2a2010" : "#1a1a1a", border: leftTab === "ai" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: leftTab === "ai" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >AI RECOMMEND</button>
+
+              <button
+                onClick={() => setShowSettings(p => !p)}
+                title="Configure room dimensions, target lux, and mounting height"
+                style={{ background: showSettings ? "#2a2010" : "#1a1a1a", border: showSettings ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showSettings ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >Settings</button>
+
+              <button
+                onClick={() => setShowVisualEditor(p => !p)}
+                title="Edit fixture size, color, and shape"
+                style={{ background: showVisualEditor ? "#2a2010" : "#1a1a1a", border: showVisualEditor ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showVisualEditor ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+              >Visual Editor</button>
+
+              {/* Protocol selector — only when fixtures selected */}
               {selectedLights.length > 0 && (
                 <>
-                  <div className={styles.tbSeparator} />
+                  <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
                   <select
                     value=""
                     onChange={(e) => {
@@ -2351,27 +2764,19 @@ export default function App() {
                         e.target.value = ""
                       }
                     }}
-                    style={{
-                      padding: '4px 8px',
-                      background: '#111111',
-                      color: '#d4a843',
-                      border: '1px solid #2a2a2a',
-                      borderRadius: 3,
-                      fontSize: 11,
-                      fontFamily: 'IBM Plex Mono',
-                      cursor: 'pointer'
-                    }}
-                    title={selectedLights.length + " fixture" + (selectedLights.length > 1 ? "s" : "") + " selected"}
+                    title={`${selectedLights.length} fixture${selectedLights.length > 1 ? "s" : ""} selected`}
+                    style={{ background: "#1a1a1a", border: "1px solid #d4a843", color: "#d4a843", padding: "7px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", outline: "none" }}
                   >
                     <option value="">Protocol ({selectedLights.length})</option>
                     <option value="NON-DIM">NON-DIM</option>
                     <option value="DALI">DALI</option>
                     <option value="ZIGBEE">ZIGBEE</option>
                     <option value="0-10V">0-10V</option>
-                    <option value="Phase-cut">Phase-cut</option>
+                    <option value="PHASE-CUT">Phase-cut</option>
                   </select>
                 </>
               )}
+
             </div>
           </div>
 
@@ -2572,308 +2977,427 @@ export default function App() {
 
           {/* Bottom electrical bar — only when circuits exist */}
           {circuits.length > 0 && (() => {
+            // Calculate phase loads and voltage drop
             const phaseLoads = [0, 0, 0]
             circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
+
             const maxVDrop = voltageDropResults.length > 0
               ? Math.max(...voltageDropResults.map(r => r.vDropPercent))
               : null
-            const vDropCol = maxVDrop == null ? "#555"
-              : maxVDrop <= 3 ? "#4caf7d"
-              : maxVDrop <= 5 ? "#e07b2a"
-              : "#e05252"
-            const Col = ({ label, children, last }) => (
-              <div style={{ flex: 1, borderRight: last ? "none" : "1px solid #222222", padding: "0 16px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.08em", marginBottom: 3 }}>{label}</div>
+
+            // Color coding for voltage drop status
+            const vDropColor = maxVDrop == null ? "#666666"
+              : maxVDrop <= 3 ? "#4ade80"  // Green - Good
+              : maxVDrop <= 5 ? "#fb923c"  // Orange - Warning
+              : "#ef4444"                  // Red - Critical
+
+            // Reusable column component
+            const StatCol = ({ label, children, last }) => (
+              <div style={{
+                flex: 1,
+                borderRight: last ? "none" : "1px solid #2a2a2a",
+                padding: "0 20px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: 4
+              }}>
+                <div style={{
+                  fontSize: 9,
+                  color: "#888888",
+                  letterSpacing: "0.1em",
+                  fontWeight: 500,
+                  textTransform: "uppercase"
+                }}>
+                  {label}
+                </div>
                 {children}
               </div>
             )
+
             return (
-              <div style={{ height: 60, background: "#0a0a0a", borderTop: "1px solid #222222", display: "flex", alignItems: "stretch", flexShrink: 0, fontFamily: "IBM Plex Mono" }}>
-                <Col label="CIRCUITS">
-                  <span style={{ fontSize: 13, color: "#ffffff" }}>{circuits.length} circuit{circuits.length !== 1 ? "s" : ""}</span>
-                  <span style={{ fontSize: 10, color: "#888888" }}>{totalWatt}W total</span>
-                </Col>
-                <Col label="VOLTAGE DROP">
-                  <span style={{ fontSize: 13, color: vDropCol }}>{maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}</span>
-                  <span style={{ fontSize: 10, color: "#888888" }}>max across circuits</span>
-                </Col>
-                <Col label="DRIVER SCHEDULE">
-                  <span style={{ fontSize: 13, color: "#ffffff" }}>{driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}</span>
-                  <span style={{ fontSize: 10, color: "#888888" }}>{lights.length} fixture{lights.length !== 1 ? "s" : ""}</span>
-                </Col>
-                <Col label="PHASE BALANCE" last>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {["L1", "L2", "L3"].map((l, i) => (
-                      <span key={l} style={{ fontSize: 11, color: ["#39c5cf", "#3dba74", "#e8a830"][i] }}>
-                        {l}: {Math.round(phaseLoads[i])}W
-                      </span>
-                    ))}
+              <div style={{
+                height: 68,
+                background: "#0a0a0a",
+                borderTop: "1px solid #2a2a2a",
+                display: "flex",
+                alignItems: "stretch",
+                flexShrink: 0,
+                fontFamily: "IBM Plex Mono, monospace"
+              }}>
+                {/* Circuits */}
+                <StatCol label="CIRCUITS">
+                  <span style={{ fontSize: 15, color: "#ffffff", fontWeight: 500 }}>
+                    {circuits.length} circuit{circuits.length !== 1 ? "s" : ""}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#888888" }}>
+                    {totalWatt}W total load
+                  </span>
+                </StatCol>
+
+                {/* Voltage Drop */}
+                <StatCol label="VOLTAGE DROP">
+                  <span style={{ fontSize: 15, color: vDropColor, fontWeight: 600 }}>
+                    {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#888888" }}>
+                    {maxVDrop != null
+                      ? maxVDrop <= 3 ? "Excellent"
+                      : maxVDrop <= 5 ? "Acceptable"
+                      : "Critical"
+                      : "Not calculated"
+                    }
+                  </span>
+                </StatCol>
+
+                {/* Driver Schedule */}
+                <StatCol label="DRIVER SCHEDULE">
+                  <span style={{ fontSize: 15, color: "#ffffff", fontWeight: 500 }}>
+                    {driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}
+                  </span>
+                  <span style={{ fontSize: 11, color: "#888888" }}>
+                    {lights.length} fixture{lights.length !== 1 ? "s" : ""}
+                  </span>
+                </StatCol>
+
+                {/* Phase Balance */}
+                <StatCol label="PHASE BALANCE" last>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    {["L1", "L2", "L3"].map((phase, i) => {
+                      const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Cyan, Green, Amber
+                      const load = Math.round(phaseLoads[i])
+                      return (
+                        <span key={phase} style={{
+                          fontSize: 12,
+                          color: colors[i],
+                          fontWeight: 600
+                        }}>
+                          {phase}: {load}W
+                        </span>
+                      )
+                    })}
                   </div>
-                  <span style={{ fontSize: 10, color: "#888888" }}>3-phase distribution</span>
-                </Col>
+                  <span style={{ fontSize: 11, color: "#888888" }}>
+                    3-phase distribution
+                  </span>
+                </StatCol>
               </div>
             )
           })()}
 
         </div>
 
-        {/* ── Right: Inspector Panel 200px ─────────────────────────────────── */}
+        {/* ── Right: Inspector Panel ───────────────────────────────────────── */}
         {(() => {
-          const luxVal    = lights.length ? Math.round(totalLux) : null
-          const tgtLux    = Number(room.targetLux)
+          const luxVal = lights.length ? Math.round(totalLux) : null
+          const tgtLux = Number(room.targetLux)
           const luxStatus = luxVal == null ? null
             : luxVal > tgtLux * 1.25 ? "OVERLIT"
             : luxVal >= tgtLux * 0.9  ? "GOOD"
             : "DIM"
-          const luxCol = { GOOD: "#4caf7d", OVERLIT: "#e07b2a", DIM: "#e05252" }[luxStatus] ?? "#e0e0e0"
-          // Room geometry — used for hover-fixture position + distance stats
-          const _hScale  = Math.min((CANVAS_W - 260) / (roomWidth || 1), (CANVAS_H - 220) / (roomHeight || 1))
-          const hPxPerMm = (roomOffsetX != null && drawnWidthPx  != null && roomWidth > 0) ? drawnWidthPx / roomWidth : _hScale
-          const hRoomX   = roomOffsetX != null ? roomOffsetX : 20
-          const hRoomY   = roomOffsetY != null ? roomOffsetY : 30
-          const hRoomPxW = (roomOffsetX != null && drawnWidthPx  != null) ? drawnWidthPx  : roomWidth  * _hScale
-          const hRoomPxH = (roomOffsetX != null && drawnHeightPx != null) ? drawnHeightPx : roomHeight * _hScale
-          const Sect = ({ title, children }) => (
-            <div style={{ padding: "12px", borderBottom: "1px solid #141414" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.12em", color: "#39c5cf", marginBottom: 8 }}>{title}</div>
+
+          // Enhanced color scheme
+          const statusColors = {
+            GOOD:    { text: "#4ade80", bg: "#052e16", label: "OPTIMAL" },
+            OVERLIT: { text: "#fb923c", bg: "#431407", label: "OVERLIT" },
+            DIM:     { text: "#ef4444", bg: "#450a0a", label: "UNDERLIT" },
+          }
+          const luxColor = statusColors[luxStatus] || { text: "#888888", bg: "#0a0a0a", label: "—" }
+
+          // Phase loads for electrical section
+          const phaseLoads = [0, 0, 0]
+          circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
+
+          // Section component
+          const Section = ({ title, children }) => (
+            <div style={{ borderBottom: "1px solid #1a1a1a", padding: "16px 16px 20px 16px" }}>
+              <div style={{ fontSize: 9, color: "#666666", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 12, textTransform: "uppercase" }}>
+                {title}
+              </div>
               {children}
             </div>
           )
-          const Row = ({ label, value, color }) => (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-              <span style={{ fontSize: 10, color: "#444" }}>{label}</span>
-              <span style={{ fontSize: 11, color: color ?? "#e0e0e0", fontWeight: 500 }}>{value}</span>
+
+          // Row component
+          const MetricRow = ({ label, value, color, subtitle }) => (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ fontSize: 11, color: "#666666", letterSpacing: "0.02em" }}>{label}</div>
+              <div style={{ fontSize: 13, color: color || "#ffffff", fontWeight: 600, fontFamily: "IBM Plex Mono" }}>
+                {value}
+                {subtitle && <span style={{ fontSize: 9, color: "#666666", marginLeft: 4 }}>{subtitle}</span>}
+              </div>
             </div>
           )
+
           return (
-            <div style={{ width: 200, background: "#000000", borderLeft: "1px solid #1e1e1e", display: "flex", flexDirection: "column", flexShrink: 0, overflowY: "auto", fontFamily: "IBM Plex Mono" }}>
+            <div style={{
+              width: 220,
+              background: "#0a0a0a",
+              borderLeft: "1px solid #2a2a2a",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              flexShrink: 0,
+              fontFamily: "IBM Plex Mono, monospace",
+            }}>
 
               {/* LUX HERO */}
-              <div style={{ padding: "16px 12px", borderBottom: "1px solid #141414" }}>
-                <div style={{ fontSize: 9, color: "#444", letterSpacing: "0.1em", marginBottom: 4 }}>AVG LUX</div>
-                <div style={{ fontSize: 36, color: luxCol, fontWeight: 500, lineHeight: 1, marginBottom: 6 }}>{luxVal ?? "—"}</div>
+              <div style={{
+                padding: "24px 20px",
+                borderBottom: "1px solid #1a1a1a",
+                background: "linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%)",
+              }}>
+                <div style={{ fontSize: 9, color: "#555555", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 8, textTransform: "uppercase" }}>
+                  Average Lux
+                </div>
+                <div style={{
+                  fontSize: 56,
+                  color: luxColor.text,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  marginBottom: 12,
+                  fontFamily: "IBM Plex Mono, monospace",
+                  textShadow: `0 0 20px ${luxColor.text}40`,
+                }}>
+                  {luxVal ?? "—"}
+                </div>
                 {luxStatus && (
                   <div style={{
-                    display: "inline-block", padding: "2px 8px", borderRadius: 3,
-                    fontSize: 10, fontWeight: 500, letterSpacing: "0.05em",
-                    background: { GOOD: "#0a1a0f", OVERLIT: "#1a0f00", DIM: "#1a0808" }[luxStatus],
-                    color: luxCol,
-                  }}>{luxStatus}</div>
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "4px 12px",
+                    borderRadius: 6,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    background: luxColor.bg,
+                    color: luxColor.text,
+                    border: `1px solid ${luxColor.text}40`,
+                    marginBottom: 12,
+                  }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: luxColor.text }} />
+                    {luxColor.label}
+                  </div>
                 )}
-                <div style={{ fontSize: 10, color: "#444", marginTop: 6 }}>Target: {tgtLux} lux</div>
+                <div style={{ fontSize: 11, color: "#555555", marginTop: 8 }}>
+                  Target: <span style={{ color: "#888888", fontWeight: 600 }}>{tgtLux} lux</span>
+                </div>
               </div>
 
-              {/* FIXTURE INSPECTOR — shows selected fixture stats; batch-updates all selected */}
-              <Sect title={selectedLights.length > 0 && selectedLights[0].category !== "LED_STRIP" ? `FIXTURE${selectedLights.length > 1 ? ` (${selectedLights.length})` : ''}` : "FIXTURE"}>
-                {selectedLights.length > 0 && selectedLights[0].category !== "LED_STRIP" ? (() => {
-                  const hl  = selectedLights[0]
-                  const sel = selectedLights          // full selection for batch ops
-                  const multi = sel.length > 1
-
-                  // Batch updater — applies to all selected fixtures
-                  const batchUpdate = (updates) => sel.forEach(l => updateLight(l.id, updates))
-
-                  // Mixed-value helpers
-                  const sizes   = sel.map(l => l.fixtureSize  ?? 8)
-                  const colors  = sel.map(l => l.fixtureColor ?? '#ffffff')
-                  const shapes  = sel.map(l => l.fixtureShape ?? 'circle')
-                  const allSameSize  = sizes.every(v => v === sizes[0])
-                  const allSameColor = colors.every(v => v === colors[0])
-                  const allSameShape = shapes.every(v => v === shapes[0])
-
-                  const hx = hl.x ?? 0, hy = hl.y ?? 0
-                  const inspUnit  = getStoredUnit()
-                  const xDisp     = fromMM((hx - hRoomX) / hPxPerMm, inspUnit)
-                  const yDisp     = fromMM((hy - hRoomY) / hPxPerMm, inspUnit)
-                  const nearWallPx = Math.min(
-                    hx - hRoomX, hRoomX + hRoomPxW - hx,
-                    hy - hRoomY, hRoomY + hRoomPxH - hy,
-                  )
-                  const wallDisp  = fromMM(Math.max(0, nearWallPx) / hPxPerMm, inspUnit)
-                  let nearFixDist = Infinity
-                  for (const l of lights) {
-                    if (l.id === hl.id || l.category === "LED_STRIP") continue
-                    const d = Math.sqrt(((l.x ?? 0) - hx) ** 2 + ((l.y ?? 0) - hy) ** 2)
-                    if (d < nearFixDist) nearFixDist = d
-                  }
-                  const nearFixDisp = nearFixDist < Infinity ? fromMM(nearFixDist / hPxPerMm, inspUnit) : null
-                  return (
-                    <>
-                      {/* Multi-select banner */}
-                      {multi && (
-                        <div style={{ fontSize: 9, color: "#d4a843", background: "#1a1500", border: "1px solid #3a2e00", borderRadius: 3, padding: "5px 8px", marginBottom: 8, letterSpacing: "0.08em" }}>
-                          ✓ {sel.length} fixtures — edits apply to all
+              {/* FIXTURE INSPECTOR */}
+              <Section title="Fixture">
+                {selectedLights.length === 1 ? (
+                  (() => {
+                    const light = selectedLights[0]
+                    return (
+                      // key=light.id forces remount when selection changes,
+                      // so defaultValue initialises correctly for each fixture.
+                      <div key={light.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {/* Fixture name */}
+                        <div style={{ fontSize: 14, color: "#ffffff", fontWeight: 600, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {light.label ?? light.name ?? light.category ?? "Unknown"}
                         </div>
-                      )}
-
-                      {/* Name / label (first selected) */}
-                      <div style={{ fontSize: 10, color: "#39c5cf", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {multi ? `${hl.label ?? "Fixture"} +${sel.length - 1} more` : (hl.label ?? hl.name ?? "Fixture")}
-                      </div>
-
-                      {/* Protocol selector — branded fixtures only */}
-                      {hl.brand && (
-                        <div style={{ marginBottom: 8 }}>
-                          <div style={{ fontSize: 9, color: '#555', letterSpacing: '0.06em', marginBottom: 4 }}>PROTOCOL</div>
-                          <select
-                            value={hl.protocol ?? 'PHASE-CUT'}
-                            onChange={e => batchUpdate({ protocol: e.target.value })}
-                            style={{ width: '100%', padding: '4px 6px', background: '#111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
-                          >
-                            <option value="NON-DIM">NON-DIM</option>
-                            <option value="PHASE-CUT">TRIAC</option>
-                            <option value="DALI">DALI</option>
-                          </select>
+                        {/* Specs grid — uncontrolled inputs, commit on blur */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          {/* WATT */}
+                          <div>
+                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>WATT</label>
+                            <input
+                              type="number" min="0" step="1"
+                              defaultValue={light.watt ?? 0}
+                              onBlur={(e) => {
+                                const v = Math.max(0, Number(e.target.value) || 0)
+                                e.target.value = v
+                                updateLight(light.id, { watt: v })
+                                e.target.style.borderColor = "#2a2a2a"
+                              }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
+                            />
+                          </div>
+                          {/* LUMENS */}
+                          <div>
+                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>LUMENS</label>
+                            <input
+                              type="number" min="0" step="1"
+                              defaultValue={light.lumens ?? 0}
+                              onBlur={(e) => {
+                                const v = Math.max(0, Number(e.target.value) || 0)
+                                e.target.value = v
+                                updateLight(light.id, { lumens: v })
+                                e.target.style.borderColor = "#2a2a2a"
+                              }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
+                            />
+                          </div>
+                          {/* BEAM */}
+                          <div>
+                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>BEAM (°)</label>
+                            <input
+                              type="number" min="1" max="180" step="1"
+                              defaultValue={light.beamAngle ?? 36}
+                              onBlur={(e) => {
+                                const v = Math.min(180, Math.max(1, Number(e.target.value) || 36))
+                                e.target.value = v
+                                updateLight(light.id, { beamAngle: v })
+                                e.target.style.borderColor = "#2a2a2a"
+                              }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
+                            />
+                          </div>
+                          {/* CCT — read-only, fixture spec */}
+                          <div>
+                            <div style={{ fontSize: 9, color: "#555555", marginBottom: 3, letterSpacing: "0.06em" }}>CCT</div>
+                            <div style={{ fontSize: 12, color: "#888888", fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 3 }}>
+                              {light.cct ? `${light.cct}K` : "—"}
+                            </div>
+                          </div>
                         </div>
-                      )}
-
-                      {/* Position (first selected only) */}
-                      {!multi && <>
-                        <Row label={`X (${inspUnit})`} value={xDisp !== '' ? String(xDisp) : '—'} />
-                        <Row label={`Y (${inspUnit})`} value={yDisp !== '' ? String(yDisp) : '—'} />
-                        <Row label="→ wall"     value={wallDisp !== '' ? `${wallDisp}${inspUnit}` : '—'} />
-                        {nearFixDisp !== null && (
-                          <Row label="↔ nearest" value={`${nearFixDisp}${inspUnit}`} color="#d4a843" />
+                        {/* Protocol badge */}
+                        {light.protocol && light.protocol !== "NON-DIM" && light.protocol !== "Room Default" && (
+                          <div style={{ padding: "6px 10px", borderRadius: 4, background: "#0f0f0f", border: "1px solid #2a2a2a", fontSize: 10, color: "#39c5cf", fontWeight: 600, textAlign: "center" }}>
+                            {light.protocol === "DALI" ? `DALI • D:${light.daliAddress ?? "?"}` : light.protocol}
+                          </div>
                         )}
-                      </>}
-                      {multi && (
-                        <Row label="Watt"  value={sel.map(l => l.watt ?? 0).every((v,_,a) => v === a[0]) ? `${sel[0].watt ?? 0}W` : "Mixed"} />
-                      )}
-
-                      {/* Delete — batch when multi */}
-                      <button
-                        onClick={async () => {
-                          const msg = multi ? `Delete ${sel.length} fixtures?` : `Delete fixture?`
-                          const ok  = await confirm(msg, { confirmLabel: "DELETE", danger: true })
-                          if (!ok) return
-                          sel.forEach(l => deleteLight(l.id))
-                          setSelectedLights([])
-                        }}
-                        style={{ marginTop: 8, padding: '4px 8px', background: '#8b0000', color: '#fff', border: 'none', borderRadius: 3, cursor: 'pointer', fontSize: 10, fontFamily: 'IBM Plex Mono', width: '100%' }}
-                      >
-                        {multi ? `DELETE ALL ${sel.length}` : "DELETE"}
-                      </button>
-
-                      {/* Visual options — all controls batch-update */}
-                      <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #2a2a2a' }}>
-                        <div style={{ fontSize: 9, color: '#888', marginBottom: 6 }}>VISUAL OPTIONS{multi ? ` · all ${sel.length}` : ''}</div>
-                        <div style={{ marginBottom: 8 }}>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
-                            Size: {allSameSize ? sizes[0] : "Mixed"}
-                          </label>
-                          <input
-                            type="range" min="5" max="20"
-                            value={allSameSize ? sizes[0] : 8}
-                            onChange={(e) => batchUpdate({ fixtureSize: Number(e.target.value) })}
-                            style={{ width: '100%', cursor: 'pointer' }}
-                          />
+                        {/* Visual options */}
+                        <div style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
+                          <div style={{ fontSize: 9, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>VISUAL OPTIONS</div>
+                          <div style={{ marginBottom: 8 }}>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {light.fixtureSize ?? 8}</label>
+                            <input type="range" min="5" max="20" value={light.fixtureSize ?? 8}
+                              onChange={(e) => updateLight(light.id, { fixtureSize: Number(e.target.value) })}
+                              style={{ width: "100%", cursor: "pointer" }} />
+                          </div>
+                          <div style={{ marginBottom: 8 }}>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Color</label>
+                            <input type="color" value={light.fixtureColor ?? "#ffffff"}
+                              onChange={(e) => updateLight(light.id, { fixtureColor: e.target.value })}
+                              style={{ width: "100%", height: 28, cursor: "pointer", border: "none", borderRadius: 3 }} />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape</label>
+                            <select value={light.fixtureShape ?? "circle"}
+                              onChange={(e) => updateLight(light.id, { fixtureShape: e.target.value })}
+                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 10, fontFamily: "IBM Plex Mono", cursor: "pointer" }}>
+                              <option value="circle">Circle</option>
+                              <option value="square">Square</option>
+                              <option value="diamond">Diamond</option>
+                              <option value="triangle">Triangle</option>
+                              <option value="hexagon">Hexagon</option>
+                              <option value="star">Star</option>
+                              <option value="rectangle">Rectangle</option>
+                              <option value="cross">Cross</option>
+                            </select>
+                          </div>
                         </div>
-                        <div style={{ marginBottom: 8 }}>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
-                            Color{!allSameColor ? " (mixed)" : ""}
-                          </label>
-                          <input
-                            type="color"
-                            value={allSameColor ? colors[0] : '#ffffff'}
-                            onChange={(e) => batchUpdate({ fixtureColor: e.target.value })}
-                            style={{ width: '100%', height: 28, cursor: 'pointer', border: 'none', borderRadius: 3 }}
-                          />
+                        {/* Delete */}
+                        <button
+                          onClick={async () => {
+                            const ok = await confirm("Delete fixture?", { confirmLabel: "DELETE", danger: true })
+                            if (!ok) return
+                            deleteLight(light.id)
+                            setSelectedLights([])
+                          }}
+                          style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 10, fontFamily: "IBM Plex Mono", width: "100%" }}
+                        >DELETE</button>
+                      </div>
+                    )
+                  })()
+                ) : selectedLights.length > 1 ? (
+                  (() => {
+                    const sel = selectedLights
+                    const batchUpdate = (updates) => sel.forEach(l => updateLight(l.id, updates))
+                    const sizes  = sel.map(l => l.fixtureSize  ?? 8)
+                    const colors = sel.map(l => l.fixtureColor ?? "#ffffff")
+                    const shapes = sel.map(l => l.fixtureShape ?? "circle")
+                    const allSameSize  = sizes.every(v => v === sizes[0])
+                    const allSameColor = colors.every(v => v === colors[0])
+                    const allSameShape = shapes.every(v => v === shapes[0])
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ padding: "8px 10px", borderRadius: 6, background: "#0f0f0f", border: "1px solid #2a2a2a", textAlign: "center" }}>
+                          <div style={{ fontSize: 13, color: "#ffffff", fontWeight: 600, marginBottom: 4 }}>{sel.length} fixtures selected</div>
+                          <div style={{ fontSize: 10, color: "#666666" }}>Edits apply to all</div>
                         </div>
-                        <div>
-                          <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 4 }}>
-                            Shape{!allSameShape ? " (mixed)" : ""}
-                          </label>
-                          <select
-                            value={allSameShape ? shapes[0] : ''}
-                            onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
-                            style={{ width: '100%', padding: '4px 6px', background: '#111111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3, fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer' }}
-                          >
-                            {!allSameShape && <option value="">— Mixed —</option>}
-                            <option value="circle">Circle</option>
-                            <option value="square">Square</option>
-                            <option value="diamond">Diamond</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="hexagon">Hexagon</option>
-                            <option value="star">Star</option>
-                            <option value="rectangle">Rectangle</option>
-                            <option value="cross">Cross</option>
-                          </select>
+                        <div style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
+                          <div style={{ fontSize: 9, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>BATCH EDIT</div>
+                          <div style={{ marginBottom: 8 }}>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {allSameSize ? sizes[0] : "Mixed"}</label>
+                            <input type="range" min="5" max="20" value={allSameSize ? sizes[0] : 8}
+                              onChange={(e) => batchUpdate({ fixtureSize: Number(e.target.value) })}
+                              style={{ width: "100%", cursor: "pointer" }} />
+                          </div>
+                          <div style={{ marginBottom: 8 }}>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Color{!allSameColor ? " (mixed)" : ""}</label>
+                            <input type="color" value={allSameColor ? colors[0] : "#ffffff"}
+                              onChange={(e) => batchUpdate({ fixtureColor: e.target.value })}
+                              style={{ width: "100%", height: 28, cursor: "pointer", border: "none", borderRadius: 3 }} />
+                          </div>
+                          <div style={{ marginBottom: 8 }}>
+                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape{!allSameShape ? " (mixed)" : ""}</label>
+                            <select value={allSameShape ? shapes[0] : ""}
+                              onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
+                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 10, fontFamily: "IBM Plex Mono", cursor: "pointer" }}>
+                              {!allSameShape && <option value="">— Mixed —</option>}
+                              <option value="circle">Circle</option>
+                              <option value="square">Square</option>
+                              <option value="diamond">Diamond</option>
+                              <option value="triangle">Triangle</option>
+                              <option value="hexagon">Hexagon</option>
+                              <option value="star">Star</option>
+                              <option value="rectangle">Rectangle</option>
+                              <option value="cross">Cross</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              const ok = await confirm(`Delete ${sel.length} fixtures?`, { confirmLabel: "DELETE", danger: true })
+                              if (!ok) return
+                              sel.forEach(l => deleteLight(l.id))
+                              setSelectedLights([])
+                            }}
+                            style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 10, fontFamily: "IBM Plex Mono", width: "100%" }}
+                          >DELETE ALL {sel.length}</button>
                         </div>
                       </div>
-                    </>
-                  )
-                })() : (
-                  <>
-                    <div style={{ fontSize: 11, color: "#ffffff", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {activeFixture.label ?? activeFixture.name ?? "—"}
-                    </div>
-                    <Row label="Watt"   value={`${activeFixture.watt ?? 0}W`} />
-                    <Row label="Lumens" value={`${activeFixture.lumens ?? 0}lm`} />
-                    <Row label="Beam"   value={`${activeFixture.beamAngle ?? 0}°`} />
-                    {activeFixture.cct && <Row label="CCT" value={`${activeFixture.cct}K`} />}
-                  </>
+                    )
+                  })()
+                ) : (
+                  <div style={{ fontSize: 11, color: "#555555", fontStyle: "italic" }}>
+                    Click a fixture to inspect
+                  </div>
                 )}
-              </Sect>
+              </Section>
 
-              {/* ROOM METRICS + elevation diagram */}
-              <Sect title="ROOM">
-                <Row label="Area"  value={`${areaM2.toFixed(1)}m²`} />
-                <Row label="MH"    value={`${mh.toFixed(2)}m`} />
-                <Row label="RCR"   value={rcr.toFixed(2)} />
-                <Row label="UF"    value={uf.toFixed(2)} />
-                <Row label="MF"    value={MAINT_FACTOR} />
-                {(() => {
-                  const ceilH  = Number(room.ceilingHeight)
-                  const falseC = Number(room.falseCeiling)
-                  const workP  = Number(room.workingPlane)
-                  if (!(ceilH > 0)) return null
-                  const svgW = 154, interior = 60
-                  const yTop = 6, yBot = yTop + interior
-                  const s      = interior / ceilH
-                  const yFix   = yTop + falseC * s
-                  const yWork  = yTop + (ceilH - workP) * s
-                  const mhPx   = Math.max(2, yWork - yFix)
-                  const coneW  = Math.min(mhPx * 0.6, 38)
-                  return (
-                    <svg width={svgW} height={yBot + 14} style={{ display: "block", marginTop: 10, overflow: "visible" }}>
-                      {/* Ceiling slab */}
-                      <rect x={0} y={0} width={svgW} height={yTop} fill="#0a0a0a" />
-                      <line x1={0} y1={yTop} x2={svgW} y2={yTop} stroke="#222222" strokeWidth={2} />
-                      {/* False ceiling drop */}
-                      {falseC > 0 && <line x1={0} y1={yFix} x2={svgW} y2={yFix} stroke="#222222" strokeWidth={1} strokeDasharray="4 3" />}
-                      {/* Working plane */}
-                      <line x1={0} y1={yWork} x2={svgW} y2={yWork} stroke="#1e3020" strokeWidth={1} strokeDasharray="4 3" />
-                      {/* Floor slab */}
-                      <rect x={0} y={yBot} width={svgW} height={14} fill="#0a0a0a" />
-                      <line x1={0} y1={yBot} x2={svgW} y2={yBot} stroke="#0a0a0a" strokeWidth={2} />
-                      {/* Light cone */}
-                      <polygon points={`${svgW/2},${yFix} ${svgW/2-coneW},${yWork} ${svgW/2+coneW},${yWork}`} fill="#d4a84320" />
-                      {/* Fixture dot */}
-                      <circle cx={svgW/2} cy={yFix} r={3.5} fill="#d4a843" />
-                      {/* MH annotation */}
-                      <line x1={svgW-16} y1={yFix}  x2={svgW-16} y2={yWork} stroke="#333" strokeWidth={1} />
-                      <line x1={svgW-19} y1={yFix}  x2={svgW-13} y2={yFix}  stroke="#333" strokeWidth={1} />
-                      <line x1={svgW-19} y1={yWork}  x2={svgW-13} y2={yWork}  stroke="#333" strokeWidth={1} />
-                      {/* Labels */}
-                      <text x={3} y={yTop-1}              fontSize="7" fontFamily="IBM Plex Mono" fill="#333">{ceilH.toFixed(1)}m</text>
-                      <text x={3} y={yWork+9}              fontSize="7" fontFamily="IBM Plex Mono" fill="#1e4030">WP</text>
-                      <text x={svgW-12} y={(yFix+yWork)/2+3} fontSize="7" fontFamily="IBM Plex Mono" fill="#444" textAnchor="end">MH</text>
-                    </svg>
-                  )
-                })()}
-              </Sect>
+              {/* ROOM METRICS */}
+              <Section title="Room">
+                <MetricRow label="Area"               value={`${areaM2.toFixed(1)}m²`} />
+                <MetricRow label="Mounting Height"    value={`${mh.toFixed(2)}m`} />
+                <MetricRow label="RCR"                value={rcr.toFixed(2)} />
+                <MetricRow label="Utilization Factor" value={uf.toFixed(2)} />
+                <MetricRow label="Maintenance Factor" value={MAINT_FACTOR} />
+              </Section>
 
               {/* ELECTRICAL */}
-              <Sect title="ELECTRICAL">
-                <Row label="Circuits" value={circuits.length} />
-                <Row label="Load"     value={`${totalWatt}W`} />
+              <Section title="Electrical">
+                <MetricRow label="Circuits"   value={circuits.length} />
+                <MetricRow label="Total Load" value={`${totalWatt}W`} />
                 {voltageDropResults.length > 0 && (() => {
-                  const mv = Math.max(...voltageDropResults.map(r => r.vDropPercent))
-                  return <Row label="Max V-drop" value={`${mv.toFixed(1)}%`} color={mv <= 3 ? "#4caf7d" : "#e07b2a"} />
+                  const maxVDrop  = Math.max(...voltageDropResults.map(r => r.vDropPercent))
+                  const vDropColor = maxVDrop <= 3 ? "#4ade80" : maxVDrop <= 5 ? "#fb923c" : "#ef4444"
+                  return <MetricRow label="Max V-Drop" value={`${maxVDrop.toFixed(1)}%`} color={vDropColor} />
                 })()}
-                {daliActive && <Row label="DALI buses" value={totalBuses} color="#d4a843" />}
-                {daliActive && <Row label="Cable" value={`${totalCableM.toFixed(0)}m`} />}
-              </Sect>
+                {daliActive && <MetricRow label="DALI Buses"   value={totalBuses}                    color="#d4a843" />}
+                {daliActive && <MetricRow label="Cable Length" value={`${totalCableM.toFixed(0)}m`}              />}
+                <MetricRow
+                  label="Phase Balance"
+                  value={`L1:${Math.round(phaseLoads[0])} L2:${Math.round(phaseLoads[1])} L3:${Math.round(phaseLoads[2])}`}
+                  subtitle="W"
+                />
+              </Section>
 
             </div>
           )

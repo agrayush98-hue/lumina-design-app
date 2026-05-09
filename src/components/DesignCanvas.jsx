@@ -346,12 +346,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap: colour scale & grid computation ──────────────────
   const HEATMAP_STOPS = [
-    [0.00, [0,   0, 170]],
-    [0.25, [0, 170, 255]],
-    [0.50, [0, 204,  68]],
-    [0.75, [255, 238,  0]],
-    [1.00, [255, 136,  0]],
-    [1.50, [255,   0,  0]],
+    [0.00, [0,   50, 200]],   // deep blue   — 0% of target (darker, richer)
+    [0.25, [0, 190, 255]],    // cyan        — 25% (more vibrant)
+    [0.50, [0, 230,  90]],    // green       — 50% (brighter green)
+    [0.75, [255, 220,  0]],   // yellow      — 75% (pure yellow)
+    [1.00, [255, 140,  0]],   // orange      — 100% (at target lux)
+    [1.50, [255,  30,  30]],  // red         — 150%+ (overlit, more saturated)
   ]
 
   function luxToColor(lux) {
@@ -463,7 +463,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     }
     return cells
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX])
+  }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
 
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
@@ -647,7 +647,26 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       const w2 = toWorld({ x: boxSelect.endX,   y: boxSelect.endY })
       const minX = Math.min(w1.x, w2.x), maxX = Math.max(w1.x, w2.x)
       const minY = Math.min(w1.y, w2.y), maxY = Math.max(w1.y, w2.y)
-      const inBox = (lights ?? []).filter(l => l.x >= minX && l.x <= maxX && l.y >= minY && l.y <= maxY)
+      const inBox = (lights ?? []).filter(l => {
+        // Point fixtures
+        if (l.x != null && l.y != null && l.category !== "LED_STRIP")
+          return l.x >= minX && l.x <= maxX && l.y >= minY && l.y <= maxY
+        // LED strip — line: either endpoint inside box
+        if (l.shape === "line")
+          return (l.x1 >= minX && l.x1 <= maxX && l.y1 >= minY && l.y1 <= maxY) ||
+                 (l.x2 >= minX && l.x2 <= maxX && l.y2 >= minY && l.y2 <= maxY)
+        // LED strip — circle: centre point inside box
+        if (l.shape === "circle")
+          return l.cx >= minX && l.cx <= maxX && l.cy >= minY && l.cy <= maxY
+        // LED strip — freehand: any sampled point inside box
+        if (l.shape === "freehand" && Array.isArray(l.points)) {
+          for (let i = 0; i < l.points.length - 1; i += 2) {
+            if (l.points[i] >= minX && l.points[i] <= maxX && l.points[i+1] >= minY && l.points[i+1] <= maxY)
+              return true
+          }
+        }
+        return false
+      })
       if (inBox.length > 0) onSelectLights?.(inBox)
       setBoxSelect({ isDrawing: false, startX: 0, startY: 0, endX: 0, endY: 0 })
       return
@@ -719,9 +738,23 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const w = Math.ceil(STEP_PX)
     const h = Math.ceil(STEP_PX)
     return (
-      <Group listening={false} clipX={ROOM_X} clipY={ROOM_Y} clipWidth={ROOM_PX_W} clipHeight={ROOM_PX_H}>
+      <Group
+        listening={false}
+        clipX={ROOM_X}
+        clipY={ROOM_Y}
+        clipWidth={ROOM_PX_W}
+        clipHeight={ROOM_PX_H}
+      >
         {heatmapCells.map((cell, i) => (
-          <Rect key={i} x={cell.x} y={cell.y} width={w} height={h} fill={cell.color} opacity={0.55} />
+          <Rect
+            key={i}
+            x={cell.x}
+            y={cell.y}
+            width={w}
+            height={h}
+            fill={cell.color}
+            opacity={0.70}
+          />
         ))}
       </Group>
     )
@@ -735,13 +768,14 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const H   = 150
     const MF  = 0.8
     // Gradient bar: top=hot (red), bottom=cold (blue)
+    // Match HEATMAP_STOPS exactly (top = hot/overlit, bottom = dark/zero)
     const gradStops = [
-      0,    "#ff0000",
-      1/6,  "#ff8800",
-      2/6,  "#ffee00",
-      3/6,  "#00cc44",
-      4/6,  "#00aaff",
-      1,    "#0000aa",
+      0,    "rgb(255,30,30)",   // red   — 150%+ (overlit)
+      0.25, "rgb(255,140,0)",   // orange — 100% (at target)
+      0.4,  "rgb(255,220,0)",   // yellow — 75%
+      0.55, "rgb(0,230,90)",    // green  — 50%
+      0.75, "rgb(0,190,255)",   // cyan   — 25%
+      1,    "rgb(0,50,200)",    // blue   — 0%
     ]
     const labels = [
       { frac: 0,    text: `${Math.round(targetLux * 1.5)} lx` },
@@ -796,30 +830,84 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return BEAM_COLORS[light.category] ?? "#ffffff"
   }
 
-  function BeamSpreads() {
-    if (!showBeam || !(mountingHeight > 0)) return null
+  function BeamLayer() {
+    if (!showBeam || !(mountingHeight > 0) || lights.length === 0) return null
+
+    const beams = lights
+      .filter(light => light.category !== "LED_STRIP")
+      .map(light => {
+        const beamAngle = light.beamAngle ?? 36
+        const beamRad   = (beamAngle * Math.PI) / 180 / 2
+
+        // Center beam radius (standard cone projection)
+        const spreadM  = mountingHeight * Math.tan(beamRad)
+        const spreadPx = Math.max(1, spreadM * SCALE * 1000)
+
+        // Field angle radius (1.8× wider for spill light)
+        const fieldPx = spreadPx * 1.8
+
+        // Color based on category
+        const cat = (light.category ?? "").toUpperCase().replace(/_/g, "")
+        const color =
+          cat === "DOWNLIGHT" || cat === "COBDOWNLIGHT" ? "#ffe9a0" :
+          cat === "SPOTLIGHT" || cat === "TRACKLIGHT"   ? "#ffd4a3" :
+          cat === "PANEL"     || cat === "SURFACEPANEL" ? "#e8f4ff" :
+          cat === "LINEAR"                              ? "#fff5e1" :
+          cat === "WALLWASHER"                          ? "#ffe4b5" :
+          cat === "PENDANT"   || cat === "CHANDELIER"   ? "#f8a8d4" :
+          cat === "COVELIGHT" || cat === "ARCHITECTURAL"? "#a8f0f8" :
+          cat === "HIGHBAY"   || cat === "INDUSTRIAL"   ? "#ffe4b5" :
+          beamColor(light)
+
+        return { x: light.x ?? 0, y: light.y ?? 0, spreadPx, fieldPx, color, id: light.id }
+      })
+
     return (
-      <>
-        {lights.map(light => {
-          if (light.category === "LED_STRIP") return null
-          const angleDeg = light.beamAngle ?? 36
-          const spreadM  = mountingHeight * Math.tan((angleDeg / 2) * Math.PI / 180)
-          const spreadPx = Math.max(1, spreadM * SCALE * 1000)
-          const color    = beamColor(light)
-          const cx = light.x ?? 0
-          const cy = light.y ?? 0
-          return (
-            <Group key={light.id} listening={false}>
-              {/* Filled spread area */}
-              <Circle x={cx} y={cy} radius={spreadPx} fill={color} opacity={0.08} listening={false} />
-              {/* Outer glow ring */}
-              <Circle x={cx} y={cy} radius={spreadPx} fill="transparent" stroke={color} strokeWidth={1} opacity={0.15} listening={false} />
-              {/* Inner bright core */}
-              <Circle x={cx} y={cy} radius={Math.max(1, spreadPx * 0.15)} fill="#ffffff" opacity={0.20} listening={false} />
-            </Group>
-          )
-        })}
-      </>
+      <Group listening={false}>
+        {beams.map((beam, i) => (
+          <Group key={beam.id ?? i} x={beam.x} y={beam.y}>
+            {/* ZONE 1: Field Angle - Outer spill light (very dim) */}
+            <Circle
+              radius={beam.fieldPx}
+              fill={beam.color}
+              opacity={0.04}
+              listening={false}
+            />
+            <Circle
+              radius={beam.fieldPx}
+              fill="transparent"
+              stroke={beam.color}
+              strokeWidth={1}
+              opacity={0.08}
+              listening={false}
+            />
+
+            {/* ZONE 2: Beam Angle - Inner core beam (brighter) */}
+            <Circle
+              radius={beam.spreadPx}
+              fill={beam.color}
+              opacity={0.12}
+              listening={false}
+            />
+            <Circle
+              radius={beam.spreadPx}
+              fill="transparent"
+              stroke={beam.color}
+              strokeWidth={1.5}
+              opacity={0.20}
+              listening={false}
+            />
+
+            {/* ZONE 3: Center Hot Spot - Brightest point */}
+            <Circle
+              radius={beam.spreadPx * 0.15}
+              fill="#ffffff"
+              opacity={0.25}
+              listening={false}
+            />
+          </Group>
+        ))}
+      </Group>
     )
   }
 
@@ -924,6 +1012,18 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const stroke = light.stroke       ?? "#ffb300"
     const glow   = light.glowColor    ?? "rgba(255,179,0,0.08)"
 
+    const isSelected      = selectedLightIds?.includes(light.id) ?? false
+    const isMultiSelected = false
+    const fixtureColor    = light.fixtureColor ?? fill
+
+    // Enhanced glow layers - multiple circles for richer effect
+    const glowLayers = [
+      { radius: r + 20, opacity: 0.03, color: "#ffb300" },  // Outermost - very subtle
+      { radius: r + 14, opacity: 0.06, color: "#ffb300" },  // Outer glow
+      { radius: r + 10, opacity: 0.12, color: "#ffc845" },  // Mid glow - brighter
+      { radius: r + 6,  opacity: 0.20, color: "#ffd166" },  // Inner glow - vibrant
+    ]
+
     function handleDragEnd(e) {
       const PAD  = r + 2
       const newX = Math.min(Math.max(snap(e.target.x(), ROOM_X, ROOM_PX_W), ROOM_X + PAD), ROOM_X + ROOM_PX_W - PAD)
@@ -948,104 +1048,219 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       })
     }
 
-    const protoBadge = light.protocol && light.protocol !== "NON-DIM" && light.protocol !== "Room Default"
-      ? PROTO_BADGE_MAP[light.protocol] : null
-    const cctBadge = light.cctType && light.cctType !== "single"
-      ? CCT_BADGE_MAP[light.cctType] : null
-    const daliEntry = daliAddresses?.byId?.[light.id]
-
-    const hasBoth = protoBadge && cctBadge
-
-    const isSelected = selectedLightIds?.includes(light.id) ?? false
-
     return (
-      <Group x={light.x} y={light.y} draggable onDragEnd={handleDragEnd} onContextMenu={handleContextMenu}>
-        <Circle radius={Math.max(1, Math.abs(r + 8))} fill={light.fixtureColor ? light.fixtureColor + '33' : glow} listening={false} />
-        {/* Selection ring — rendered beneath the fixture shape */}
+      <Group
+        x={light.x}
+        y={light.y}
+        draggable
+        onDragEnd={handleDragEnd}
+        onContextMenu={handleContextMenu}
+      >
+        {/* Multi-layer glow effect - renders bottom to top */}
+        {glowLayers.map((layer, idx) => (
+          <Circle
+            key={`glow-${idx}`}
+            radius={layer.radius}
+            fill={layer.color}
+            opacity={layer.opacity}
+            listening={false}
+          />
+        ))}
+
+        {/* Selection ring (cyan) */}
         {isSelected && (
           <Circle
-            radius={Math.max(1, Math.abs(r + 6))}
+            radius={r + 6}
             fill="transparent"
             stroke="#39c5cf"
             strokeWidth={2}
-            opacity={0.9}
             shadowColor="#39c5cf"
             shadowBlur={8}
             shadowOpacity={0.6}
             listening={false}
           />
         )}
-        <Circle
-          radius={Math.max(1, Math.abs(r + 4))}
-          fill="transparent"
-          onMouseEnter={() => { setHoveredLightId(light.id); onHoverLight?.(light) }}
-          onMouseLeave={() => { setHoveredLightId(null);     onHoverLight?.(null)  }}
-          onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); }}
-          onContextMenu={handleContextMenu}
-          listening={true}
-        />
-        {(() => {
-          const shape = light.fixtureShape ?? 'circle'
-          const shapeColor = light.fixtureColor ?? fill
-          const shapeRadius = Math.max(1, Math.abs(r))
-          const shapeProps = {
-            fill: shapeColor,
-            stroke: isSelected ? "#39c5cf" : stroke,
-            strokeWidth: isSelected ? 2.5 : 1.5,
-            onClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey); },
-            onDblClick: (e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id); },
-            listening: true,
-          }
 
-          if (shape === 'circle')    return <Circle radius={shapeRadius} {...shapeProps} />
-          if (shape === 'square')    return <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} {...shapeProps} />
-          if (shape === 'diamond')   return <RegularPolygon sides={4} radius={shapeRadius} rotation={45} {...shapeProps} />
-          if (shape === 'triangle')  return <RegularPolygon sides={3} radius={shapeRadius} {...shapeProps} />
-          if (shape === 'hexagon')   return <RegularPolygon sides={6} radius={shapeRadius} {...shapeProps} />
-          if (shape === 'star')      return <Star numPoints={5} innerRadius={shapeRadius*0.4} outerRadius={shapeRadius} {...shapeProps} />
-          if (shape === 'rectangle') return <Rect x={-shapeRadius*1.6} y={-shapeRadius*0.6} width={shapeRadius*3.2} height={shapeRadius*1.2} {...shapeProps} />
-          if (shape === 'cross') return (
-            <>
-              <Rect x={-shapeRadius} y={-shapeRadius} width={shapeRadius*2} height={shapeRadius*2} fill="transparent" listening={true} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} />
-              <Line points={[-shapeRadius, 0, shapeRadius, 0]} stroke={stroke} strokeWidth={1.5} listening={false} />
-              <Line points={[0, -shapeRadius, 0, shapeRadius]} stroke={stroke} strokeWidth={1.5} listening={false} />
-            </>
-          )
-          // ── Professional fixture shapes ────────────────────────────────────
-          if (shape === 'star6')  return <Star numPoints={6} innerRadius={shapeRadius*0.42} outerRadius={shapeRadius} {...shapeProps} />
-          if (shape === 'flood')  return <Wedge radius={shapeRadius*1.3} angle={80} rotation={-40} {...shapeProps} />
-          if (shape === 'cove')   return <Rect x={-shapeRadius*2.2} y={-shapeRadius*0.3} width={shapeRadius*4.4} height={shapeRadius*0.6} {...shapeProps} />
-          if (shape === 'pendant') return (
-            <>
-              <Line points={[0, -shapeRadius*2.4, 0, -shapeRadius]} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={1.5} listening={false} />
-              <Circle radius={shapeRadius} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={true} />
-            </>
-          )
-          if (shape === 'track') return (
-            <>
-              <Rect x={-shapeRadius*2} y={-shapeRadius*0.45} width={shapeRadius*4} height={shapeRadius*0.9} fill={shapeColor} stroke={isSelected ? "#39c5cf" : stroke} strokeWidth={isSelected ? 2.5 : 1.5} onClick={shapeProps.onClick} onDblClick={shapeProps.onDblClick} listening={true} />
-              <Circle radius={shapeRadius*0.55} fill={stroke} stroke="transparent" strokeWidth={0} listening={false} />
-            </>
-          )
-          return <Circle radius={shapeRadius} {...shapeProps} />
+        {/* Multi-select ring (light cyan) */}
+        {isMultiSelected && !isSelected && (
+          <Circle
+            radius={r + 6}
+            fill="transparent"
+            stroke="#6ae5ff"
+            strokeWidth={2}
+            shadowColor="#6ae5ff"
+            shadowBlur={6}
+            shadowOpacity={0.5}
+            listening={false}
+          />
+        )}
+
+        {/* Hit target (invisible, for interactions) */}
+        <Circle
+          radius={r + 4}
+          fill="transparent"
+          listening={true}
+          onMouseEnter={() => { setHoveredLightId(light.id); onHoverLight?.(light); document.body.style.cursor = "pointer" }}
+          onMouseLeave={() => { setHoveredLightId(null); onHoverLight?.(null); document.body.style.cursor = "default" }}
+          onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }}
+          onContextMenu={handleContextMenu}
+        />
+
+        {/* Main fixture body */}
+        {(() => {
+          const shape          = light.fixtureShape ?? "circle"
+          const bodyFill       = light.fixtureColor ?? fill
+          const bodyStroke     = isSelected ? "#39c5cf" : stroke
+          const bodyStrokeWidth = isSelected ? 2 : 1.5
+
+          switch (shape) {
+            case "circle":
+              return (
+                <Circle
+                  radius={r}
+                  fill={bodyFill}
+                  stroke={bodyStroke}
+                  strokeWidth={bodyStrokeWidth}
+                  shadowColor={bodyFill}
+                  shadowBlur={4}
+                  shadowOpacity={0.3}
+                  onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }}
+                  onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+                  listening={true}
+                />
+              )
+
+            case "square":
+              return (
+                <Rect
+                  x={-r} y={-r} width={r * 2} height={r * 2}
+                  fill={bodyFill}
+                  stroke={bodyStroke}
+                  strokeWidth={bodyStrokeWidth}
+                  shadowColor={bodyFill}
+                  shadowBlur={4}
+                  shadowOpacity={0.3}
+                  onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }}
+                  onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+                  listening={true}
+                />
+              )
+
+            case "rectangle":
+              return (
+                <Rect
+                  x={-r * 1.4} y={-r * 0.7} width={r * 2.8} height={r * 1.4}
+                  fill={bodyFill}
+                  stroke={bodyStroke}
+                  strokeWidth={bodyStrokeWidth}
+                  shadowColor={bodyFill}
+                  shadowBlur={4}
+                  shadowOpacity={0.3}
+                  onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }}
+                  onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+                  listening={true}
+                />
+              )
+
+            case "diamond":
+              return <RegularPolygon sides={4} radius={r} rotation={45} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "triangle":
+              return <RegularPolygon sides={3} radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "hexagon":
+              return <RegularPolygon sides={6} radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "star":
+              return <Star numPoints={5} innerRadius={r*0.4} outerRadius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "star6":
+              return <Star numPoints={6} innerRadius={r*0.42} outerRadius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "flood":
+              return <Wedge radius={r*1.3} angle={80} rotation={-40} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "cove":
+              return <Rect x={-r*2.2} y={-r*0.3} width={r*4.4} height={r*0.6} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            case "cross":
+              return (
+                <>
+                  <Rect x={-r} y={-r} width={r*2} height={r*2} fill="transparent" listening={true} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} />
+                  <Line points={[-r, 0, r, 0]} stroke={bodyStroke} strokeWidth={1.5} listening={false} />
+                  <Line points={[0, -r, 0, r]} stroke={bodyStroke} strokeWidth={1.5} listening={false} />
+                </>
+              )
+
+            case "pendant":
+              return (
+                <>
+                  <Line points={[0, -r*2.4, 0, -r]} stroke={bodyStroke} strokeWidth={1.5} listening={false} />
+                  <Circle radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                </>
+              )
+
+            case "track":
+              return (
+                <>
+                  <Rect x={-r*2} y={-r*0.45} width={r*4} height={r*0.9} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  <Circle radius={r*0.55} fill={stroke} stroke="transparent" strokeWidth={0} listening={false} />
+                </>
+              )
+
+            default:
+              return (
+                <Circle
+                  radius={r}
+                  fill={bodyFill}
+                  stroke={bodyStroke}
+                  strokeWidth={bodyStrokeWidth}
+                  shadowColor={bodyFill}
+                  shadowBlur={4}
+                  shadowOpacity={0.3}
+                  onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }}
+                  onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+                  listening={true}
+                />
+              )
+          }
         })()}
+
+        {/* Center dot */}
         <Circle radius={1.5} fill={stroke} listening={false} />
-        {protoBadge && (
-          <Text text={protoBadge.char} fontSize={6} fontFamily="IBM Plex Mono" fontStyle="bold"
-            fill={protoBadge.color} x={hasBoth ? -9 : -3} y={r + 3} listening={false} />
-        )}
-        {cctBadge && (
-          <Text text={cctBadge.text} fontSize={6} fontFamily="IBM Plex Mono" fontStyle="bold"
-            fill={cctBadge.color} x={hasBoth ? 1 : -7} y={r + 3} listening={false} />
-        )}
-        {daliEntry && (
-          <>
-            <Rect x={-12} y={r + 10} width={24} height={12}
-              fill="#001a2e" stroke="#00d4ff" strokeWidth={0.5} cornerRadius={2} listening={false} />
-            <Text x={-12} y={r + 11} width={24} text={`D:${daliEntry.address}`}
-              fontSize={7} fontFamily="IBM Plex Mono" fill="#00d4ff" align="center" listening={false} />
-          </>
-        )}
+
+        {/* Protocol badge (DALI, 0-10V, etc.) */}
+        {light.protocol && light.protocol !== "NON-DIM" && light.protocol !== "Room Default" && (() => {
+          const badge = PROTO_BADGE_MAP[light.protocol]
+          if (!badge) return null
+          return (
+            <Text text={badge.char} fontSize={6} fontFamily="IBM Plex Mono" fontStyle="bold"
+              fill={badge.color} x={-3} y={r + 3} listening={false} />
+          )
+        })()}
+
+        {/* CCT badge */}
+        {light.cctType && light.cctType !== "single" && (() => {
+          const badge = CCT_BADGE_MAP[light.cctType]
+          if (!badge) return null
+          return (
+            <Text text={badge.text} fontSize={6} fontFamily="IBM Plex Mono" fontStyle="bold"
+              fill={badge.color} x={-7} y={r + 3} listening={false} />
+          )
+        })()}
+
+        {/* DALI address badge */}
+        {daliAddresses?.byId?.[light.id] && (() => {
+          const daliEntry = daliAddresses.byId[light.id]
+          return (
+            <>
+              <Rect x={-12} y={r + 10} width={24} height={12}
+                fill="#001a2e" stroke="#00d4ff" strokeWidth={0.5} cornerRadius={2} listening={false} />
+              <Text x={-12} y={r + 11} width={24} text={`D:${daliEntry.address}`}
+                fontSize={7} fontFamily="IBM Plex Mono" fill="#00d4ff" align="center" listening={false} />
+            </>
+          )
+        })()}
       </Group>
     )
   }
@@ -1067,10 +1282,18 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       onMoveLight(light.id, dx, dy)
     }
 
+    const isSelected = selectedLightIds?.includes(light.id)
+
     return (
       <Group x={0} y={0} draggable onDragEnd={handleDragEnd}>
         <Line points={[x1, y1, x2, y2]} stroke={fill} strokeWidth={8} opacity={0.3} listening={false} />
-        <Line points={[x1, y1, x2, y2]} stroke={fill} strokeWidth={4} onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id); }} />
+        <Line
+          points={[x1, y1, x2, y2]}
+          stroke={isSelected ? "#39c5cf" : fill}
+          strokeWidth={isSelected ? 5 : 4}
+          onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
+          onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+        />
         <Circle x={x1} y={y1} radius={3} fill={stroke} listening={false} />
         <Circle x={x2} y={y2} radius={3} fill={stroke} listening={false} />
         <Text x={midX + 5} y={midY - 14} text={`${lengthM.toFixed(2)}m · ${light.watt ?? 0}W`} fontSize={8} fontFamily="IBM Plex Mono" fill={stroke} listening={false} />
@@ -1093,10 +1316,21 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       onMoveLight(light.id, dx, dy)
     }
 
+    const isSelected = selectedLightIds?.includes(light.id)
+
     return (
       <Group x={0} y={0} draggable onDragEnd={handleDragEnd}>
         <Arc x={cx} y={cy} innerRadius={Math.max(1, Math.abs(safeRadius - 6))} outerRadius={Math.max(1, Math.abs(safeRadius + 6))} angle={arcDeg} rotation={startDeg} fill={fill} opacity={0.3} closed={false} listening={false} />
-        <Arc x={cx} y={cy} innerRadius={Math.max(1, Math.abs(safeRadius - 3))} outerRadius={Math.max(1, Math.abs(safeRadius + 3))} angle={arcDeg} rotation={startDeg} fill={fill} closed={false} onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id); }} />
+        <Arc
+          x={cx} y={cy}
+          innerRadius={Math.max(1, Math.abs(safeRadius - 3))}
+          outerRadius={Math.max(1, Math.abs(safeRadius + 3))}
+          angle={arcDeg} rotation={startDeg}
+          fill={isSelected ? "#39c5cf" : fill}
+          closed={false}
+          onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
+          onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+        />
         <Circle x={cx} y={cy} radius={2} fill={stroke} opacity={0.5} listening={false} />
         <Text x={cx + 5} y={cy - safeRadius - 14} text={`${(lengthM ?? 0).toFixed(2)}m · ${light.watt ?? 0}W`} fontSize={8} fontFamily="IBM Plex Mono" fill={stroke} listening={false} />
       </Group>
@@ -1119,10 +1353,19 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       onMoveLight(light.id, dx, dy)
     }
 
+    const isSelected = selectedLightIds?.includes(light.id)
+
     return (
       <Group x={0} y={0} draggable onDragEnd={handleDragEnd}>
         <Line points={points} stroke={fill} strokeWidth={8} opacity={0.3} tension={0.5} lineCap="round" lineJoin="round" listening={false} />
-        <Line points={points} stroke={fill} strokeWidth={4} tension={0.5} lineCap="round" lineJoin="round" onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id); }} />
+        <Line
+          points={points}
+          stroke={isSelected ? "#39c5cf" : fill}
+          strokeWidth={isSelected ? 5 : 4}
+          tension={0.5} lineCap="round" lineJoin="round"
+          onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
+          onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
+        />
         <Text x={lx} y={ly} text={`${lengthM.toFixed(2)}m · ${light.watt ?? 0}W`} fontSize={8} fontFamily="IBM Plex Mono" fill={stroke} listening={false} />
       </Group>
     )
@@ -1486,7 +1729,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             )}
 
             {/* Beam spread visualization (rendered below fixtures) */}
-            <BeamSpreads />
+            <BeamLayer />
 
             {/* Measurement lines — wall distances + nearest fixture spacing */}
             <MeasurementLines />

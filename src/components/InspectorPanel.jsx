@@ -20,18 +20,19 @@ export default function InspectorPanel({
   }
 
   const handleDelete = async () => {
-    const ok = await confirm(`Delete ${fixture.name}?`, { confirmLabel: "DELETE", danger: true })
+    const label = fixture.label ?? fixture.name ?? 'Fixture'
+    const ok = await confirm(`Delete ${label}?`, { confirmLabel: "DELETE", danger: true })
     if (ok) onDelete(fixture.id)
   }
 
   const isDali = fixture.protocol?.startsWith('DALI')
 
   // ── Lux calculations ──
-  const nadirLux    = Math.round(getNadirLux(fixture, ceilingHeight))
-  const totalLux    = Math.round(getTotalLuxAtPoint(allFixtures, fixture.position.x, fixture.position.y, ceilingHeight))
-  const beamR_px    = getBeamRadiusPx(fixture, ceilingHeight)
-  const beamR_m     = beamR_px !== null ? ((beamR_px / SCALE) / 1000).toFixed(2) : null
-  const beamDesc    = beamDescription(fixture.beamAngle || 60)
+  const nadirLux = Math.round(getNadirLux(fixture, ceilingHeight))
+  const totalLux = Math.round(getTotalLuxAtPoint(allFixtures, fixture.x, fixture.y, ceilingHeight))
+  const beamR_px = getBeamRadiusPx(fixture, ceilingHeight)
+  const beamR_m  = beamR_px !== null ? ((beamR_px / SCALE) / 1000).toFixed(2) : null
+  const beamDesc = beamDescription(fixture.beamAngle || 60)
 
   const fieldStyle = { marginBottom: 12 }
 
@@ -66,8 +67,6 @@ export default function InspectorPanel({
     borderRadius: 3,
     border: '1px solid #1a2b3c',
   }
-
-  const wattColor = fixture.wattageColor?.hex
 
   return (
     <div style={{ padding: '12px' }}>
@@ -114,7 +113,7 @@ export default function InspectorPanel({
         </div>
       )}
 
-      {/* Header — shows shape symbol + name */}
+      {/* Header */}
       <div
         style={{
           fontFamily: 'IBM Plex Mono, monospace',
@@ -133,7 +132,7 @@ export default function InspectorPanel({
         }}
       >
         {fixture.shapeSymbol && (
-          <span style={{ fontSize: 14, color: wattColor || '#d4a843' }}>
+          <span style={{ fontSize: 14, color: fixture.fill ?? '#d4a843' }}>
             {fixture.shapeSymbol}
           </span>
         )}
@@ -149,44 +148,32 @@ export default function InspectorPanel({
         <label style={labelStyle}>NAME</label>
         <input
           type="text"
-          value={fixture.name}
-          onChange={(e) => handleChange('name', e.target.value)}
+          defaultValue={fixture.label ?? fixture.name ?? 'Fixture'}
+          key={fixture.id + '_label'}
+          onBlur={(e) => handleChange('label', e.target.value)}
           style={inputStyle}
         />
       </div>
 
-      {/* Wattage + color band */}
+      {/* Wattage */}
       <div style={fieldStyle}>
         <label style={labelStyle}>WATTAGE (W)</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input
-            type="number"
-            value={fixture.wattage || 0}
-            onChange={(e) => handleChange('wattage', parseInt(e.target.value) || 0)}
-            style={{ ...inputStyle, flex: 1 }}
-          />
-          {wattColor && (
-            <div
-              title={fixture.wattageColor?.name}
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: wattColor,
-                boxShadow: `0 0 5px ${wattColor}`,
-                flexShrink: 0,
-              }}
-            />
-          )}
-        </div>
+        <input
+          type="number"
+          defaultValue={fixture.watt ?? 0}
+          key={fixture.id + '_watt'}
+          onBlur={(e) => handleChange('watt', parseInt(e.target.value) || 0)}
+          style={inputStyle}
+        />
       </div>
 
       <div style={fieldStyle}>
         <label style={labelStyle}>BEAM ANGLE (°)</label>
         <input
           type="number"
-          value={fixture.beamAngle || 0}
-          onChange={(e) => handleChange('beamAngle', parseInt(e.target.value) || 0)}
+          defaultValue={fixture.beamAngle ?? 0}
+          key={fixture.id + '_beam'}
+          onBlur={(e) => handleChange('beamAngle', parseInt(e.target.value) || 0)}
           style={inputStyle}
         />
         <div style={{ ...readonlyStyle, marginTop: 3, fontSize: 8, color: '#2d4f68' }}>
@@ -226,7 +213,7 @@ export default function InspectorPanel({
         </div>
       </div>
 
-      {/* Lumens (read-only computed) */}
+      {/* Lumens (read-only) */}
       {fixture.lumens != null && (
         <div style={fieldStyle}>
           <label style={labelStyle}>LUMENS (lm)</label>
@@ -235,14 +222,14 @@ export default function InspectorPanel({
       )}
 
       {/* CCT */}
-      {fixture.cct && (
+      {fixture.cctType && (
         <div style={fieldStyle}>
-          <label style={labelStyle}>CCT</label>
-          <div style={readonlyStyle}>{fixture.cct}</div>
+          <label style={labelStyle}>CCT TYPE</label>
+          <div style={readonlyStyle}>{fixture.cctType}</div>
         </div>
       )}
 
-      {/* ── PROTOCOL SECTION ── */}
+      {/* Protocol */}
       <div
         style={{
           marginBottom: 12,
@@ -264,65 +251,15 @@ export default function InspectorPanel({
         >
           PROTOCOL
         </div>
-
-        {/* Active protocol dropdown */}
-        {fixture.supportedProtocols?.length > 0 ? (
-          <select
-            value={fixture.protocol || ''}
-            onChange={(e) => handleChange('protocol', e.target.value)}
-            style={{
-              ...inputStyle,
-              background: '#0d1117',
-              marginBottom: 8,
-              color: '#6ae5ff',
-              borderColor: '#1a3a4a',
-            }}
-          >
-            {fixture.supportedProtocols.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        ) : (
-          <div style={{ ...readonlyStyle, marginBottom: 8, color: '#6ae5ff' }}>
-            {fixture.protocol || 'Not set'}
-          </div>
-        )}
-
-        {/* Supported protocols list */}
-        {fixture.supportedProtocols?.length > 0 && (
-          <div
-            style={{
-              fontFamily: 'IBM Plex Mono, monospace',
-              fontSize: 8,
-              color: '#2d4f68',
-              lineHeight: 1.7,
-            }}
-          >
-            {fixture.supportedProtocols.map((p) => (
-              <span
-                key={p}
-                style={{
-                  display: 'inline-block',
-                  marginRight: 4,
-                  marginBottom: 2,
-                  padding: '1px 5px',
-                  border: `1px solid ${p === fixture.protocol ? '#4a9fbf' : '#1a2b3c'}`,
-                  borderRadius: 2,
-                  color: p === fixture.protocol ? '#6ae5ff' : '#2d4f68',
-                  background: p === fixture.protocol ? '#0a1e2a' : 'transparent',
-                }}
-              >
-                {p}
-              </span>
-            ))}
-          </div>
-        )}
+        <div style={{ ...readonlyStyle, color: '#6ae5ff' }}>
+          {fixture.protocol || 'Room Default'}
+        </div>
       </div>
 
-      {/* DALI address — shown for any DALI protocol */}
-      <div style={fieldStyle}>
-        <label style={labelStyle}>DALI ADDRESS</label>
-        {isDali ? (
+      {/* DALI address */}
+      {isDali && (
+        <div style={fieldStyle}>
+          <label style={labelStyle}>DALI ADDRESS</label>
           <div
             style={{
               fontFamily: 'IBM Plex Mono, monospace',
@@ -335,19 +272,15 @@ export default function InspectorPanel({
               fontWeight: 600,
             }}
           >
-            {fixture.daliAddress || 'Not Assigned — click ASSIGN DALI'}
+            {fixture.daliAddress || 'Not Assigned'}
           </div>
-        ) : (
-          <div style={{ ...readonlyStyle, color: '#2d4f68' }}>
-            N/A (protocol: {fixture.protocol || 'unset'})
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div style={fieldStyle}>
         <label style={labelStyle}>POSITION</label>
         <div style={readonlyStyle}>
-          X: {fixture.position.x.toFixed(0)} px | Y: {fixture.position.y.toFixed(0)} px
+          X: {(fixture.x ?? 0).toFixed(0)} px | Y: {(fixture.y ?? 0).toFixed(0)} px
         </div>
       </div>
 

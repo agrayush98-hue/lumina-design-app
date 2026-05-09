@@ -1,6 +1,20 @@
 // Vercel serverless function — verifies Razorpay payment signature then
 // writes subscription to Firestore server-side (guaranteed activation).
 //
+// ✅ THIS IS THE ONLY AUTHORITATIVE PLACE THAT SHOULD WRITE subscription STATUS.
+//    The client-side createSubscription() in src/firebase.js is a known
+//    vulnerability and must be removed once Firestore security rules are in place.
+//    See SECURITY_AUDIT.md for the full fix plan.
+//
+// ⚠️  SECONDARY VULNERABILITY — FALLBACK PATH (line ~115):
+//    When Firebase Admin SDK fails to initialise (missing/invalid
+//    FIREBASE_SERVICE_ACCOUNT env var), this function returns success:true with
+//    firestoreWritten:false. The client interprets this as a successful payment
+//    and falls back to the client-side createSubscription() call — bypassing
+//    signature verification entirely for the Firestore write.
+//    Fix: ensure FIREBASE_SERVICE_ACCOUNT is always set on Vercel, or change
+//    the fallback to return HTTP 500 so the client does NOT proceed.
+//
 // Required env vars:
 //   RAZORPAY_KEY_SECRET       — Razorpay secret key
 //   FIREBASE_SERVICE_ACCOUNT  — full service-account JSON as a single-line string
@@ -111,13 +125,13 @@ export default async function handler(req, res) {
     db = getAdminDb()
   } catch (err) {
     console.error('[verify-payment] Cannot get Firestore client:', err.message)
-    // Return success=true so client fallback write runs
-    return res.status(200).json({
-      success:          true,
-      paymentId:        razorpay_payment_id,
-      planId,
-      firestoreWritten: false,
-      adminError:       err.message,
+    // 500 — do NOT return success:true. Returning success here would trigger the
+    // client-side createSubscription() fallback which bypasses HMAC verification.
+    // The user's payment succeeded with Razorpay; they should contact support.
+    return res.status(500).json({
+      success: false,
+      error:   'Server configuration error. Your payment was received but could not be activated automatically. Please contact support with your payment ID.',
+      paymentId: razorpay_payment_id,
     })
   }
 
@@ -150,12 +164,12 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('[verify-payment] Firestore write FAILED:', err.message, err.code ?? '')
-    return res.status(200).json({
-      success:          true,
-      paymentId:        razorpay_payment_id,
-      planId,
-      firestoreWritten: false,
-      firestoreError:   err.message,
+    // 500 — do NOT return success:true. Same reason as the Admin SDK catch above:
+    // a success response triggers the client-side createSubscription() fallback.
+    return res.status(500).json({
+      success: false,
+      error:   'Payment was verified but subscription activation failed. Please contact support with your payment ID.',
+      paymentId: razorpay_payment_id,
     })
   }
 }

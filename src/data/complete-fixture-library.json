@@ -1,0 +1,159 @@
+{
+  "fixtures": [
+    {
+      "category": "Downlight",
+      "subcategory": "Residential",
+      "name": "COB Downlight",
+      "description": "Chip-on-Board downlight for residential applications",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"watt": 3, "lumens": 270, "efficacy": 90, "beamOptions": [24, 36, 60]},
+        {"watt": 5, "lumens": 450, "efficacy": 90, "beamOptions": [24, 36, 60]},
+        {"watt": 7, "lumens": 630, "efficacy": 90, "beamOptions": [24, 36, 60]},
+        {"watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36, 60]},
+        {"watt": 10, "lumens": 900, "efficacy": 90, "beamOptions": [36, 60]},
+        {"watt": 12, "lumens": 1100, "efficacy": 92, "beamOptions": [36, 60]},
+        {"watt": 15, "lumens": 1400, "efficacy": 93, "beamOptions": [60]},
+        {"watt": 18, "lumens": 1700, "efficacy": 94, "beamOptions": [60, 90]},
+        {"watt": 20, "lumens": 1900, "efficacy": 95, "beamOptions": [60]},
+        {"watt": 24, "lumens": 2300, "efficacy": 96, "beamOptions": [90]},
+        {"watt": 30, "lumens": 3000, "efficacy": 100, "beamOptions": [60, 90]},
+        {"watt": 35, "lumens": 3500, "efficacy": 100, "beamOptions": [60, 90]}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "Residential",
+      "name": "SMD Downlight",
+      "description": "Surface-Mount Device downlight with wide beam",
+      "mounting": "Recessed",
+      "beam": 120,
+      "cri": 80,
+      "variants": [
+        {"watt": 6, "lumens": 600, "efficacy": 100},
+        {"watt": 8, "lumens": 800, "efficacy": 100},
+        {"watt": 10, "lumens": 1000, "efficacy": 100},
+        {"watt": 12, "lumens": 1200, "efficacy": 100},
+        {"watt": 15, "lumens": 1500, "efficacy": 100},
+        {"watt": 18, "lumens": 1800, "efficacy": 100},
+        {"watt": 20, "lumens": 2000, "efficacy": 100},
+        {"watt": 24, "lumens": 2400, "efficacy": 100}
+      ]
+    },
+    {
+      "category": "LED_STRIP",
+      "subcategory": "Residential",
+      "name": "LED Strip",
+      "description": "Flexible LED strip for indirect lighting",
+      "mounting": "Adhesive",
+      "beam": 120,
+      "cri": 80,
+      "variants": [
+        {"watt_per_meter": 4.8, "lumens_per_meter": 400, "efficacy": 83},
+        {"watt_per_meter": 6, "lumens_per_meter": 500, "efficacy": 83},
+        {"watt_per_meter": 7.2, "lumens_per_meter": 600, "efficacy": 83},
+        {"watt_per_meter": 9.6, "lumens_per_meter": 900, "efficacy": 94},
+        {"watt_per_meter": 12, "lumens_per_meter": 1100, "efficacy": 92},
+        {"watt_per_meter": 14.4, "lumens_per_meter": 1300, "efficacy": 90},
+        {"watt_per_meter": 18, "lumens_per_meter": 1600, "efficacy": 89}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Commercial",
+      "name": "Track Spotlight",
+      "description": "Adjustable track-mounted spotlight",
+      "mounting": "Track",
+      "cri": 95,
+      "variants": [
+        {"watt": 7, "lumens": 650, "efficacy": 93, "beamOptions": [15, 24, 36]},
+        {"watt": 10, "lumens": 950, "efficacy": 95, "beamOptions": [15, 24, 36]},
+        {"watt": 12, "lumens": 1100, "efficacy": 92, "beamOptions": [24, 36]},
+        {"watt": 15, "lumens": 1400, "efficacy": 93, "beamOptions": [24, 36]},
+        {"watt": 20, "lumens": 1900, "efficacy": 95, "beamOptions": [24, 36]},
+        {"watt": 25, "lumens": 2400, "efficacy": 96, "beamOptions": [24, 36]},
+        {"watt": 30, "lumens": 3000, "efficacy": 100, "beamOptions": [36]},
+        {"watt": 35, "lumens": 3500, "efficacy": 100, "beamOptions": [36]}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "name": "LED Panel Light",
+      "description": "Flat panel for office spaces",
+      "mounting": "Recessed",
+      "beam": 120,
+      "cri": 80,
+      "variants": [
+        {"size": "300×300", "watt": 12, "lumens": 1200, "efficacy": 100},
+        {"size": "300×300", "watt": 18, "lumens": 1800, "efficacy": 100},
+        {"size": "600×600", "watt": 24, "lumens": 2400, "efficacy": 100},
+        {"size": "600×600", "watt": 30, "lumens": 3000, "efficacy": 100},
+        {"size": "600×600", "watt": 36, "lumens": 3600, "efficacy": 100},
+        {"size": "600×600", "watt": 40, "lumens": 4000, "efficacy": 100},
+        {"size": "600×600", "watt": 45, "lumens": 4500, "efficacy": 100},
+        {"size": "600×1200", "watt": 40, "lumens": 4000, "efficacy": 100},
+        {"size": "600×1200", "watt": 48, "lumens": 4800, "efficacy": 100},
+        {"size": "600×1200", "watt": 54, "lumens": 5400, "efficacy": 100},
+        {"size": "600×1200", "watt": 60, "lumens": 6000, "efficacy": 100}
+      ]
+    },
+    {
+      "category": "Linear",
+      "subcategory": "Commercial",
+      "name": "Linear Light",
+      "description": "Continuous linear fixture",
+      "mounting": "Suspended",
+      "beam": 120,
+      "cri": 80,
+      "variants": [
+        {"watt_per_meter": 8, "lumens_per_meter": 800, "efficacy": 100},
+        {"watt_per_meter": 10, "lumens_per_meter": 1000, "efficacy": 100},
+        {"watt_per_meter": 12, "lumens_per_meter": 1200, "efficacy": 100},
+        {"watt_per_meter": 15, "lumens_per_meter": 1500, "efficacy": 100},
+        {"watt_per_meter": 18, "lumens_per_meter": 1800, "efficacy": 100},
+        {"watt_per_meter": 20, "lumens_per_meter": 2000, "efficacy": 100},
+        {"watt_per_meter": 24, "lumens_per_meter": 2400, "efficacy": 100}
+      ]
+    },
+    {
+      "category": "High_Bay",
+      "subcategory": "Industrial",
+      "name": "High Bay",
+      "description": "High-output industrial fixture",
+      "mounting": "Suspended",
+      "beamOptions": [90, 120],
+      "cri": 80,
+      "variants": [
+        {"watt": 100, "lumens": 13000, "efficacy": 130},
+        {"watt": 120, "lumens": 15600, "efficacy": 130},
+        {"watt": 150, "lumens": 19500, "efficacy": 130},
+        {"watt": 180, "lumens": 23400, "efficacy": 130},
+        {"watt": 200, "lumens": 26000, "efficacy": 130},
+        {"watt": 240, "lumens": 31200, "efficacy": 130}
+      ]
+    },
+    {
+      "category": "Cove_Light",
+      "subcategory": "Architectural",
+      "name": "Cove Light",
+      "description": "Indirect architectural lighting",
+      "mounting": "Concealed",
+      "beam": 120,
+      "cri": 90,
+      "variants": [
+        {"watt_per_meter": 6, "lumens_per_meter": 540, "efficacy": 90},
+        {"watt_per_meter": 8, "lumens_per_meter": 720, "efficacy": 90},
+        {"watt_per_meter": 10, "lumens_per_meter": 900, "efficacy": 90},
+        {"watt_per_meter": 12, "lumens_per_meter": 1080, "efficacy": 90},
+        {"watt_per_meter": 15, "lumens_per_meter": 1350, "efficacy": 90}
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "2.0",
+    "totalFixtureTypes": 8,
+    "totalVariants": 78
+  }
+}

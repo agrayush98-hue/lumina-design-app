@@ -114,8 +114,24 @@ export async function getUserSubscription(userId) {
   return snap.exists() ? (snap.data().subscription ?? null) : null
 }
 
-// Client-side fallback write — primary write is in api/verify-payment.js (server).
-// Only touches the root doc; no subcollection.
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  SECURITY VULNERABILITY — CLIENT-SIDE SUBSCRIPTION WRITE
+//
+// This function runs in the browser and can be called by ANY user from DevTools:
+//   import { createSubscription } from './firebase'
+//   createSubscription(auth.currentUser.uid, 'professional', 'fake_id')
+//   → user gets free Professional plan, no payment required
+//
+// TODO (MUST FIX BEFORE SCALING PAID ACQUISITION):
+//   1. Remove this function entirely, or
+//   2. Restrict with Firestore security rules so only the Firebase Admin SDK
+//      (running in api/verify-payment.js) can write subscription fields.
+//      See SECURITY_AUDIT.md for the exact rules needed.
+//
+// Current status: this exists as a fallback for when api/verify-payment.js
+// fails to initialise its Firebase Admin SDK (FIREBASE_SERVICE_ACCOUNT env
+// var missing or malformed on Vercel). Fix the env var, then delete this.
+// ─────────────────────────────────────────────────────────────────────────────
 export async function createSubscription(userId, plan, razorpayPaymentId) {
   const now      = new Date()
   const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)

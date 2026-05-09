@@ -4,6 +4,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import SharedView from './components/SharedView.jsx'
 import DashboardRoute from './components/DashboardRoute.jsx'
+import LandingPage from './pages/LandingPage.jsx'
+import PricingPage from './pages/PricingPage.jsx'
+import FeaturesPage from './pages/FeaturesPage.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider }   from './components/Toast.jsx'
@@ -35,6 +38,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ConfirmProvider>
       <AuthProvider>
         <Routes>
+          <Route path="/"                 element={<LandingPage />} />
+          <Route path="/pricing"          element={<PricingPage />} />
+          <Route path="/features"         element={<FeaturesPage />} />
           <Route path="/share/:projectId" element={<SharedView />} />
           <Route path="/dashboard"        element={<DashboardRoute />} />
           <Route path="/app"              element={<App />} />

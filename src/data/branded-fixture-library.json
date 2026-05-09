@@ -1,0 +1,708 @@
+{
+  "fixtures": [
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Philips",
+      "name": "DuraSlim Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "DuraSlim 7W", "watt": 7, "lumens": 735, "efficacy": 105, "beamOptions": [36], "cct": "3000K"},
+        {"name": "DuraSlim 12W", "watt": 12, "lumens": 1260, "efficacy": 105, "beamOptions": [36], "cct": "3000K"},
+        {"name": "DuraSlim 15W", "watt": 15, "lumens": 1575, "efficacy": 105, "beamOptions": [36], "cct": "4000K"},
+        {"name": "DuraSlim 18W", "watt": 18, "lumens": 1890, "efficacy": 105, "beamOptions": [36], "cct": "4000K"},
+        {"name": "DuraSlim 22W", "watt": 22, "lumens": 2310, "efficacy": 105, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Philips",
+      "name": "Prime Plus Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Prime Plus 10W", "watt": 10, "lumens": 1000, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Prime Plus 12W", "watt": 12, "lumens": 1200, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Prime Plus 15W", "watt": 15, "lumens": 1500, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Prime Plus 18W", "watt": 18, "lumens": 1800, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Prime Plus 22W", "watt": 22, "lumens": 2200, "efficacy": 100, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Philips",
+      "name": "Max Plus Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Max Plus 10W", "watt": 10, "lumens": 1050, "efficacy": 105, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Max Plus 15W", "watt": 15, "lumens": 1575, "efficacy": 105, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Max Plus 18W", "watt": 18, "lumens": 1890, "efficacy": 105, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Philips",
+      "name": "CoreLine RC091V",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "CoreLine RC091V 25W", "watt": 25, "lumens": 2500, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "CoreLine RC091V 34W", "watt": 34, "lumens": 3400, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Philips",
+      "name": "Ledinaire RC065B",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Ledinaire RC065B 24W", "watt": 24, "lumens": 2400, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Ledinaire RC065B 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Ledinaire RC065B 40W", "watt": 40, "lumens": 4000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Philips",
+      "name": "ModiFly SP800P",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "ModiFly SP800P 18W", "watt": 18, "lumens": 1800, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "ModiFly SP800P 25W", "watt": 25, "lumens": 2500, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "ModiFly SP800P 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "ModiFly SP800P 40W", "watt": 40, "lumens": 4000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "LED_STRIP",
+      "subcategory": "Linear",
+      "brand": "Philips",
+      "name": "LV09 Strip",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "LV09 Strip 10W/m", "watt_per_meter": 10, "lumens_per_meter": 1000, "efficacy": 100, "beamOptions": [120], "cct": "3000K"},
+        {"name": "LV09 Strip 14W/m", "watt_per_meter": 14, "lumens_per_meter": 1400, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "LV09 Strip 20W/m", "watt_per_meter": 20, "lumens_per_meter": 2000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Havells",
+      "name": "Joy Neo Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Joy Neo 3W", "watt": 3, "lumens": 270, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Joy Neo 5W", "watt": 5, "lumens": 450, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Joy Neo 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Joy Neo 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Joy Neo 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Joy Neo 24W", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Havells",
+      "name": "Lumeno Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Lumeno 5W", "watt": 5, "lumens": 500, "efficacy": 100, "beamOptions": [36], "cct": "6500K"},
+        {"name": "Lumeno 8W", "watt": 8, "lumens": 800, "efficacy": 100, "beamOptions": [36], "cct": "6500K"},
+        {"name": "Lumeno 10W", "watt": 10, "lumens": 1000, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Lumeno 15W", "watt": 15, "lumens": 1500, "efficacy": 100, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Havells",
+      "name": "Azstro COB",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Azstro COB 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Azstro COB 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Azstro COB 24W", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Track",
+      "brand": "Havells",
+      "name": "Innova Neo",
+      "mounting": "Track",
+      "cri": 90,
+      "variants": [
+        {"name": "Innova Neo 7W", "watt": 7, "lumens": 630, "efficacy": 90, "beamOptions": [24], "cct": "3000K"},
+        {"name": "Innova Neo 10W", "watt": 10, "lumens": 900, "efficacy": 90, "beamOptions": [24], "cct": "3000K"},
+        {"name": "Innova Neo 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [24], "cct": "3000K"},
+        {"name": "Innova Neo 20W", "watt": 20, "lumens": 1800, "efficacy": 90, "beamOptions": [24], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Track",
+      "brand": "Havells",
+      "name": "Cylindro Track",
+      "mounting": "Track",
+      "cri": 85,
+      "variants": [
+        {"name": "Cylindro Track 10W", "watt": 10, "lumens": 850, "efficacy": 85, "beamOptions": [38], "cct": "3000K"},
+        {"name": "Cylindro Track 15W", "watt": 15, "lumens": 1275, "efficacy": 85, "beamOptions": [38], "cct": "3000K"},
+        {"name": "Cylindro Track 20W", "watt": 20, "lumens": 1700, "efficacy": 85, "beamOptions": [38], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Havells",
+      "name": "Trim Panel",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Trim 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Trim 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Trim 24W", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Trim 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Smart",
+      "brand": "Havells",
+      "name": "Smart CCT",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Smart CCT 10W", "watt": 10, "lumens": 900, "efficacy": 90, "beamOptions": [120], "cct": "Tunable"},
+        {"name": "Smart CCT 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [120], "cct": "Tunable"}
+      ]
+    },
+    {
+      "category": "LED_STRIP",
+      "subcategory": "Linear",
+      "brand": "Havells",
+      "name": "Azure Strip",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "Azure Strip 10W/m", "watt_per_meter": 10, "lumens_per_meter": 1000, "efficacy": 100, "beamOptions": [120], "cct": "3000K"},
+        {"name": "Azure Strip 14W/m", "watt_per_meter": 14, "lumens_per_meter": 1400, "efficacy": 100, "beamOptions": [120], "cct": "3000K"},
+        {"name": "Azure Strip 18W/m", "watt_per_meter": 18, "lumens_per_meter": 1800, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Wipro",
+      "name": "Garnet Alpha",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Garnet Alpha 5W", "watt": 5, "lumens": 450, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Alpha 7W", "watt": 7, "lumens": 700, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Alpha 10W", "watt": 10, "lumens": 1000, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Alpha 12W", "watt": 12, "lumens": 1200, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Alpha 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "COB",
+      "brand": "Wipro",
+      "name": "Garnet COB Spot",
+      "mounting": "Surface",
+      "cri": 90,
+      "variants": [
+        {"name": "Garnet COB Spot 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [40], "cct": "4000K"},
+        {"name": "Garnet COB Spot 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet COB Spot 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Track",
+      "brand": "Wipro",
+      "name": "Garnet Figo Track",
+      "mounting": "Track",
+      "cri": 85,
+      "variants": [
+        {"name": "Garnet Figo Track 10W", "watt": 10, "lumens": 850, "efficacy": 85, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Figo Track 20W", "watt": 20, "lumens": 1700, "efficacy": 85, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Garnet Figo Track 30W", "watt": 30, "lumens": 2550, "efficacy": 85, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Residential",
+      "brand": "Wipro",
+      "name": "Garnet Wave",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "Garnet Wave 7W Round", "watt": 7, "lumens": 700, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Garnet Wave 10W Round", "watt": 10, "lumens": 950, "efficacy": 95, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Garnet Wave 12W Square", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Wipro",
+      "name": "Garnet Slim Edge",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Garnet Slim Edge 10W", "watt": 10, "lumens": 900, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Garnet Slim Edge 20W", "watt": 20, "lumens": 1800, "efficacy": 90, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Wipro",
+      "name": "Commercial 2x2",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Commercial 2x2 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Commercial 2x2 40W", "watt": 40, "lumens": 4000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Cove_Light",
+      "subcategory": "Architectural",
+      "brand": "Wipro",
+      "name": "Garnet U/D Wall",
+      "mounting": "Wall",
+      "cri": 90,
+      "variants": [
+        {"name": "Garnet U/D Wall 6W", "watt": 6, "lumens": 540, "efficacy": 90, "beamOptions": [120], "cct": "2700K"},
+        {"name": "Garnet U/D Wall 10W", "watt": 10, "lumens": 900, "efficacy": 90, "beamOptions": [120], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Orient",
+      "name": "Moonlite Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Moonlite 3W", "watt": 3, "lumens": 270, "efficacy": 90, "beamOptions": [36], "cct": "6500K"},
+        {"name": "Moonlite 6W", "watt": 6, "lumens": 540, "efficacy": 90, "beamOptions": [36], "cct": "6500K"},
+        {"name": "Moonlite 9W", "watt": 9, "lumens": 765, "efficacy": 85, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Orient",
+      "name": "Eternal Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Eternal 9W Slim", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Eternal 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Eternal 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "COB",
+      "brand": "Orient",
+      "name": "COB Spot",
+      "mounting": "Surface",
+      "cri": 85,
+      "variants": [
+        {"name": "COB Spot 3W", "watt": 3, "lumens": 240, "efficacy": 80, "beamOptions": [40], "cct": "3000K"},
+        {"name": "COB Spot 6W", "watt": 6, "lumens": 510, "efficacy": 85, "beamOptions": [40], "cct": "4000K"},
+        {"name": "COB Spot 9W", "watt": 9, "lumens": 765, "efficacy": 85, "beamOptions": [40], "cct": "4000K"},
+        {"name": "COB Spot 12W", "watt": 12, "lumens": 1020, "efficacy": 85, "beamOptions": [40], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Accent",
+      "brand": "Orient",
+      "name": "Flexi Spot",
+      "mounting": "Surface",
+      "cri": 90,
+      "variants": [
+        {"name": "Flexi Spot 5W", "watt": 5, "lumens": 350, "efficacy": 70, "beamOptions": [20], "cct": "3000K"},
+        {"name": "Flexi Spot 7W", "watt": 7, "lumens": 490, "efficacy": 70, "beamOptions": [20], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Orient",
+      "name": "Rimless Panel",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Rimless Panel 12W Round", "watt": 12, "lumens": 1200, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Rimless Panel 18W Square", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Rimless Panel 24W Square", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Rimless Panel 36W 2x2", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "High_Bay",
+      "subcategory": "Industrial",
+      "brand": "Orient",
+      "name": "Eternal Flood",
+      "mounting": "Surface",
+      "cri": 70,
+      "variants": [
+        {"name": "Eternal Flood 20W", "watt": 20, "lumens": 1800, "efficacy": 90, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Eternal Flood 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Eternal Flood 50W", "watt": 50, "lumens": 4500, "efficacy": 90, "beamOptions": [120], "cct": "6500K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Neve Surface",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "Neve Surface 3W", "watt": 3, "lumens": 225, "efficacy": 75, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Neve Surface 6W", "watt": 6, "lumens": 450, "efficacy": 75, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Neve Surface 12W", "watt": 12, "lumens": 900, "efficacy": 75, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Areva Prime",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Areva Prime 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Areva Prime 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Areva Prime 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Areva Prime 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Lucent Slim",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Lucent Slim 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Lucent Slim 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Lucent Slim 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Gem Blaze",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Gem Blaze 6W", "watt": 6, "lumens": 540, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Gem Blaze 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Striker Mini",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Striker Mini 3W", "watt": 3, "lumens": 270, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Striker Mini 6W", "watt": 6, "lumens": 540, "efficacy": 90, "beamOptions": [36], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Jaquar",
+      "name": "Ensave Plus",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Ensave Plus 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Ensave Plus 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Track",
+      "brand": "Jaquar",
+      "name": "Jaquar Track",
+      "mounting": "Track",
+      "cri": 85,
+      "variants": [
+        {"name": "Jaquar Track 10W", "watt": 10, "lumens": 850, "efficacy": 85, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Jaquar Track 15W", "watt": 15, "lumens": 1275, "efficacy": 85, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Jaquar Track 20W", "watt": 20, "lumens": 1700, "efficacy": 85, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Jaquar Track 30W", "watt": 30, "lumens": 2550, "efficacy": 85, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Jaquar",
+      "name": "Panel Square/2x2",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Panel 12W Square", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Panel 18W Square", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Panel 24W Square", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Panel 36W 2x2", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Panel 40W 2x2", "watt": 40, "lumens": 4000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Cove_Light",
+      "subcategory": "Architectural",
+      "brand": "Jaquar",
+      "name": "Wall Washer",
+      "mounting": "Wall",
+      "cri": 90,
+      "variants": [
+        {"name": "Wall Washer 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [75], "cct": "3000K"},
+        {"name": "Wall Washer 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [75], "cct": "3000K"},
+        {"name": "Wall Washer 24W", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [75], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Osram",
+      "name": "Ledinaire DN065B",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Ledinaire DN065B 7W", "watt": 7, "lumens": 700, "efficacy": 100, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Ledinaire DN065B 10W", "watt": 10, "lumens": 1000, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Ledinaire DN065B 12W", "watt": 12, "lumens": 1200, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Ledinaire DN065B 17W", "watt": 17, "lumens": 1700, "efficacy": 100, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Ledinaire DN065B 20W", "watt": 20, "lumens": 2000, "efficacy": 100, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Osram",
+      "name": "Valuefit DN",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Valuefit DN 9W", "watt": 9, "lumens": 810, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Valuefit DN 13W", "watt": 13, "lumens": 1200, "efficacy": 92, "beamOptions": [36], "cct": "4000K"},
+        {"name": "Valuefit DN 16W", "watt": 16, "lumens": 1500, "efficacy": 94, "beamOptions": [36], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Osram",
+      "name": "Ledinaire Panel",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Ledinaire Panel 25W", "watt": 25, "lumens": 2500, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Ledinaire Panel 34W", "watt": 34, "lumens": 3400, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Ledinaire Panel 40W", "watt": 40, "lumens": 4000, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Osram",
+      "name": "Planon Plus",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Planon Plus 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Planon Plus 44W", "watt": 44, "lumens": 4400, "efficacy": 100, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Linear",
+      "subcategory": "Commercial",
+      "brand": "Osram",
+      "name": "SubstiTUBE",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "SubstiTUBE 18W 4ft", "watt": 18, "lumens": 2000, "efficacy": 111, "beamOptions": [120], "cct": "4000K"},
+        {"name": "SubstiTUBE 24W 5ft", "watt": 24, "lumens": 2500, "efficacy": 104, "beamOptions": [120], "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Linear",
+      "subcategory": "Industrial",
+      "brand": "Osram",
+      "name": "Ledvance Batten",
+      "mounting": "Surface",
+      "cri": 70,
+      "variants": [
+        {"name": "Ledvance Batten 20W", "watt": 20, "lumens": 2000, "efficacy": 100, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Ledvance Batten 36W", "watt": 36, "lumens": 3600, "efficacy": 100, "beamOptions": [120], "cct": "6500K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Hybec",
+      "name": "HLR Fixed Series",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "HLR-2361 7W", "watt": 7, "lumens": 630, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "HLR-2362 12W", "watt": 12, "lumens": 1080, "efficacy": 90, "beamOptions": [36], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Hybec",
+      "name": "Elite Fixed",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "Elite Fixed 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Elite Fixed 25W", "watt": 25, "lumens": 2250, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Elite Fixed 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Elite Fixed 35W", "watt": 35, "lumens": 3150, "efficacy": 90, "beamOptions": [36], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "Anti-glare",
+      "brand": "Hybec",
+      "name": "HLR Anti-glare",
+      "mounting": "Recessed",
+      "cri": 95,
+      "variants": [
+        {"name": "HLR-2898 Anti-glare 7W", "watt": 7, "lumens": 630, "efficacy": 90, "beamOptions": [40], "cct": "3000K"},
+        {"name": "HLR-2899 Anti-glare 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [36], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "Grille",
+      "brand": "Hybec",
+      "name": "HLR Grille",
+      "mounting": "Recessed",
+      "cri": 90,
+      "variants": [
+        {"name": "HLR-2608 Grille 1x15W", "watt": 15, "lumens": 1425, "efficacy": 95, "beamOptions": [40], "cct": "3000K"},
+        {"name": "HLR-2608 Grille 2x15W", "watt": 30, "lumens": 3100, "efficacy": 103, "beamOptions": [40], "cct": "3000K"},
+        {"name": "HLR-2608 Grille 3x15W", "watt": 45, "lumens": 4700, "efficacy": 104, "beamOptions": [40], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Tiltable",
+      "brand": "Hybec",
+      "name": "Elite Tiltable",
+      "mounting": "Surface",
+      "cri": 90,
+      "variants": [
+        {"name": "Elite Tiltable 8W", "watt": 8, "lumens": 720, "efficacy": 90, "beamOptions": [24], "cct": "3000K"},
+        {"name": "Elite Tiltable 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [24], "cct": "3000K"},
+        {"name": "Elite Tiltable 35W", "watt": 35, "lumens": 3150, "efficacy": 90, "beamOptions": [24], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Track",
+      "brand": "Hybec",
+      "name": "Elite Track",
+      "mounting": "Track",
+      "cri": 90,
+      "variants": [
+        {"name": "Elite Track 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Elite Track 25W", "watt": 25, "lumens": 2250, "efficacy": 90, "beamOptions": [36], "cct": "3000K"},
+        {"name": "Elite Track 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [38], "cct": "3000K"},
+        {"name": "Elite Track 35W", "watt": 35, "lumens": 3150, "efficacy": 90, "beamOptions": [38], "cct": "3000K"},
+        {"name": "Elite Track 2x30W", "watt": 60, "lumens": 5400, "efficacy": 90, "beamOptions": [38], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Hybec",
+      "name": "HLM Module",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "HLM-2133 Module 33W", "watt": 33, "lumens": 2970, "efficacy": 90, "beamOptions": [120], "cct": "3000K"},
+        {"name": "HLM-2133 Module 40W", "watt": 40, "lumens": 3600, "efficacy": 90, "beamOptions": [120], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Hybec",
+      "name": "Elite Panel",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Elite Panel 15W", "watt": 15, "lumens": 1350, "efficacy": 90, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Elite Panel 35W Round", "watt": 35, "lumens": 3150, "efficacy": 90, "beamOptions": [120], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "Cove_Light",
+      "subcategory": "Architectural",
+      "brand": "Hybec",
+      "name": "Elite Wall Washer",
+      "mounting": "Wall",
+      "cri": 90,
+      "variants": [
+        {"name": "Elite Wall Washer 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [75], "cct": "3000K"},
+        {"name": "Elite Wall Washer 25W", "watt": 25, "lumens": 2250, "efficacy": 90, "beamOptions": [75], "cct": "3000K"}
+      ]
+    },
+    {
+      "category": "High_Bay",
+      "subcategory": "Industrial",
+      "brand": "Hybec",
+      "name": "Elite Flood",
+      "mounting": "Surface",
+      "cri": 70,
+      "variants": [
+        {"name": "Elite Flood 20W", "watt": 20, "lumens": 1800, "efficacy": 90, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Elite Flood 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Elite Flood 50W", "watt": 50, "lumens": 4500, "efficacy": 90, "beamOptions": [120], "cct": "6500K"}
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "2.0",
+    "totalFixtureTypes": 69,
+    "totalVariants": 186,
+    "brands": ["Philips", "Havells", "Wipro", "Orient", "Jaquar", "Osram", "Hybec"],
+    "categories": ["Downlight", "Spotlight", "Panel", "LED_STRIP", "Linear", "Cove_Light", "High_Bay"],
+    "notes": "Complete branded fixture library with Indian manufacturers - actual product specifications from catalogs"
+  }
+}
