@@ -1,5 +1,5 @@
 # YC Technical Audit Report
-Generated: 2026-05-11 15:48:53 UTC
+Generated: 2026-05-11 15:50:35 UTC
 Audit score: **82/100 (B)**
 
 ---
@@ -48,7 +48,7 @@ _None_
 | Metric | Value |
 |--------|-------|
 | Total files scanned | 80 |
-| Total lines of code | 23,696 |
+| Total lines of code | 23,697 |
 | Largest file | `src/App.jsx` (3473 lines) |
 | Files > 500 lines | 10 |
 | API routes | 10 |

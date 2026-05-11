@@ -10,7 +10,7 @@
     "audit:security": "npm audit",
     "audit:yc": "node scripts/yc-audit.js",
     "audit:all": "npm run audit:security && npm run audit:yc",
-    "prepare": "husky",
+    "prepare": "husky && git config core.hooksPath .husky",
     "agents": "node scripts/agents/orchestrator.js",
     "agents:no-open": "node scripts/agents/orchestrator.js --no-open"
   },
