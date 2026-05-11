@@ -31,7 +31,11 @@
       "Bash(node -e \"console.log\\(require\\('./node_modules/husky/package.json'\\).version\\)\")",
       "Bash(git hook *)",
       "Bash(node -e ' *)",
-      "Bash(xxd .husky/pre-commit)"
+      "Bash(xxd .husky/pre-commit)",
+      "Bash(node -e \"require\\('@anthropic-ai/sdk'\\)\")",
+      "Bash(node --input-type=module -e \"import Anthropic from '@anthropic-ai/sdk'; console.log\\('sdk ok'\\)\")",
+      "Bash(rm -rf .husky && rm -rf scripts/agents && rm -f public/agent-dashboard.html && echo \"deleted\")",
+      "Bash(npm prune *)"
     ]
   }
 }

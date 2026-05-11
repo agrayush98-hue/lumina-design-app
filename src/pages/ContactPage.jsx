@@ -110,6 +110,9 @@ export default function ContactPage() {
           html,
           replyTo:       form.email,
           isContactForm: true,
+          senderName:    form.name,
+          senderEmail:   form.email,
+          messageText:   form.message,
         }),
       })
       const data = await r.json().catch(() => ({}))

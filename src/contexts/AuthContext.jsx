@@ -11,11 +11,6 @@ import {
   serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
-import {
-  emailWelcome,
-  emailTrialExpiringSoon,
-  emailTrialExpired,
-} from '../emails/templates'
 
 const AuthContext = createContext(null)
 
@@ -25,29 +20,24 @@ export function useAuth() {
 
 const TRIAL_DAYS = 14
 
-// ── Email helper — fire-and-forget, never blocks auth flow ─────────────────────
-async function dispatchEmail(to, subject, html) {
-  if (!to) {
-    console.error('[AuthContext] dispatchEmail — no recipient address, skipping')
-    return
-  }
+// ── Email workflow trigger — fire-and-forget via /api/email-trigger ───────────
+// Calls a thin serverless wrapper so the template logic stays server-side.
+async function triggerEmail(event, payload) {
+  if (!payload?.email) return
   try {
-    // send-email.js requires a Firebase ID token to prevent open-relay abuse
     const idToken = await auth.currentUser?.getIdToken?.().catch(() => null) ?? null
-    const r    = await fetch('/api/send-email', {
+    const r = await fetch('/api/email-trigger', {
       method:  'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
       },
-      body: JSON.stringify({ to, subject, html }),
+      body: JSON.stringify({ event, payload }),
     })
     const data = await r.json().catch(() => ({}))
-    if (!r.ok) {
-      console.error('[AuthContext] dispatchEmail — email send failed (HTTP', r.status + '):', data)
-    }
+    if (!r.ok) console.error('[AuthContext] triggerEmail failed (HTTP', r.status + '):', data)
   } catch (err) {
-    console.error('[AuthContext] dispatchEmail — network error:', err.message)
+    console.error('[AuthContext] triggerEmail network error:', err.message)
   }
 }
 
@@ -111,14 +101,10 @@ export function AuthProvider({ children }) {
 
     setUserDoc(rootData)
 
-    // Welcome email — fire after docs are written, don't await
-    dispatchEmail(
-      email,
-      'Welcome to Lumina Design — Your 14-day trial has started',
-      emailWelcome({ name: displayName, trialEndsAt: trialEnd }),
-    ).then(() => {
-      markEmailSent(uid, 'welcome')
-    }).catch(err => console.error('[AuthContext] welcome email dispatch failed:', err.message))
+    // trial_started email — fire after docs are written, never blocks auth
+    triggerEmail('trial_started', { email, name: displayName, trialEndsAt: trialEnd })
+      .then(() => markEmailSent(uid, 'welcome'))
+      .catch(err => console.error('[AuthContext] trial_started email failed:', err.message))
   }
 
   // ── Check & send trial lifecycle emails on login ──────────────────
@@ -134,21 +120,13 @@ export function AuthProvider({ children }) {
 
     if (daysLeft <= 0 && !emailsSent.trialExpired) {
       markEmailSent(uid, 'trialExpired')
-      dispatchEmail(
-        email,
-        'Your Lumina Design trial has ended',
-        emailTrialExpired({ name }),
-      )
+      triggerEmail('subscription_expired', { email, name, planId: 'trial' })
       return
     }
 
     if (daysLeft <= 3 && daysLeft > 0 && !emailsSent.trialWarning) {
       markEmailSent(uid, 'trialWarning')
-      dispatchEmail(
-        email,
-        `Your Lumina Design trial expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
-        emailTrialExpiringSoon({ name, trialEndsAt: end, daysLeft }),
-      )
+      triggerEmail('subscription_expiring', { email, name, planId: 'trial', renewsAt: end, daysLeft })
     }
   }
 

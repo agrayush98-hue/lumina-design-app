@@ -1,6 +1,6 @@
 # YC Technical Audit Report
-Generated: 2026-05-11 15:50:35 UTC
-Audit score: **82/100 (B)**
+Generated: 2026-05-11 16:28:54 UTC
+Audit score: **79/100 (B)**
 
 ---
 
@@ -10,8 +10,8 @@ _None — excellent!_
 ## 🟠 HIGH PRIORITY (1 found)
 - Firestore operation without .catch() or try/catch — `src/firebase.js:191`
 
-## 🟡 MEDIUM PRIORITY (0 found)
-_None_
+## 🟡 MEDIUM PRIORITY (1 found)
+- async function in API route with await but no try/catch — `api/email-workflows.js:314`
 
 ## 🟢 LOW PRIORITY (10 found)
 - Large file — 3473 lines (max 500) — `src/App.jsx`
@@ -47,11 +47,11 @@ _None_
 ## 📊 CODE METRICS
 | Metric | Value |
 |--------|-------|
-| Total files scanned | 80 |
-| Total lines of code | 23,697 |
+| Total files scanned | 83 |
+| Total lines of code | 24,543 |
 | Largest file | `src/App.jsx` (3473 lines) |
 | Files > 500 lines | 10 |
-| API routes | 10 |
+| API routes | 12 |
 | API routes without auth | 0 |
 | API routes with wildcard CORS | 0 |
 

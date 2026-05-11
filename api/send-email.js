@@ -13,6 +13,7 @@
  */
 
 import { getAdminAuth } from './_adminDb.js'
+import { trigger }      from './email-workflows.js'
 
 const ALLOWED_ORIGINS = [
   'https://app.lightillumina.com',
@@ -51,7 +52,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })
 
-  const { to, subject, html, replyTo, isContactForm } = req.body ?? {}
+  const { to, subject, html, replyTo, isContactForm, senderName, senderEmail, messageText } = req.body ?? {}
 
   // ── Contact form path — FIRST, no auth required ───────────────────────────
   if (isContactForm) {
@@ -82,6 +83,17 @@ export default async function handler(req, res) {
         return res.status(r.status).json({ error: data.message ?? 'Email send failed' })
       }
       console.log('[send-email] ✓ contact form sent — id:', data.id)
+
+      // Auto-reply to submitter (fire-and-forget — never blocks the response)
+      if (replyTo) {
+        trigger('contact_form_received', {
+          email:   replyTo,
+          name:    senderName  ?? '',
+          subject: senderEmail ?? subject,
+          message: messageText ?? '',
+        }).catch(() => {})
+      }
+
       return res.status(200).json({ success: true, id: data.id })
     } catch (err) {
       console.error('[send-email] contact form fetch threw:', err.message)

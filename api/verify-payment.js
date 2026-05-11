@@ -13,6 +13,7 @@
 
 import crypto from 'crypto'
 import { getAdminDb } from './_adminDb.js'
+import { trigger }    from './email-workflows.js'
 
 const ALLOWED_ORIGINS = [
   'https://app.lightillumina.com',
@@ -113,6 +114,20 @@ export default async function handler(req, res) {
     await db.doc(`users/${userId}`).set(payload, { merge: true })
 
     console.log('[verify-payment] ✓ Firestore write complete for userId:', userId)
+
+    // Fire payment_success email — fetch user email from Firestore, never block the response
+    db.doc(`users/${userId}`).get().then(snap => {
+      const { email, name } = snap.data() ?? {}
+      if (email) {
+        trigger('payment_success', {
+          email,
+          name,
+          planId,
+          paymentId: razorpay_payment_id,
+          renewsAt,
+        }).catch(() => {})
+      }
+    }).catch(() => {})
 
     return res.status(200).json({
       success:          true,
