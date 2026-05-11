@@ -106,11 +106,10 @@ export default function ContactPage() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to:      'info@lightillumina.com',
-          subject: `[Contact] ${form.subject} — ${form.name}`,
+          subject:       `[Contact] ${form.subject} — ${form.name}`,
           html,
-          from:    'Lumina Design Contact <info@lightillumina.com>',
-          replyTo: form.email,
+          replyTo:       form.email,
+          isContactForm: true,
         }),
       })
       const data = await r.json().catch(() => ({}))
@@ -119,7 +118,7 @@ export default function ContactPage() {
       setForm({ name: '', email: '', subject: SUBJECTS[0], message: '' })
     } catch (err) {
       setStatus('error')
-      setErrMsg(err.message ?? 'Something went wrong. Please try again.')
+      setErrMsg('Message could not be sent. Please email us directly at support@lightillumina.com')
     }
   }
 

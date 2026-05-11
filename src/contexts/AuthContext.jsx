@@ -40,12 +40,7 @@ async function dispatchEmail(to, subject, html) {
         'Content-Type': 'application/json',
         ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
       },
-      body: JSON.stringify({
-        to,
-        subject,
-        html,
-        from: 'Lumina Design <business@lightillumina.com>',
-      }),
+      body: JSON.stringify({ to, subject, html }),
     })
     const data = await r.json().catch(() => ({}))
     if (!r.ok) {
