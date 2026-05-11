@@ -53,26 +53,24 @@ export default async function handler(req, res) {
 
   const { to, subject, html, replyTo, isContactForm } = req.body ?? {}
 
-  if (!subject || !html) {
-    return res.status(400).json({ error: 'Missing required fields: subject, html' })
-  }
-
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.error('[send-email] RESEND_API_KEY is not set')
-    return res.status(500).json({ error: 'Email service not configured' })
-  }
-
-  // ── Contact form path — no auth required ─────────────────────────────────
+  // ── Contact form path — FIRST, no auth required ───────────────────────────
   if (isContactForm) {
+    if (!subject || !html) {
+      return res.status(400).json({ error: 'Missing required fields: subject, html' })
+    }
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      console.error('[send-email] RESEND_API_KEY is not set')
+      return res.status(500).json({ error: 'Email service not configured' })
+    }
     console.log('[send-email] contact-form send | subject:', subject.slice(0, 80))
     try {
       const r = await fetch('https://api.resend.com/emails', {
         method:  'POST',
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from:     CONTACT_FORM_FROM,
-          to:       [CONTACT_FORM_RECIPIENT],
+          from:    CONTACT_FORM_FROM,
+          to:      [CONTACT_FORM_RECIPIENT],
           subject,
           html,
           ...(replyTo ? { reply_to: replyTo } : {}),
@@ -92,6 +90,15 @@ export default async function handler(req, res) {
   }
 
   // ── Authenticated path — requires Firebase ID token ───────────────────────
+  if (!subject || !html) {
+    return res.status(400).json({ error: 'Missing required fields: subject, html' })
+  }
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.error('[send-email] RESEND_API_KEY is not set')
+    return res.status(500).json({ error: 'Email service not configured' })
+  }
+
   const authHeader = req.headers.authorization ?? ''
   const idToken    = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
