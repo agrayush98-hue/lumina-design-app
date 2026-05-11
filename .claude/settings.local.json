@@ -25,7 +25,13 @@
       "Bash(node -e \"require\\('ws'\\)\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\)\")",
       "Bash(node --input-type=module)",
-      "Bash(node -e \"const ws = require\\('ws'\\); console.log\\('ws cjs ok'\\)\")"
+      "Bash(node -e \"const ws = require\\('ws'\\); console.log\\('ws cjs ok'\\)\")",
+      "Bash(git config *)",
+      "Bash(node -e \"const p=require\\('/dev/stdin','utf8'\\); process.stdin.resume\\(\\); let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>{ const j=JSON.parse\\(d\\); console.log\\('husky version:', j.version\\) }\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/husky/package.json'\\).version\\)\")",
+      "Bash(git hook *)",
+      "Bash(node -e ' *)",
+      "Bash(xxd .husky/pre-commit)"
     ]
   }
 }
