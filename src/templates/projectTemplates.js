@@ -5,11 +5,12 @@ function mkFixture(id, mmX, mmY, geo, props) {
   return { id, x: Math.round(x), y: Math.round(y), ...props }
 }
 
-const DL12 = { fixtureId: "dl-12w-36",  label: "12W Downlight",   type: "downlight",  watt: 12, lumens: 950,  beamAngle: 36,  fill: "#ffe9b0", stroke: "#ffb300", glowColor: "rgba(255,179,0,0.10)",  visualRadius: 7  }
-const PL18 = { fixtureId: "pl-18w-120", label: "18W Panel",        type: "panel",      watt: 18, lumens: 1800, beamAngle: 120, fill: "#d0eaff", stroke: "#4da6ff", glowColor: "rgba(77,166,255,0.10)", visualRadius: 13 }
-const SP7  = { fixtureId: "sp-7w-26",   label: "7W Spotlight",     type: "spotlight",  watt: 7,  lumens: 550,  beamAngle: 26,  fill: "#ffd0a0", stroke: "#ff7c00", glowColor: "rgba(255,124,0,0.10)",  visualRadius: 5  }
-const WW15 = { fixtureId: "ww-15w-60",  label: "15W Wall Washer",  type: "wallwasher", watt: 15, lumens: 1200, beamAngle: 60,  fill: "#c8f0ff", stroke: "#20c0f0", glowColor: "rgba(32,192,240,0.10)", visualRadius: 9  }
-const DL7  = { fixtureId: "dl-7w-24",   label: "7W Mini Downlight",type: "downlight",  watt: 7,  lumens: 500,  beamAngle: 24,  fill: "#fff5c0", stroke: "#f0d000", glowColor: "rgba(240,208,0,0.10)",  visualRadius: 5  }
+// Visual props match FIXTURE_LIBRARY exactly so templates render correctly
+const DL12 = { fixtureId: "dl-12w-36",  label: "12W Downlight",    type: "downlight",  watt: 12, lumens: 950,  beamAngle: 36,  fill: "#ffe9b0", stroke: "#ffb300", glowColor: "rgba(255,179,0,0.12)",  visualRadius: 7,  fixtureShape: "circle"     }
+const PL18 = { fixtureId: "pl-18w-120", label: "18W Panel",         type: "panel",      watt: 18, lumens: 1800, beamAngle: 120, fill: "#d0eaff", stroke: "#4da6ff", glowColor: "rgba(77,166,255,0.12)", visualRadius: 13, fixtureShape: "panel-grid" }
+const SP7  = { fixtureId: "sp-7w-26",   label: "7W Spotlight",      type: "spotlight",  watt: 7,  lumens: 550,  beamAngle: 26,  fill: "#c8d8f8", stroke: "#2196f3", glowColor: "rgba(33,150,243,0.14)", visualRadius: 7,  fixtureShape: "diamond"    }
+const WW15 = { fixtureId: "ww-15w-60",  label: "15W Wall Washer",   type: "wallwasher", watt: 15, lumens: 1200, beamAngle: 60,  fill: "#b8e8ff", stroke: "#1e88e5", glowColor: "rgba(30,136,229,0.12)", visualRadius: 9,  fixtureShape: "flood"      }
+const DL7  = { fixtureId: "dl-7w-24",   label: "7W Mini Downlight", type: "downlight",  watt: 7,  lumens: 500,  beamAngle: 24,  fill: "#fff5c0", stroke: "#e8d020", glowColor: "rgba(232,208,0,0.12)",  visualRadius: 5,  fixtureShape: "circle"     }
 
 // ── Template 1: Office Conference Room ────────────────────────────────────────
 function buildOfficeConference() {

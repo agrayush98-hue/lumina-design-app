@@ -1,30 +1,30 @@
 // ── Quick-access shortcuts (used by FixturePanel sidebar) ─────────────────────
 export const FIXTURE_LIBRARY = [
-  { id: 'dl-12w-36',  label: '12W Downlight',    subLabel: '36° · 950 lm',   type: 'downlight',  watt: 12, lumens: 950,  beamAngle: 36,  fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.10)',  visualRadius: 7  },
-  { id: 'sp-7w-26',   label: '7W Spotlight',      subLabel: '26° · 550 lm',   type: 'spotlight',  watt: 7,  lumens: 550,  beamAngle: 26,  fill: '#ffd0a0', stroke: '#ff7c00', glowColor: 'rgba(255,124,0,0.10)',  visualRadius: 5  },
-  { id: 'pl-18w-120', label: '18W Panel',          subLabel: '120° · 1800 lm', type: 'panel',      watt: 18, lumens: 1800, beamAngle: 120, fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.10)', visualRadius: 13 },
-  { id: 'ln-10w-90',  label: '10W Linear',         subLabel: '90° · 900 lm/m', type: 'linear',     watt: 10, lumens: 900,  beamAngle: 90,  fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.10)', visualRadius: 10 },
-  { id: 'ww-15w-60',  label: '15W Wall Washer',    subLabel: '60° · 1200 lm',  type: 'wallwasher', watt: 15, lumens: 1200, beamAngle: 60,  fill: '#c8f0ff', stroke: '#20c0f0', glowColor: 'rgba(32,192,240,0.10)', visualRadius: 9  },
-  { id: 'dl-7w-24',   label: '7W Mini Downlight',  subLabel: '24° · 500 lm',   type: 'downlight',  watt: 7,  lumens: 500,  beamAngle: 24,  fill: '#fff5c0', stroke: '#f0d000', glowColor: 'rgba(240,208,0,0.10)',  visualRadius: 5  },
+  { id: 'dl-12w-36',  label: '12W Downlight',    subLabel: '36° · 950 lm',   type: 'downlight',  watt: 12, lumens: 950,  beamAngle: 36,  fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.12)',  visualRadius: 7,  fixtureShape: 'circle'     },
+  { id: 'sp-7w-26',   label: '7W Spotlight',      subLabel: '26° · 550 lm',   type: 'spotlight',  watt: 7,  lumens: 550,  beamAngle: 26,  fill: '#c8d8f8', stroke: '#2196f3', glowColor: 'rgba(33,150,243,0.14)', visualRadius: 7,  fixtureShape: 'diamond'    },
+  { id: 'pl-18w-120', label: '18W Panel',          subLabel: '120° · 1800 lm', type: 'panel',      watt: 18, lumens: 1800, beamAngle: 120, fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.12)', visualRadius: 13, fixtureShape: 'panel-grid' },
+  { id: 'ln-10w-90',  label: '10W Linear',         subLabel: '90° · 900 lm/m', type: 'linear',     watt: 10, lumens: 900,  beamAngle: 90,  fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.12)', visualRadius: 10, fixtureShape: 'rectangle'  },
+  { id: 'ww-15w-60',  label: '15W Wall Washer',    subLabel: '60° · 1200 lm',  type: 'wallwasher', watt: 15, lumens: 1200, beamAngle: 60,  fill: '#b8e8ff', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'flood'      },
+  { id: 'dl-7w-24',   label: '7W Mini Downlight',  subLabel: '24° · 500 lm',   type: 'downlight',  watt: 7,  lumens: 500,  beamAngle: 24,  fill: '#fff5c0', stroke: '#e8d020', glowColor: 'rgba(232,208,0,0.12)',  visualRadius: 5,  fixtureShape: 'circle'     },
 ]
 
 // ── Category → canvas visual defaults ────────────────────────────────────────
 export const CATEGORY_VISUAL = {
   // ── Standard ───────────────────────────────────────────────────────────────
-  COB_DOWNLIGHT: { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.10)',  visualRadius: 7,  fixtureShape: 'circle'    },
-  SPOTLIGHT:     { fill: '#ffd0a0', stroke: '#ff7c00', glowColor: 'rgba(255,124,0,0.10)',  visualRadius: 5,  fixtureShape: 'circle'    },
-  PANEL:         { fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.10)', visualRadius: 13, fixtureShape: 'square'    },
-  LINEAR:        { fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.10)', visualRadius: 10, fixtureShape: 'rectangle' },
-  WALL_WASHER:   { fill: '#c8f0ff', stroke: '#20c0f0', glowColor: 'rgba(32,192,240,0.10)', visualRadius: 9,  fixtureShape: 'rectangle' },
-  LED_STRIP:     { fill: '#f0d0ff', stroke: '#cc60ff', glowColor: 'rgba(200,96,255,0.10)', visualRadius: 10, fixtureShape: 'rectangle' },
+  COB_DOWNLIGHT: { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.12)',  visualRadius: 7,  fixtureShape: 'circle'     },
+  SPOTLIGHT:     { fill: '#c8d8f8', stroke: '#2196f3', glowColor: 'rgba(33,150,243,0.14)', visualRadius: 7,  fixtureShape: 'diamond'    },
+  PANEL:         { fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.12)', visualRadius: 13, fixtureShape: 'panel-grid' },
+  LINEAR:        { fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.12)', visualRadius: 10, fixtureShape: 'rectangle'  },
+  WALL_WASHER:   { fill: '#b8e8ff', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'flood'      },
+  LED_STRIP:     { fill: '#e8d0ff', stroke: '#9c5cd0', glowColor: 'rgba(156,92,208,0.14)', visualRadius: 6,  fixtureShape: 'cove-slot'  },
   // ── Professional ───────────────────────────────────────────────────────────
-  CHANDELIER:    { fill: '#d4a8f0', stroke: '#9b59b6', glowColor: 'rgba(155,89,182,0.14)',  visualRadius: 10, fixtureShape: 'star6'   },
-  PENDANT:       { fill: '#f8a8d4', stroke: '#e91e8c', glowColor: 'rgba(233,30,140,0.12)',  visualRadius: 8,  fixtureShape: 'pendant' },
-  TRACK_LIGHT:   { fill: '#a8d4f8', stroke: '#2196f3', glowColor: 'rgba(33,150,243,0.12)',  visualRadius: 9,  fixtureShape: 'track'   },
-  COVE_LIGHT:    { fill: '#a8f0f8', stroke: '#00bcd4', glowColor: 'rgba(0,188,212,0.12)',   visualRadius: 11, fixtureShape: 'cove'    },
-  BOLLARD:       { fill: '#a8f0a8', stroke: '#4caf50', glowColor: 'rgba(76,175,80,0.12)',   visualRadius: 8,  fixtureShape: 'hexagon' },
-  FLOOD_LIGHT:   { fill: '#f8a8a8', stroke: '#f44336', glowColor: 'rgba(244,67,54,0.12)',   visualRadius: 12, fixtureShape: 'flood'   },
-  SURFACE_PANEL: { fill: '#f8d4a8', stroke: '#ff9800', glowColor: 'rgba(255,152,0,0.12)',   visualRadius: 12, fixtureShape: 'square'  },
+  CHANDELIER:    { fill: '#d4a8f0', stroke: '#7b1fa2', glowColor: 'rgba(123,31,162,0.14)', visualRadius: 10, fixtureShape: 'chandelier' },
+  PENDANT:       { fill: '#f8d8f0', stroke: '#c2185b', glowColor: 'rgba(194,24,91,0.12)',  visualRadius: 8,  fixtureShape: 'pendant'    },
+  TRACK_LIGHT:   { fill: '#c0d8f8', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'track'      },
+  COVE_LIGHT:    { fill: '#a8f0f8', stroke: '#00acc1', glowColor: 'rgba(0,172,193,0.14)',   visualRadius: 7,  fixtureShape: 'cove-slot'  },
+  BOLLARD:       { fill: '#c8f0c0', stroke: '#43a047', glowColor: 'rgba(67,160,71,0.14)',   visualRadius: 8,  fixtureShape: 'spike'      },
+  FLOOD_LIGHT:   { fill: '#f8a8a8', stroke: '#f44336', glowColor: 'rgba(244,67,54,0.16)',   visualRadius: 11, fixtureShape: 'floodlight' },
+  SURFACE_PANEL: { fill: '#f8d4a8', stroke: '#ff9800', glowColor: 'rgba(255,152,0,0.12)',   visualRadius: 12, fixtureShape: 'panel-grid' },
 }
 
 // ── Category metadata — drives modal UI ───────────────────────────────────────

@@ -1,3 +1,42 @@
+const T = {
+  panel:   '#1c1c1c',
+  panel3:  '#2c2c2c',
+  border:  '#333333',
+  text:    '#e8e8e8',
+  textMid: '#a0a0a0',
+  textDim: '#606060',
+  accent:  '#d4a843',
+  accentBg:'rgba(212,168,67,0.12)',
+  blue:    '#4a9eff',
+  blueBg:  'rgba(74,158,255,0.10)',
+  green:   '#3dba74',
+  red:     '#e05555',
+  font:    "'Inter', system-ui, sans-serif",
+}
+
+const btn = (active, color = T.textMid) => ({
+  height: 28,
+  padding: '0 10px',
+  background: active ? T.accentBg : 'transparent',
+  color: active ? T.accent : color,
+  border: active ? `1px solid rgba(212,168,67,0.25)` : '1px solid transparent',
+  borderRadius: 3,
+  fontFamily: T.font,
+  fontSize: 12,
+  fontWeight: active ? 500 : 400,
+  letterSpacing: '0.01em',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 5,
+  transition: 'background 0.1s, color 0.1s',
+})
+
+const sep = (
+  <div style={{ width: 1, height: 16, background: T.border, margin: '0 4px', flexShrink: 0 }} />
+)
+
 export default function Toolbar({
   onOpenSettings,
   onLoadProject,
@@ -18,12 +57,6 @@ export default function Toolbar({
   ceilingHeight,
   onChangeCeilingHeight,
 }) {
-  const mono = { fontFamily: 'IBM Plex Mono, monospace' }
-
-  // Placement button behaviour:
-  //   no activeFixture → "+ SELECT FIXTURE" → opens library
-  //   activeFixture + placing → "◆ PLACING" → toggle off
-  //   activeFixture + paused → "◆ PAUSED" → toggle on
   const handlePlacementBtn = () => {
     if (!activeFixture) {
       onOpenLibrary()
@@ -33,10 +66,10 @@ export default function Toolbar({
   }
 
   const btnLabel = !activeFixture
-    ? '+ SELECT FIXTURE'
+    ? '+ Fixture'
     : placementMode
-      ? '◆ PLACING'
-      : '◆ PAUSED'
+      ? '◆ Placing'
+      : '◆ Paused'
 
   const btnActive = !!activeFixture && placementMode
 
@@ -45,112 +78,74 @@ export default function Toolbar({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
-        padding: '8px 12px',
-        background: '#0a0f14',
-        borderRadius: 4,
-        width: '100%',
-        boxSizing: 'border-box',
+        gap: 2,
+        padding: '4px 8px',
+        background: T.panel,
+        border: `1px solid ${T.border}`,
+        borderRadius: 6,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.35)',
       }}
     >
       {/* Settings */}
       <button
         onClick={onOpenSettings}
-        title="Open settings"
-        style={{
-          ...mono,
-          padding: '6px 12px',
-          background: '#1a2a3a',
-          color: '#cdd9e5',
-          border: '1px solid #2a3a4a',
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          letterSpacing: '0.06em',
-          whiteSpace: 'nowrap',
-        }}
+        title="Settings"
+        style={btn(false)}
       >
-        ⚙ SETTINGS
+        ⚙ Settings
       </button>
 
-      <div style={{ width: 1, height: 20, background: '#1a2b3c', margin: '0 2px' }} />
+      {sep}
 
-      {/* Placement / Select fixture button */}
+      {/* Placement */}
       <button
         onClick={handlePlacementBtn}
         style={{
-          ...mono,
-          padding: '6px 12px',
-          background: btnActive ? '#d4a843' : activeFixture ? '#1a3a2a' : '#1a2a3a',
-          color: btnActive ? '#0f0f0f' : activeFixture ? '#3dba74' : '#cdd9e5',
-          border: `1px solid ${btnActive ? '#d4a843' : activeFixture ? '#2a5a3a' : '#2a3a4a'}`,
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          fontWeight: btnActive ? 600 : 400,
-          letterSpacing: '0.06em',
-          whiteSpace: 'nowrap',
+          ...btn(btnActive),
+          background: btnActive ? T.accentBg : activeFixture ? 'rgba(61,186,116,0.08)' : 'transparent',
+          color: btnActive ? T.accent : activeFixture ? T.green : T.textMid,
+          border: `1px solid ${btnActive ? 'rgba(212,168,67,0.3)' : activeFixture ? 'rgba(61,186,116,0.2)' : 'transparent'}`,
         }}
       >
         {btnLabel}
       </button>
 
-      {/* Active fixture indicator + CLEAR button */}
+      {/* Active fixture indicator + clear */}
       {activeFixture && (
         <>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              padding: '5px 10px',
-              background: '#0e1d14',
-              border: `1px solid ${placementMode ? '#2a5a3a' : '#1a3828'}`,
+              gap: 5,
+              padding: '3px 8px',
+              background: 'rgba(61,186,116,0.06)',
+              border: '1px solid rgba(61,186,116,0.15)',
               borderRadius: 3,
               whiteSpace: 'nowrap',
+              maxWidth: 180,
+              overflow: 'hidden',
             }}
           >
-            <span
-              style={{
-                fontSize: 13,
-                lineHeight: 1,
-                color: activeFixture.wattageColor?.hex || '#e8a245',
-              }}
-            >
-              {activeFixture.symbol}
+            <span style={{ fontSize: 13, lineHeight: 1, color: activeFixture.fill ?? T.accent }}>
+              {activeFixture.symbol ?? '○'}
             </span>
-            <span
-              style={{
-                ...mono,
-                fontSize: 9,
-                color: '#3dba74',
-                letterSpacing: '0.06em',
-              }}
-            >
-              ACTIVE: {activeFixture.wattage}W {activeFixture.category}
+            <span style={{ fontFamily: T.font, fontSize: 11, color: T.green, fontWeight: 500 }}>
+              {activeFixture.watt ?? activeFixture.wattage}W
             </span>
-            {activeFixture.beamAngle != null && (
-              <span style={{ ...mono, fontSize: 8, color: '#2d4f68' }}>
-                · {activeFixture.beamAngle}° · {activeFixture.protocol}
-              </span>
-            )}
+            <span style={{ fontFamily: T.font, fontSize: 11, color: T.textDim }}>
+              {activeFixture.label ?? activeFixture.name ?? activeFixture.category}
+            </span>
           </div>
 
-          {/* CLEAR button */}
           <button
             onClick={onClearActiveFixture}
             title="Clear active fixture"
             style={{
-              ...mono,
-              padding: '5px 8px',
-              background: '#2a1010',
-              color: '#ff6b6b',
-              border: '1px solid #4a2020',
-              borderRadius: 3,
-              cursor: 'pointer',
-              fontSize: 11,
-              fontWeight: 600,
-              lineHeight: 1,
+              ...btn(false, T.red),
+              padding: '0 8px',
+              fontSize: 13,
+              fontWeight: 400,
             }}
           >
             ✕
@@ -158,134 +153,83 @@ export default function Toolbar({
         </>
       )}
 
-      {/* Delete selected — visible only when ≥1 fixture is multi-selected */}
+      {/* Delete selected */}
       {selectedCount > 0 && (
-        <button
-          onClick={onDeleteSelected}
-          title={`Delete ${selectedCount} selected fixture${selectedCount !== 1 ? 's' : ''} (Delete key)`}
-          style={{
-            ...mono,
-            padding: '6px 12px',
-            background: '#2a1010',
-            color: '#ff6b6b',
-            border: '1px solid #4a2020',
-            borderRadius: 3,
-            cursor: 'pointer',
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: '0.06em',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          🗑 DEL {selectedCount}
-        </button>
+        <>
+          {sep}
+          <button
+            onClick={onDeleteSelected}
+            title={`Delete ${selectedCount} selected`}
+            style={{
+              ...btn(false, T.red),
+              background: 'rgba(224,85,85,0.06)',
+              border: '1px solid rgba(224,85,85,0.2)',
+            }}
+          >
+            Delete {selectedCount}
+          </button>
+        </>
       )}
 
       {/* Delete all */}
-      {fixtureCount > 0 && (
-        <button
-          onClick={onDeleteAll}
-          title="Delete all fixtures"
-          style={{
-            ...mono,
-            padding: '6px 12px',
-            background: '#1a0a0a',
-            color: '#8b3a3a',
-            border: '1px solid #3a1a1a',
-            borderRadius: 3,
-            cursor: 'pointer',
-            fontSize: 10,
-            letterSpacing: '0.06em',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          🗑 ALL
-        </button>
+      {fixtureCount > 0 && !selectedCount && (
+        <>
+          {sep}
+          <button
+            onClick={onDeleteAll}
+            title="Delete all fixtures"
+            style={btn(false, T.textDim)}
+          >
+            Clear All
+          </button>
+        </>
       )}
 
-      {/* DALI assign */}
+      {/* DALI */}
       <button
         onClick={onAssignDALI}
-        style={{
-          ...mono,
-          padding: '6px 12px',
-          background: '#1a2a3a',
-          color: '#cdd9e5',
-          border: '1px solid #2a3a4a',
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          letterSpacing: '0.06em',
-          whiteSpace: 'nowrap',
-        }}
+        style={btn(false)}
+        title="DALI circuit planning"
       >
         ⚡ DALI
       </button>
 
-      <div style={{ width: 1, height: 20, background: '#1a2b3c', margin: '0 2px' }} />
+      {sep}
 
       {/* Load project */}
-      <button
-        onClick={onLoadProject}
-        style={{
-          ...mono,
-          padding: '6px 12px',
-          background: '#1a2a3a',
-          color: '#cdd9e5',
-          border: '1px solid #2a3a4a',
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          letterSpacing: '0.06em',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        📂 LOAD
+      <button onClick={onLoadProject} style={btn(false)} title="Load project">
+        📂 Load
       </button>
 
-      <div style={{ marginLeft: 'auto' }} />
+      <div style={{ flex: 1 }} />
 
-      {/* ── Visualisation toggles ── */}
+      {/* Beam toggle */}
       <button
         onClick={onToggleBeams}
-        title="Toggle beam cone footprints"
-        style={{
-          ...mono,
-          padding: '5px 10px',
-          background: showBeams ? '#0e1d2a' : '#0a0f14',
-          color: showBeams ? '#d4a843' : '#2d4f68',
-          border: `1px solid ${showBeams ? '#d4a843' : '#1a2b3c'}`,
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          whiteSpace: 'nowrap',
-        }}
+        title="Toggle beam cones (B)"
+        style={btn(showBeams, showBeams ? T.accent : T.textMid)}
       >
-        🔆 BEAM
+        🔆 Beam
       </button>
 
+      {/* Heatmap toggle */}
       <button
         onClick={onToggleHeatMap}
-        title="Toggle lux heat map"
+        title="Toggle lux heatmap (H)"
         style={{
-          ...mono,
-          padding: '5px 10px',
-          background: showHeatMap ? '#1a0e2a' : '#0a0f14',
-          color: showHeatMap ? '#a78bfa' : '#2d4f68',
-          border: `1px solid ${showHeatMap ? '#a78bfa' : '#1a2b3c'}`,
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: 10,
-          whiteSpace: 'nowrap',
+          ...btn(showHeatMap, showHeatMap ? '#a78bfa' : T.textMid),
+          background: showHeatMap ? 'rgba(167,139,250,0.10)' : 'transparent',
+          border: showHeatMap ? '1px solid rgba(167,139,250,0.25)' : '1px solid transparent',
+          color: showHeatMap ? '#a78bfa' : T.textMid,
         }}
       >
-        🌡 HEAT
+        🌡 Heat
       </button>
 
-      {/* Ceiling height input — shown when either visualisation is active */}
+      {/* Ceiling height — only when viz active */}
       {(showBeams || showHeatMap) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ ...mono, fontSize: 8, color: '#2d4f68', whiteSpace: 'nowrap' }}>H:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
+          <span style={{ fontFamily: T.font, fontSize: 11, color: T.textDim }}>H:</span>
           <input
             type="number"
             min={1000}
@@ -293,37 +237,41 @@ export default function Toolbar({
             step={100}
             value={ceilingHeight}
             onChange={(e) => onChangeCeilingHeight(parseInt(e.target.value) || 2700)}
-            title="Ceiling / mounting height (mm)"
+            title="Ceiling height (mm)"
             style={{
-              ...mono,
-              width: 56,
-              fontSize: 9,
-              background: '#0a0f14',
-              color: '#cdd9e5',
-              border: '1px solid #1a2b3c',
+              fontFamily: T.font,
+              width: 52,
+              fontSize: 11,
+              background: T.panel3,
+              color: T.text,
+              border: `1px solid ${T.border}`,
               borderRadius: 3,
-              padding: '4px 5px',
+              padding: '3px 5px',
               textAlign: 'right',
+              outline: 'none',
             }}
           />
-          <span style={{ ...mono, fontSize: 8, color: '#2d4f68' }}>mm</span>
+          <span style={{ fontFamily: T.font, fontSize: 11, color: T.textDim }}>mm</span>
         </div>
       )}
 
-      {/* Fixture count */}
+      {sep}
+
+      {/* Fixture count chip */}
       <div
         style={{
-          ...mono,
-          fontSize: 10,
-          color: '#4a7a96',
-          padding: '4px 8px',
-          background: '#0d1117',
+          fontFamily: T.font,
+          fontSize: 11,
+          color: T.textDim,
+          padding: '3px 8px',
+          background: T.panel3,
           borderRadius: 3,
-          border: '1px solid #1a2b3c',
+          border: `1px solid ${T.border}`,
           whiteSpace: 'nowrap',
         }}
       >
-        FIXTURES: <span style={{ color: '#d4a843', fontWeight: 600 }}>{fixtureCount}</span>
+        <span style={{ color: T.accent, fontWeight: 600 }}>{fixtureCount}</span>
+        <span style={{ marginLeft: 4 }}>fixtures</span>
       </div>
     </div>
   )

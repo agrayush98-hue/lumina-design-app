@@ -1,82 +1,40 @@
-// Vercel serverless function — verifies Razorpay payment signature then
-// writes subscription to Firestore server-side (guaranteed activation).
+// Vercel serverless function — verifies Razorpay payment HMAC signature then
+// writes subscription to Firestore via Firebase Admin SDK (bypasses client rules).
 //
-// ✅ THIS IS THE ONLY AUTHORITATIVE PLACE THAT SHOULD WRITE subscription STATUS.
-//    The client-side createSubscription() in src/firebase.js is a known
-//    vulnerability and must be removed once Firestore security rules are in place.
-//    See SECURITY_AUDIT.md for the full fix plan.
-//
-// ⚠️  SECONDARY VULNERABILITY — FALLBACK PATH (line ~115):
-//    When Firebase Admin SDK fails to initialise (missing/invalid
-//    FIREBASE_SERVICE_ACCOUNT env var), this function returns success:true with
-//    firestoreWritten:false. The client interprets this as a successful payment
-//    and falls back to the client-side createSubscription() call — bypassing
-//    signature verification entirely for the Firestore write.
-//    Fix: ensure FIREBASE_SERVICE_ACCOUNT is always set on Vercel, or change
-//    the fallback to return HTTP 500 so the client does NOT proceed.
+// ✅ Sole authoritative writer of subscription status on successful payment.
+//    Client-side createSubscription() in src/firebase.js is deprecated (throws).
+//    Firestore security rules (VULN-001) block any client writes to subscription fields.
+//    api/razorpay-webhook.js handles the edge case where the browser closes before
+//    this function is called (Razorpay retries the webhook until we return 200).
 //
 // Required env vars:
 //   RAZORPAY_KEY_SECRET       — Razorpay secret key
-//   FIREBASE_SERVICE_ACCOUNT  — full service-account JSON as a single-line string
+//   FIREBASE_SERVICE_ACCOUNT  — service-account JSON as single-line string
 
 import crypto from 'crypto'
+import { getAdminDb } from './_adminDb.js'
 
-// ── Firebase Admin — lazy singleton ───────────────────────────────────────────
-// Initialised once per cold start; re-used across warm invocations.
-let _adminDb = null
-let _initError = null
+const ALLOWED_ORIGINS = [
+  'https://app.lightillumina.com',
+  'https://lumina-design-app.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+]
 
-function getAdminDb() {
-  if (_adminDb)    return _adminDb
-  if (_initError)  throw _initError
-
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT
-  console.log('[verify-payment] FIREBASE_SERVICE_ACCOUNT present:', !!raw,
-    raw ? `(length ${raw.length})` : '— NOT SET')
-
-  if (!raw) {
-    _initError = new Error('FIREBASE_SERVICE_ACCOUNT env var is not set in Vercel')
-    throw _initError
-  }
-
-  let serviceAccount
-  try {
-    serviceAccount = JSON.parse(raw)
-    console.log('[verify-payment] Service account parsed — project_id:', serviceAccount.project_id,
-      '| client_email:', serviceAccount.client_email)
-  } catch (e) {
-    _initError = new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT JSON: ${e.message}`)
-    throw _initError
-  }
-
-  try {
-    // Dynamic import avoids bundling firebase-admin into the client build
-    const { initializeApp, getApps, cert } = require('firebase-admin/app')
-    const { getFirestore }                  = require('firebase-admin/firestore')
-
-    if (!getApps().length) {
-      console.log('[verify-payment] Initialising Firebase Admin app…')
-      initializeApp({ credential: cert(serviceAccount) })
-      console.log('[verify-payment] Firebase Admin app initialised OK')
-    } else {
-      console.log('[verify-payment] Firebase Admin app already initialised')
-    }
-
-    _adminDb = getFirestore()
-    console.log('[verify-payment] Firestore Admin client obtained OK')
-    return _adminDb
-  } catch (e) {
-    _initError = new Error(`Firebase Admin init failed: ${e.message}`)
-    console.error('[verify-payment]', _initError.message)
-    throw _initError
+function corsHeaders(req) {
+  const origin  = req.headers.origin ?? ''
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin':  allowed,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
   }
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  const cors = corsHeaders(req)
+  Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v))
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })

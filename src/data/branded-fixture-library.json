@@ -696,13 +696,188 @@
         {"name": "Elite Flood 50W", "watt": 50, "lumens": 4500, "efficacy": 90, "beamOptions": [120], "cct": "6500K"}
       ]
     }
+    ,
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Syska",
+      "name": "Stario COB Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Stario 5W",  "watt": 5,  "lumens": 450,  "efficacy": 90, "beamOptions": [36],     "cct": "3000K"},
+        {"name": "Stario 7W",  "watt": 7,  "lumens": 650,  "efficacy": 93, "beamOptions": [36],     "cct": "3000K"},
+        {"name": "Stario 9W",  "watt": 9,  "lumens": 850,  "efficacy": 94, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Stario 12W", "watt": 12, "lumens": 1150, "efficacy": 96, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Stario 15W", "watt": 15, "lumens": 1450, "efficacy": 97, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Stario 18W", "watt": 18, "lumens": 1750, "efficacy": 97, "beamOptions": [60],     "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Syska",
+      "name": "Panel-6060 Series",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Panel-6060 30W", "watt": 30, "lumens": 2700, "efficacy": 90, "beamOptions": [120], "cct": "4000K", "size": "600×600"},
+        {"name": "Panel-6060 36W", "watt": 36, "lumens": 3240, "efficacy": 90, "beamOptions": [120], "cct": "4000K", "size": "600×600"},
+        {"name": "Panel-6060 40W", "watt": 40, "lumens": 3600, "efficacy": 90, "beamOptions": [120], "cct": "6500K", "size": "600×600"}
+      ]
+    },
+    {
+      "category": "LED_Strip",
+      "subcategory": "Residential",
+      "brand": "Syska",
+      "name": "LightStrip Premium",
+      "mounting": "Adhesive",
+      "cri": 80,
+      "variants": [
+        {"name": "Strip 4.8W/m", "watt": 4.8, "lumens": 420, "efficacy": 88, "beamOptions": [120], "cct": "3000K"},
+        {"name": "Strip 9.6W/m", "watt": 9.6, "lumens": 880, "efficacy": 92, "beamOptions": [120], "cct": "4000K"},
+        {"name": "Strip 14W/m",  "watt": 14,  "lumens": 1300, "efficacy": 93, "beamOptions": [120], "cct": "6500K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Crompton",
+      "name": "Jura COB Downlight",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Jura 5W",  "watt": 5,  "lumens": 450,  "efficacy": 90, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Jura 7W",  "watt": 7,  "lumens": 650,  "efficacy": 93, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Jura 10W", "watt": 10, "lumens": 950,  "efficacy": 95, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Jura 12W", "watt": 12, "lumens": 1150, "efficacy": 96, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Jura 15W", "watt": 15, "lumens": 1450, "efficacy": 97, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Jura 20W", "watt": 20, "lumens": 1950, "efficacy": 98, "beamOptions": [60],     "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "High_Bay",
+      "subcategory": "Industrial",
+      "brand": "Crompton",
+      "name": "Hi-Lume UFO High Bay",
+      "mounting": "Suspended",
+      "cri": 80,
+      "variants": [
+        {"name": "Hi-Lume 60W",  "watt": 60,  "lumens": 7800,  "efficacy": 130, "beamOptions": [90, 120], "cct": "6500K"},
+        {"name": "Hi-Lume 80W",  "watt": 80,  "lumens": 10400, "efficacy": 130, "beamOptions": [90, 120], "cct": "6500K"},
+        {"name": "Hi-Lume 100W", "watt": 100, "lumens": 13000, "efficacy": 130, "beamOptions": [90, 120], "cct": "6500K"},
+        {"name": "Hi-Lume 150W", "watt": 150, "lumens": 19500, "efficacy": 130, "beamOptions": [120],     "cct": "6500K"}
+      ]
+    },
+    {
+      "category": "Floodlight",
+      "subcategory": "Outdoor",
+      "brand": "Crompton",
+      "name": "Intelio LED Floodlight",
+      "mounting": "Wall / Pole",
+      "cri": 80,
+      "ipRating": "IP66",
+      "variants": [
+        {"name": "Intelio 20W",  "watt": 20,  "lumens": 2000,  "efficacy": 100, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Intelio 30W",  "watt": 30,  "lumens": 3150,  "efficacy": 105, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Intelio 50W",  "watt": 50,  "lumens": 5500,  "efficacy": 110, "beamOptions": [120], "cct": "6500K"},
+        {"name": "Intelio 100W", "watt": 100, "lumens": 11500, "efficacy": 115, "beamOptions": [120], "cct": "6500K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Bajaj",
+      "name": "Ledlite COB Downlight",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Ledlite 7W",  "watt": 7,  "lumens": 645,  "efficacy": 92, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Ledlite 9W",  "watt": 9,  "lumens": 840,  "efficacy": 93, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Ledlite 12W", "watt": 12, "lumens": 1130, "efficacy": 94, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Ledlite 15W", "watt": 15, "lumens": 1430, "efficacy": 95, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Ledlite 18W", "watt": 18, "lumens": 1730, "efficacy": 96, "beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "Ledlite 24W", "watt": 24, "lumens": 2330, "efficacy": 97, "beamOptions": [60],     "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Panel",
+      "subcategory": "Commercial",
+      "brand": "Bajaj",
+      "name": "Flat Panel LED",
+      "mounting": "Recessed",
+      "cri": 80,
+      "variants": [
+        {"name": "Flat Panel 18W", "watt": 18, "lumens": 1620, "efficacy": 90, "beamOptions": [120], "cct": "4000K", "size": "300×300"},
+        {"name": "Flat Panel 24W", "watt": 24, "lumens": 2160, "efficacy": 90, "beamOptions": [120], "cct": "4000K", "size": "600×600"},
+        {"name": "Flat Panel 36W", "watt": 36, "lumens": 3240, "efficacy": 90, "beamOptions": [120], "cct": "4000K", "size": "600×600"},
+        {"name": "Flat Panel 40W", "watt": 40, "lumens": 3800, "efficacy": 95, "beamOptions": [120], "cct": "6500K", "size": "600×600"}
+      ]
+    },
+    {
+      "category": "Spotlight",
+      "subcategory": "Commercial",
+      "brand": "Bajaj",
+      "name": "Edgy Track Spotlight",
+      "mounting": "Track",
+      "cri": 90,
+      "variants": [
+        {"name": "Edgy 10W", "watt": 10, "lumens": 950,  "efficacy": 95, "beamOptions": [24, 36], "cct": "3000K"},
+        {"name": "Edgy 15W", "watt": 15, "lumens": 1450, "efficacy": 97, "beamOptions": [24, 36], "cct": "3000K"},
+        {"name": "Edgy 20W", "watt": 20, "lumens": 1950, "efficacy": 98, "beamOptions": [36],     "cct": "4000K"},
+        {"name": "Edgy 25W", "watt": 25, "lumens": 2450, "efficacy": 98, "beamOptions": [36],     "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Downlight",
+      "subcategory": "COB",
+      "brand": "Panasonic",
+      "name": "Downlight N Series",
+      "mounting": "Recessed",
+      "cri": 83,
+      "variants": [
+        {"name": "N 6W",  "watt": 6,  "lumens": 580,  "efficacy": 97, "beamOptions": [24, 36], "cct": "3000K"},
+        {"name": "N 9W",  "watt": 9,  "lumens": 900,  "efficacy": 100,"beamOptions": [24, 36], "cct": "3000K"},
+        {"name": "N 12W", "watt": 12, "lumens": 1200, "efficacy": 100,"beamOptions": [24, 36], "cct": "4000K"},
+        {"name": "N 15W", "watt": 15, "lumens": 1500, "efficacy": 100,"beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "N 18W", "watt": 18, "lumens": 1850, "efficacy": 103,"beamOptions": [36, 60], "cct": "4000K"},
+        {"name": "N 22W", "watt": 22, "lumens": 2300, "efficacy": 105,"beamOptions": [60],     "cct": "4000K"}
+      ]
+    },
+    {
+      "category": "Linear",
+      "subcategory": "Commercial",
+      "brand": "Panasonic",
+      "name": "Linear Pro Batten",
+      "mounting": "Surface",
+      "cri": 80,
+      "variants": [
+        {"name": "Linear 18W 600mm", "watt": 18, "lumens": 1900, "efficacy": 106, "beamOptions": [120], "cct": "4000K", "length": "600mm"},
+        {"name": "Linear 24W 600mm", "watt": 24, "lumens": 2550, "efficacy": 106, "beamOptions": [120], "cct": "4000K", "length": "600mm"},
+        {"name": "Linear 36W 1200mm","watt": 36, "lumens": 3850, "efficacy": 107, "beamOptions": [120], "cct": "4000K", "length": "1200mm"},
+        {"name": "Linear 48W 1200mm","watt": 48, "lumens": 5200, "efficacy": 108, "beamOptions": [120], "cct": "4000K", "length": "1200mm"}
+      ]
+    },
+    {
+      "category": "High_Bay",
+      "subcategory": "Industrial",
+      "brand": "Panasonic",
+      "name": "HighBay Pro UFO",
+      "mounting": "Suspended",
+      "cri": 80,
+      "ipRating": "IP65",
+      "variants": [
+        {"name": "HighBay 80W",  "watt": 80,  "lumens": 10400, "efficacy": 130, "beamOptions": [90, 120], "cct": "5000K"},
+        {"name": "HighBay 100W", "watt": 100, "lumens": 13000, "efficacy": 130, "beamOptions": [90, 120], "cct": "5000K"},
+        {"name": "HighBay 150W", "watt": 150, "lumens": 19500, "efficacy": 130, "beamOptions": [120],     "cct": "5000K"},
+        {"name": "HighBay 200W", "watt": 200, "lumens": 26400, "efficacy": 132, "beamOptions": [120],     "cct": "5000K"}
+      ]
+    }
   ],
   "metadata": {
-    "version": "2.0",
-    "totalFixtureTypes": 69,
-    "totalVariants": 186,
-    "brands": ["Philips", "Havells", "Wipro", "Orient", "Jaquar", "Osram", "Hybec"],
-    "categories": ["Downlight", "Spotlight", "Panel", "LED_STRIP", "Linear", "Cove_Light", "High_Bay"],
-    "notes": "Complete branded fixture library with Indian manufacturers - actual product specifications from catalogs"
+    "version": "3.0",
+    "brands": ["Philips", "Havells", "Wipro", "Orient", "Jaquar", "Osram", "Hybec", "Syska", "Crompton", "Bajaj", "Panasonic"],
+    "categories": ["Downlight", "Spotlight", "Panel", "LED_Strip", "Linear", "Architectural", "High_Bay", "Floodlight"],
+    "notes": "Branded fixture library — Indian and international manufacturers, real product specifications"
   }
 }

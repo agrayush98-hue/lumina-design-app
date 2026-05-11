@@ -31,17 +31,19 @@ async function dispatchEmail(to, subject, html) {
     console.error('[AuthContext] dispatchEmail — no recipient address, skipping')
     return
   }
-  console.log('[AuthContext] dispatchEmail — sending to:', to, '| subject:', subject?.slice(0, 60))
   try {
+    // send-email.js requires a Firebase ID token to prevent open-relay abuse
+    const idToken = await auth.currentUser?.getIdToken?.().catch(() => null) ?? null
     const r    = await fetch('/api/send-email', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ to, subject, html }),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+      },
+      body: JSON.stringify({ to, subject, html }),
     })
     const data = await r.json().catch(() => ({}))
-    if (r.ok) {
-      console.log('[AuthContext] dispatchEmail — sent OK, id:', data.id)
-    } else {
+    if (!r.ok) {
       console.error('[AuthContext] dispatchEmail — Resend rejected (HTTP', r.status + '):', data)
     }
   } catch (err) {
@@ -94,27 +96,29 @@ export function AuthProvider({ children }) {
       emailsSent: {},
     }
 
-    await setDoc(doc(db, 'users', uid), rootData)
-
-    await setDoc(doc(db, 'users', uid, 'profile', 'data'), {
-      createdAt:   serverTimestamp(),
-      displayName: displayName ?? '',
-      email:       email ?? '',
-      updatedAt:   serverTimestamp(),
-    })
+    try {
+      await setDoc(doc(db, 'users', uid), rootData)
+      await setDoc(doc(db, 'users', uid, 'profile', 'data'), {
+        createdAt:   serverTimestamp(),
+        displayName: displayName ?? '',
+        email:       email ?? '',
+        updatedAt:   serverTimestamp(),
+      })
+    } catch (err) {
+      console.error('[AuthContext] _initUserDocs — Firestore write failed:', err.message)
+      throw err
+    }
 
     setUserDoc(rootData)
 
     // Welcome email — fire after docs are written, don't await
-    console.log('[AuthContext] _initUserDocs — dispatching welcome email to:', email)
     dispatchEmail(
       email,
       'Welcome to Lumina Design — Your 14-day trial has started',
       emailWelcome({ name: displayName, trialEndsAt: trialEnd }),
     ).then(() => {
-      console.log('[AuthContext] _initUserDocs — welcome email dispatched, marking sent')
       markEmailSent(uid, 'welcome')
-    }).catch(err => console.error('[AuthContext] _initUserDocs — welcome email dispatch threw:', err))
+    }).catch(err => console.error('[AuthContext] welcome email dispatch failed:', err.message))
   }
 
   // ── Check & send trial lifecycle emails on login ──────────────────
@@ -169,12 +173,29 @@ export function AuthProvider({ children }) {
     if (!userDoc) return { status: 'loading' }
 
     const { subscription, trialEndsAt } = userDoc
+    const now = new Date()
 
     if (subscription?.status === 'active') {
+      // Enforce renewsAt — treat as expired if billing period has lapsed
+      const renewsAt = subscription.renewsAt?.toDate?.() ?? subscription.renewsAt ?? null
+      if (renewsAt && renewsAt < now) {
+        // Billing period ended — access should be revoked until renewed
+        return { status: 'expired', daysLeft: 0, plan: subscription.plan, subscriptionExpired: true }
+      }
       return { status: 'active', plan: subscription.plan }
     }
 
-    const now      = new Date()
+    // 'cancelled' — user keeps access until renewsAt, then expires
+    if (subscription?.status === 'cancelled') {
+      const accessUntil = subscription.renewsAt?.toDate?.() ?? subscription.renewsAt ?? null
+      if (accessUntil && accessUntil > now) {
+        const daysLeft = Math.max(0, Math.ceil((accessUntil - now) / 86_400_000))
+        return { status: 'cancelled', daysLeft, plan: subscription.plan, accessUntil }
+      }
+      return { status: 'expired', daysLeft: 0 }
+    }
+
+    // Trial path
     const end      = trialEndsAt?.toDate?.() ?? now
     const msLeft   = end - now
     const daysLeft = Math.max(0, Math.ceil(msLeft / 86_400_000))
@@ -193,16 +214,19 @@ export function AuthProvider({ children }) {
       setUser(firebaseUser)
 
       if (firebaseUser) {
-        const ref  = doc(db, 'users', firebaseUser.uid)
-        const snap = await getDoc(ref)
-
-        if (!snap.exists()) {
-          await _initUserDocs(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName)
-        } else {
-          const data = snap.data()
-          setUserDoc(data)
-          // Check trial lifecycle emails each time user authenticates
-          _checkTrialEmails(firebaseUser.uid, data)
+        const ref = doc(db, 'users', firebaseUser.uid)
+        try {
+          const snap = await getDoc(ref)
+          if (!snap.exists()) {
+            await _initUserDocs(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName)
+          } else {
+            const data = snap.data()
+            setUserDoc(data)
+            // Check trial lifecycle emails each time user authenticates
+            _checkTrialEmails(firebaseUser.uid, data)
+          }
+        } catch (err) {
+          console.error('[AuthContext] onAuthStateChanged — getDoc failed:', err.message)
         }
 
         docUnsub = onSnapshot(ref,

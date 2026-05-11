@@ -6,11 +6,46 @@
 import { getRelativeIntensity } from './luminousIntensityLookup'
 import { SCALE, pxToMm, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H } from './canvasConstants'
 
+// ── Maintenance Factor (MF) ───────────────────────────────────
+// Accounts for lamp depreciation and luminaire dirt accumulation over
+// the service life (typically 3 years / 25 000 h). CIBSE/EN 12464-1
+// recommends 0.80 for good-quality LED luminaires with quarterly
+// cleaning in a normal environment. Applied to every point calculation
+// so heatmap, stats bar, and reports all reflect maintained values.
+const MAINTENANCE_FACTOR = 0.80
+
+// ── Wall-washer floor contribution factor ─────────────────────
+// Wall washers are mounted near a wall with their optical axis tilted
+// ~70-80° from vertical (almost horizontal, aimed at the wall surface).
+// In a 2D top-down heatmap we lack wall-orientation data, so we cannot
+// compute the asymmetric intensity distribution directly. Instead we
+// apply a physics-based floor-contribution factor:
+//   • ~85% of luminous flux hits the vertical wall surface
+//   • ~15% reaches the floor as beam spill + first-surface wall reflection
+// This matches manufacturer data (e.g. iGuzzini, Erco washed-wall datasets)
+// showing floor Emax ≈ 80-150 lx under a 15 W / 1 200 lm washer vs
+// 600-800 lx directly under an equivalent downlight.
+// TODO: add `beamTiltDeg` + `tiltDirectionRad` to fixture schema so we can
+// compute the exact asymmetric distribution without this approximation.
+const WALL_WASH_FLOOR_FACTOR = 0.15
+
+/** Returns true if the fixture is a wall-washer type. */
+function isWallWasher(fixture) {
+  return fixture.type === 'wallwasher' ||
+         fixture.category === 'Wall_Washer' ||
+         fixture.fixtureShape === 'flood'
+}
+
 // ── Luminous flux ─────────────────────────────────────────────
 
-/** Total lumens emitted by a fixture */
+/** Total lumens emitted by a fixture.
+ *  Reads fixture.lumens directly (preferred), falls back to watt × efficacy. */
 export function getFixtureLumens(fixture) {
-  return (fixture.wattage || 0) * (fixture.lumensPerWatt || 100)
+  if (fixture.lumens > 0) return fixture.lumens
+  // Legacy fallback: wattage × efficacy (lm/W)
+  const w = fixture.watt || fixture.wattage || 0
+  const e = fixture.efficacy || fixture.lumensPerWatt || 100
+  return w * e
 }
 
 // ── Peak centre-beam intensity (candela) ──────────────────────
@@ -22,7 +57,7 @@ export function getFixtureCandela(fixture) {
   if (beamAngle >= 270) return lumens / (4 * Math.PI)
   const halfRad    = (beamAngle / 2) * (Math.PI / 180)
   const solidAngle = 2 * Math.PI * (1 - Math.cos(halfRad))
-  return lumens / solidAngle
+  return lumens / Math.max(solidAngle, 0.001)
 }
 
 // ── Point illuminance from a single fixture ───────────────────
@@ -36,7 +71,10 @@ export function getLuxAtPoint(fixture, tPx, tPy, ceilingHeight_mm = 2700, roomGe
   if (!I0) return 0
 
   const toMm = roomGeom ? roomGeom.pxToMm : pxToMm
-  const fMm  = toMm(fixture.position.x, fixture.position.y)
+  // Support both {position:{x,y}} and flat {x,y} light objects
+  const fxPx = fixture.position?.x ?? fixture.x ?? 0
+  const fyPx = fixture.position?.y ?? fixture.y ?? 0
+  const fMm  = toMm(fxPx, fyPx)
   const tMm  = toMm(tPx, tPy)
 
   const dx_mm = tMm.x - fMm.x
@@ -51,8 +89,9 @@ export function getLuxAtPoint(fixture, tPx, tPy, ceilingHeight_mm = 2700, roomGe
   const relI     = getRelativeIntensity(theta, fixture.beamAngle || 60)
   if (relI === 0) return 0
 
-  const cosTheta = ceilingHeight_mm / d_mm
-  return (I0 * relI * cosTheta) / (d_m * d_m)
+  const cosTheta    = ceilingHeight_mm / d_mm
+  const floorFactor = isWallWasher(fixture) ? WALL_WASH_FLOOR_FACTOR : 1.0
+  return (I0 * relI * cosTheta * MAINTENANCE_FACTOR * floorFactor) / (d_m * d_m)
 }
 
 // ── Nadir lux (directly below) ────────────────────────────────
@@ -60,7 +99,7 @@ export function getLuxAtPoint(fixture, tPx, tPy, ceilingHeight_mm = 2700, roomGe
 export function getNadirLux(fixture, ceilingHeight_mm = 2700) {
   const I0  = getFixtureCandela(fixture)
   const d_m = ceilingHeight_mm / 1000
-  return d_m > 0 ? I0 / (d_m * d_m) : 0
+  return d_m > 0 ? (I0 * MAINTENANCE_FACTOR) / (d_m * d_m) : 0
 }
 
 // ── Total lux from all fixtures at a point ────────────────────

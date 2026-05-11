@@ -33,7 +33,7 @@ export default function FloorTabsBar({ floors, activeFloorId, onSelectFloor, onA
   const canDelete = floors.length > 1
 
   return (
-    <div className={styles.tabBar} style={{ borderBottom: "1px solid #2e2e2e" }}>
+    <div className={styles.tabBar}>
       {floors.map(floor => {
         const isActive  = floor.id === activeFloorId
         const isEditing = floor.id === editingId
@@ -57,8 +57,8 @@ export default function FloorTabsBar({ floors, activeFloorId, onSelectFloor, onA
                 onClick={e => e.stopPropagation()}
                 style={{
                   background: "transparent", border: "none", outline: "none",
-                  color: isActive ? "#f0f0f0" : "#888",
-                  fontFamily: "IBM Plex Mono", fontSize: 12,
+                  color: isActive ? "#1f1f1f" : "#888888",
+                  fontFamily: "'Inter', sans-serif", fontSize: 12,
                   width: Math.max(editValue.length, 4) + "ch",
                   padding: 0,
                 }}

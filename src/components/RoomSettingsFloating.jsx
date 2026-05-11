@@ -107,7 +107,7 @@ function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActi
           </div>
           {/* Draw Room button */}
           <button
-            onClick={() => { console.log('[SETTINGS DRAW ROOM CLICKED]'); onSetActiveTool(isDrawRoom ? "fixture" : "draw-room") }}
+            onClick={() => { onSetActiveTool(isDrawRoom ? "fixture" : "draw-room") }}
             style={{
               width: "100%", height: 30,
               background: isDrawRoom ? "#1a1500" : "transparent",

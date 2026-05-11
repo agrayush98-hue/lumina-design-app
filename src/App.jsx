@@ -19,6 +19,8 @@ import LoadProjectModal from "./components/LoadProjectModal"
 import AIRecommender from "./components/AIRecommender"
 import ConnectionStatus from "./components/ConnectionStatus"
 import { FixtureLibraryPanel } from "./components/FixtureLibraryPanel"
+import Navigation from "./components/Navigation"
+import Sidebar from "./components/Sidebar"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
@@ -43,7 +45,7 @@ function calcGrid(targetLux, areaM2, uf, fixtureLumens, roomWidth, roomHeight) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function computeLuxBreakdown(lights, areaM2) {
+function computeLuxBreakdown(lights, areaM2, uf = 0.75) {
   if (areaM2 === 0) return []
   const groups = {}
   for (const light of lights) {
@@ -57,7 +59,8 @@ function computeLuxBreakdown(lights, areaM2) {
     groups[fid].totalLumens += (light.lumens ?? 0)
   }
   return Object.values(groups)
-    .map(g => ({ fixture: g.fixture, count: g.count, totalLumens: g.totalLumens, lux: g.totalLumens / areaM2 }))
+    .map(g => ({ fixture: g.fixture, count: g.count, totalLumens: g.totalLumens,
+      lux: (g.totalLumens * uf * MAINT_FACTOR) / areaM2 }))
     .sort((a, b) => b.lux - a.lux)
 }
 
@@ -67,27 +70,41 @@ function calcRCR(widthMm, heightMm, mh) {
   return (5 * mh * (W + L)) / (W * L)
 }
 
-function calcUF(rcr) {
-  return Math.max(0.3, Math.min(0.85, 0.85 - 0.04 * rcr))
+// Reflectance-aware UF — matches _calcRoomExport formula
+// cR/wR/fR are decimal fractions (e.g. 0.7 for 70%)
+function calcUF(rcr, cR = 0.7, wR = 0.5, fR = 0.2) {
+  const avgRef = (cR + wR + fR) / 3
+  const ufRaw  = avgRef >= 0.6 ? 1 - rcr * 0.04
+               : avgRef >= 0.4 ? 1 - rcr * 0.055
+               :                 1 - rcr * 0.07
+  return Math.min(0.95, Math.max(0.4, ufRaw))
 }
 
 function makeLight(id, x, y, fixture, lumensOverride) {
-  const vis = fixture?.category ? CATEGORY_VISUAL[fixture.category] ?? {} : {}
+  // Prefer per-fixture visual props; fall back to category defaults
+  const vis = fixture?.category ? (CATEGORY_VISUAL[fixture.category] ?? {}) : {}
   return {
     id, x, y,
     fixtureId:    fixture?.id,
     category:     fixture?.category ?? null,
-    lumens:       lumensOverride ?? fixture?.lumens ?? 0,
-    watt:         fixture?.watt ?? 0,
-    beamAngle:    fixture?.beamAngle ?? 36,
-    fill:         fixture?.fill        ?? vis.fill        ?? "#ffe9b0",
-    stroke:       fixture?.stroke      ?? vis.stroke      ?? "#ffb300",
-    glowColor:    fixture?.glowColor   ?? vis.glowColor   ?? "rgba(255,179,0,0.08)",
-    visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
-    fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
-    protocol:     fixture?.protocol ?? null,
+    name:         fixture?.name ?? fixture?.label ?? "Fixture",
     brand:        fixture?.brand ?? null,
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
+    watt:         fixture?.watt ?? 0,
+    lumens:       lumensOverride ?? fixture?.lumens ?? 0,
+    beamAngle:    fixture?.beamAngle ?? 36,
+    cri:          fixture?.cri ?? 80,
+    efficacy:     fixture?.efficacy ?? null,
+    mounting:     fixture?.mounting ?? null,
+    // Visual — fixture-level props take priority over category defaults
+    fill:         fixture?.fill         ?? vis.fill         ?? "#ffe9b0",
+    stroke:       fixture?.stroke       ?? vis.stroke       ?? "#ffb300",
+    glowColor:    fixture?.glowColor    ?? vis.glowColor    ?? "rgba(255,179,0,0.08)",
+    visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
+    fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
+    fixtureColor: fixture?.fixtureColor ?? fixture?.fill   ?? vis.fill ?? "#ffe9b0",
+    // Protocol
+    protocol:     fixture?.protocol ?? null,
   }
 }
 
@@ -295,6 +312,18 @@ export default function App() {
   }
 
   useEffect(() => {
+    // Prevent search engines from indexing auth-gated /app route
+    let meta = document.querySelector("meta[name='robots']")
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'robots'
+      document.head.appendChild(meta)
+    }
+    meta.content = 'noindex, nofollow'
+    return () => { meta.content = 'index, follow' }
+  }, [])
+
+  useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => {
       setUser(u ?? null)
       setAuthLoading(false)
@@ -343,6 +372,8 @@ export default function App() {
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
   const [leftTab,            setLeftTab]            = useState('fixture')
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
+  const [navTab,             setNavTab]             = useState('canvas')
+  const [sidebarView,        setSidebarView]        = useState('luminaires')
   const [settingsPos,        setSettingsPos]        = useState({ x: 10, y: 50 })
   const [showVisualEditor,   setShowVisualEditor]   = useState(false)
   const [visualEditorPos,    setVisualEditorPos]    = useState({ x: 400, y: 50 })
@@ -382,11 +413,18 @@ export default function App() {
     Number(room.ceilingHeight) || 2.8
   const mh          = autoCeiling - Number(room.falseCeiling || 0) - Number(room.workingPlane || 0.8)
   const rcr         = calcRCR(roomWidth, roomHeight, mh)
-  const uf          = calcUF(rcr)
+  // Pass room reflectances to UF; stored as decimal fraction (0–1)
+  const uf          = calcUF(
+    rcr,
+    Number(room.ceilingReflectance ?? 0.7),
+    Number(room.wallReflectance    ?? 0.5),
+    Number(room.floorReflectance   ?? 0.2)
+  )
   const totalLumens = lights.reduce((s, l) => s + (l.lumens ?? 0), 0)
   const totalWatt   = lights.reduce((s, l) => s + (l.watt   ?? 0), 0)
-  const totalLux    = areaM2 === 0 ? 0 : totalLumens / areaM2
-  const luxBreakdown = computeLuxBreakdown(lights, areaM2)
+  // Lumen method: E = (Φ × UF × MF) / A
+  const totalLux    = areaM2 === 0 ? 0 : (totalLumens * uf * MAINT_FACTOR) / areaM2
+  const luxBreakdown = computeLuxBreakdown(lights, areaM2, uf)
 
   // ── Global / project summary ──────────────────────────────────────────────
 
@@ -397,7 +435,12 @@ export default function App() {
   const projectAvgLux = roomsWithLights.length === 0 ? 0 : Math.round(
     roomsWithLights.reduce((s, r) => {
       const a = (Number(r.room.roomWidth) / 1000) * (Number(r.room.roomHeight) / 1000)
-      return s + (a > 0 ? r.lights.reduce((x, l) => x + (l.lumens ?? 0), 0) / a : 0)
+      if (a <= 0) return s
+      const rMh  = Number(r.room.ceilingHeight || 2.8) - Number(r.room.falseCeiling || 0) - Number(r.room.workingPlane || 0.8)
+      const rRcr = calcRCR(Number(r.room.roomWidth), Number(r.room.roomHeight), rMh)
+      const rUf  = calcUF(rRcr, Number(r.room.ceilingReflectance ?? 0.7), Number(r.room.wallReflectance ?? 0.5), Number(r.room.floorReflectance ?? 0.2))
+      const rLux = (r.lights.reduce((x, l) => x + (l.lumens ?? 0), 0) * rUf * MAINT_FACTOR) / a
+      return s + rLux
     }, 0) / roomsWithLights.length
   )
 
@@ -614,16 +657,8 @@ export default function App() {
     } else {
       patchActiveRoom(r => {
         const newLight = makeLight(lightData.id, lightData.x, lightData.y, activeFixture, activeFixture?.lumens ?? Number(room.fixtureLumens))
-        const lightWithProtocol = daliEnabled ? { ...newLight, protocol: 'DALI' } : newLight
-        const lightWithVisuals = {
-          ...lightWithProtocol,
-          fixtureSize: 8,
-          fixtureColor: newLight.fill,
-          fixtureShape: 'circle'
-        }
-        return {
-          lights: [...r.lights, lightWithVisuals],
-        }
+        const light = daliEnabled ? { ...newLight, protocol: 'DALI' } : newLight
+        return { lights: [...r.lights, light] }
       })
     }
   }
@@ -934,11 +969,14 @@ export default function App() {
   async function handleSave() {
     setSaving(true)
     try {
+      const allRoomsForSave = floors.flatMap(f => f.rooms)
       const id = await saveProject(projectId, {
         floors,
-        name:       projectName,
-        floorCount: floors.length,
-        roomCount:  floors.reduce((s, f) => s + f.rooms.length, 0),
+        name:        projectName,
+        floorCount:  floors.length,
+        roomCount:   allRoomsForSave.length,
+        lightCount:  allRoomsForSave.reduce((s, r) => s + (r.lights?.length ?? 0), 0),
+        totalWatts:  allRoomsForSave.reduce((s, r) => s + r.lights.reduce((w, l) => w + (l.watt ?? 0), 0), 0),
       }, user?.uid)
       setProjectId(id)
       showToast("Project saved ✓")
@@ -1058,18 +1096,11 @@ export default function App() {
         if (d2 < minDist2) minDist2 = d2
         if (d2 < overlapR2) return true
       }
-      if (process.env.NODE_ENV !== "production") {
-        const minDist = minDist2 === Infinity ? Infinity : Math.sqrt(minDist2) / Math.max(pxPerMm, 0.001) / 1000
-        console.log(`Checking (${Math.round(x)}, ${Math.round(y)}) — nearest ${minDist === Infinity ? "none" : minDist.toFixed(2) + "m"} against ${allSoFar.length + out.length} fixtures — ${minDist2 < overlapR2 ? "SKIP" : "PLACE"}`)
-      }
       return false
     }
 
     function tryPush(x, y) {
-      if (tooClose(x, y)) {
-        console.log(`Skipped (${Math.round(x)}, ${Math.round(y)}) — too close to existing fixture`)
-        return false
-      }
+      if (tooClose(x, y)) return false
       out.push(makeLight(id++, x, y, fixture, fixture.lumens))
       return true
     }
@@ -1340,55 +1371,81 @@ export default function App() {
     doc.setFillColor(212, 175, 55)
     doc.rect(0, 0, 6, PH, "F")
 
-    // Big project name center
+    // ── Cover page layout — vertically centred between branding and footer ──
+    // Usable band: branding ends ~28mm, footer line at PH-12=285mm → 257mm tall
+    const BRAND_BOTTOM = 28
+    const FOOTER_TOP   = PH - 12
+    const USABLE_H     = FOOTER_TOP - BRAND_BOTTOM   // 257mm
+
+    // Content heights (mm)
+    const TITLE_H      = 14   // 32pt project name (baseline + leading)
+    const UNDERLINE_H  = 6    // gap to underline
+    const SUBTITLE_H   = 10   // "LIGHTING DESIGN REPORT" line
+    const DESC_H       = exportMeta.description ? 10 : 0
+    const PRE_GRID_GAP = 14
+    const ROW_H        = 20, ROW_GAP = 5
+    const GRID_ROWS    = 5    // 10 items / 2 columns
+    const GRID_H       = GRID_ROWS * (ROW_H + ROW_GAP)
+
+    const CONTENT_H    = TITLE_H + UNDERLINE_H + SUBTITLE_H + DESC_H + PRE_GRID_GAP + GRID_H
+    const coverStartY  = BRAND_BOTTOM + (USABLE_H - CONTENT_H) / 2
+
+    // Compute y positions for each element
+    const titleY     = coverStartY + TITLE_H          // project name baseline
+    const underY     = titleY + UNDERLINE_H
+    const subtitleY  = underY + SUBTITLE_H
+    const descY      = subtitleY + (exportMeta.description ? 10 : 0)
+    const gridStartY = (exportMeta.description ? descY : subtitleY) + PRE_GRID_GAP
+
+    // Project name
     doc.setFont("helvetica", "bold"); doc.setFontSize(32)
     doc.setTextColor(255, 255, 255)
-    doc.text(projectName.toUpperCase(), PW / 2, PH / 2 - 30, { align: "center" })
+    doc.text(projectName.toUpperCase(), PW / 2, titleY, { align: "center" })
 
-    // Gold underline
+    // Gold underline — width matches text width
     const nameW = doc.getTextWidth(projectName.toUpperCase())
     doc.setDrawColor(212, 175, 55); doc.setLineWidth(1.5)
-    doc.line(PW / 2 - nameW / 2, PH / 2 - 24, PW / 2 + nameW / 2, PH / 2 - 24)
+    doc.line(PW / 2 - nameW / 2, underY, PW / 2 + nameW / 2, underY)
 
     // Subtitle
     doc.setFont("helvetica", "normal"); doc.setFontSize(11)
     doc.setTextColor(180, 180, 180)
-    doc.text("LIGHTING DESIGN REPORT", PW / 2, PH / 2 - 14, { align: "center" })
+    doc.text("LIGHTING DESIGN REPORT", PW / 2, subtitleY, { align: "center" })
 
     if (exportMeta.description) {
       doc.setFont("helvetica", "italic"); doc.setFontSize(9)
       doc.setTextColor(140, 140, 140)
-      doc.text(exportMeta.description, PW / 2, PH / 2 - 4, { align: "center", maxWidth: PW - 60 })
+      doc.text(exportMeta.description, PW / 2, descY, { align: "center", maxWidth: PW - 60 })
     }
 
-    // Summary grid — dark cards with gold labels
+    // Summary grid — dark cards, consistent M margins on both sides
     const gridItems = [
-      ["FLOORS",         String(floors.length)],
-      ["ROOMS",          String(allR.length)],
-      ["TOTAL FIXTURES", String(totalFix)],
-      ["TOTAL LOAD",     totalLoad + " W"],
+      ["PROJECT",        projectName || "—"],
       ["CUSTOMER",       exportMeta.customerName || "—"],
       ["COMPANY",        exportMeta.company || "—"],
       ["ADDRESS",        exportMeta.address || "—"],
       ["PREPARED BY",    exportMeta.preparedBy || user?.email || "—"],
       ["DATE",           date],
-      ["DESCRIPTION",    exportMeta.description || "—"],
+      ["FLOORS",         String(floors.length)],
+      ["ROOMS",          String(allR.length)],
+      ["TOTAL FIXTURES", String(totalFix)],
+      ["TOTAL LOAD",     totalLoad + " W"],
     ]
-    const colW = (PW - 2 * M - 8) / 2
-    const rowH = 20
-    let gx = M + 10, gy = PH / 2
+    const COL_GAP = 6
+    const colW    = (PW - 2 * M - COL_GAP) / 2   // symmetric: M left, M right
+    let gy        = gridStartY
     gridItems.forEach(([lbl, val], i) => {
-      const bx = i % 2 === 0 ? M + 10 : M + 10 + colW + 8
-      if (i > 0 && i % 2 === 0) gy += rowH + 5
+      const bx = i % 2 === 0 ? M : M + colW + COL_GAP
+      if (i > 0 && i % 2 === 0) gy += ROW_H + ROW_GAP
       doc.setFillColor(30, 30, 30)
       doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.3)
-      doc.roundedRect(bx, gy, colW, rowH, 2, 2, "FD")
+      doc.roundedRect(bx, gy, colW, ROW_H, 2, 2, "FD")
       doc.setFont("helvetica", "normal"); doc.setFontSize(7)
       doc.setTextColor(212, 175, 55)
-      doc.text(lbl, bx + 6, gy + 8)
-      doc.setFont("helvetica", "bold"); doc.setFontSize(12)
+      doc.text(lbl, bx + 5, gy + 7)
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10)
       doc.setTextColor(255, 255, 255)
-      doc.text(val, bx + 6, gy + 19)
+      doc.text(String(val), bx + 5, gy + 16)
     })
 
     // Bottom gold bar
@@ -2050,559 +2107,156 @@ export default function App() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (authLoading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "IBM Plex Mono", fontSize: 13, color: "#555555" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#555555" }}>
       Authenticating…
     </div>
   )
 
   if (!user) return <AuthPage />
 
+  // ── Sidebar view → leftTab mapping ───────────────────────────────────────
+  const SIDEBAR_TO_LEFTTAB = {
+    'luminaires':  'fixture',
+    'calculation': 'ai',
+    'floor-plan':  'fixture',
+    'heatmaps':    'fixture',
+    'dali-bus':    'fixture',
+    'reports':     'fixture',
+  }
+  function handleSidebarChange(view) {
+    setSidebarView(view)
+    if (SIDEBAR_TO_LEFTTAB[view]) setLeftTab(SIDEBAR_TO_LEFTTAB[view])
+    if (view === 'heatmaps') setShowHeatmap(true)
+    if (view === 'dali-bus' && !daliEnabled) setDaliEnabled(true)
+    if (view === 'reports') setShowExportModal(true)
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#000000", overflow: "hidden", fontFamily: "IBM Plex Mono" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0d0d0d", overflow: "hidden", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header style={{
-        height: 56,
-        background: "#0a0a0a",
-        borderBottom: "1px solid #2a2a2a",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 20px",
-        flexShrink: 0,
-        fontFamily: "IBM Plex Mono, monospace"
-      }}>
-        {/* ── Left: Logo + Back + Project Name ──────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {/* Logo */}
-          <div style={{
-            fontSize: 15,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            color: "#ffffff"
-          }}>
-            LUMINA <span style={{ color: "#666666", fontWeight: 400 }}>DESIGN</span>
-          </div>
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
-
-          {/* Back to Projects Button */}
-          <button
-            onClick={() => navigate("/dashboard")}
-            style={{
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              color: "#888888",
-              padding: "6px 14px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#3a3a3a"
-              e.currentTarget.style.color = "#ffffff"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#2a2a2a"
-              e.currentTarget.style.color = "#888888"
-            }}
-          >
-            ← Projects
-          </button>
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
-
-          {/* Project Name (Editable) */}
-          <input
-            type="text"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#ffffff",
-              fontSize: 13,
-              fontWeight: 600,
-              outline: "none",
-              padding: "6px 12px",
-              borderRadius: 4,
-              minWidth: 150,
-              maxWidth: 300,
-              fontFamily: "IBM Plex Mono, monospace"
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.background = "#1a1a1a"
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.background = "transparent"
-            }}
-            placeholder="Untitled Project"
-          />
-
-          {/* Project ID */}
-          <span style={{ fontSize: 10, color: "#555555", letterSpacing: "0.05em" }}>
-            {projectId?.slice(0, 8)}
-          </span>
-        </div>
-
-        {/* ── Center: Quick Stats Chips ──────────────────────────────── */}
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {/* Fixtures Chip */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>FIXTURES</span>
-            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{projectTotalFixtures}</span>
-          </div>
-
-          {/* Load Chip */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>LOAD</span>
-            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{projectTotalWatt}W</span>
-          </div>
-
-          {/* Lux Chip */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>LUX</span>
-            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>{lights.length ? Math.round(totalLux) : "—"}</span>
-          </div>
-
-          {/* Size Chip */}
-          <div style={{ background: "#0f0f0f", border: "1px solid #2a2a2a", borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "#666666", letterSpacing: "0.05em" }}>SIZE</span>
-            <span style={{ fontSize: 12, color: "#ffffff", fontWeight: 600 }}>
-              {(() => {
-                const dimUnit = getStoredUnit()
-                const wDisp = fromMM(roomWidth, dimUnit)
-                const hDisp = fromMM(roomHeight, dimUnit)
-                return wDisp && hDisp ? `${wDisp}×${hDisp}${dimUnit}` : "—"
-              })()}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Right: Action Buttons + User ───────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Save Button */}
-          <button
-            onClick={handleSave}
-            style={{
-              background: "#1a1a1a",
-              border: "1px solid #2a2a2a",
-              color: "#ffffff",
-              padding: "7px 16px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: "IBM Plex Mono, monospace",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#2a2a2a"
-              e.currentTarget.style.borderColor = "#3a3a3a"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#1a1a1a"
-              e.currentTarget.style.borderColor = "#2a2a2a"
-            }}
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-
-          {/* Load Button */}
-          <button
-            onClick={() => setShowLoadModal(true)}
-            style={{
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              color: "#888888",
-              padding: "7px 16px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: "IBM Plex Mono, monospace",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#3a3a3a"
-              e.currentTarget.style.color = "#ffffff"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#2a2a2a"
-              e.currentTarget.style.color = "#888888"
-            }}
-          >
-            Load
-          </button>
-
-          {/* Share Button */}
-          <button
-            onClick={handleShare}
-            style={{
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              color: "#888888",
-              padding: "7px 16px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: "IBM Plex Mono, monospace",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#3a3a3a"
-              e.currentTarget.style.color = "#ffffff"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#2a2a2a"
-              e.currentTarget.style.color = "#888888"
-            }}
-          >
-            Share
-          </button>
-
-          {/* Export Button */}
-          <button
-            onClick={() => requirePro('Export', () => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) })}
-            style={{
-              background: "#d4a843",
-              border: "1px solid #d4a843",
-              color: "#0a0a0a",
-              padding: "7px 16px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: "IBM Plex Mono, monospace",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#e0b855"
-              e.currentTarget.style.borderColor = "#e0b855"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#d4a843"
-              e.currentTarget.style.borderColor = "#d4a843"
-            }}
-          >
-            Export
-          </button>
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
-
-          {/* Keyboard Shortcuts Button */}
-          <button
-            onClick={() => setShowShortcuts(true)}
-            style={{
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              color: "#888888",
-              width: 32,
-              height: 32,
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#3a3a3a"
-              e.currentTarget.style.color = "#ffffff"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#2a2a2a"
-              e.currentTarget.style.color = "#888888"
-            }}
-            title="Keyboard Shortcuts"
-          >
-            ?
-          </button>
-
-          {/* User Email */}
-          <span style={{
-            fontSize: 11,
-            color: "#666666",
-            maxWidth: 150,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
-          }}>
-            {user?.email}
-          </span>
-
-          {/* Sign Out Button */}
-          <button
-            onClick={() => signOut(auth)}
-            style={{
-              background: "transparent",
-              border: "1px solid #2a2a2a",
-              color: "#888888",
-              padding: "7px 14px",
-              borderRadius: 6,
-              cursor: "pointer",
-              fontSize: 11,
-              fontWeight: 600,
-              fontFamily: "IBM Plex Mono, monospace",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#ef4444"
-              e.currentTarget.style.color = "#ef4444"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#2a2a2a"
-              e.currentTarget.style.color = "#888888"
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      <TrialBanner />
-
-      {/* ── Top Stats Bar ────────────────────────────────────────────────── */}
-      {(() => {
-        // Calculate lux value and status
-        const luxVal = lights.length ? Math.round(totalLux) : null
-        const tgtLux = Number(room.targetLux)
-        const luxStatus = luxVal == null ? null
-          : luxVal > tgtLux * 1.25 ? "OVERLIT"
-          : luxVal >= tgtLux * 0.9  ? "GOOD"
-          : "DIM"
-
-        // Status colors - more vibrant
-        const statusColors = {
-          GOOD:    { text: "#4ade80", bg: "#052e16" },  // Green
-          OVERLIT: { text: "#fb923c", bg: "#431407" },  // Orange
-          DIM:     { text: "#94a3b8", bg: "#0f172a" }   // Blue-gray
-        }
-        const statusColor = statusColors[luxStatus] || { text: "#888888", bg: "#0a0a0a" }
-
-        // Unit conversion for room size
-        const dimUnit = getStoredUnit()
-        const wDisp = fromMM(roomWidth, dimUnit)
-        const hDisp = fromMM(roomHeight, dimUnit)
-        const sizeStr = wDisp && hDisp ? `${wDisp}×${hDisp}${dimUnit}` : "—"
-
-        // Reusable divider
-        const Divider = () => (
-          <div style={{
-            width: 1,
-            height: 18,
-            background: "#2a2a2a",
-            flexShrink: 0
-          }} />
-        )
-
-        // Reusable stat component
-        const Stat = ({ label, value }) => (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "0 16px"
-          }}>
-            <span style={{
-              fontSize: 10,
-              color: "#666666",
-              letterSpacing: "0.08em",
-              fontWeight: 500,
-              textTransform: "uppercase"
-            }}>
-              {label}
-            </span>
-            <span style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#ffffff"
-            }}>
-              {value}
-            </span>
-          </div>
-        )
-
-        return (
-          <div style={{
-            height: 44,
-            display: "flex",
-            alignItems: "center",
-            background: "#0a0a0a",
-            borderBottom: "1px solid #2a2a2a",
-            fontFamily: "IBM Plex Mono, monospace",
-            flexShrink: 0,
-            overflow: "hidden"
-          }}>
-            {/* Left Group - Project Stats */}
-            <Stat label="FLOORS" value={floors.length} />
-            <Divider />
-            <Stat label="ROOMS" value={allRooms.length} />
-            <Divider />
-            <Stat label="FIXTURES" value={projectTotalFixtures} />
-            <Divider />
-            <Stat label="LOAD" value={`${projectTotalWatt}W`} />
-
-            {/* Right Group - Room Metrics */}
-            <div style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center"
-            }}>
-              <Divider />
-              <Stat label="SIZE" value={sizeStr} />
-              <Divider />
-              <Stat label="MH" value={`${mh.toFixed(2)}m`} />
-              <Divider />
-              <Stat label="RCR" value={rcr.toFixed(2)} />
-              <Divider />
-              <Stat label="UF" value={uf.toFixed(2)} />
-              <Divider />
-
-              {/* Lux with Status Badge */}
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "0 16px"
-              }}>
-                <span style={{
-                  fontSize: 10,
-                  color: "#666666",
-                  letterSpacing: "0.08em",
-                  fontWeight: 500,
-                  textTransform: "uppercase"
-                }}>
-                  LUX
-                </span>
-                <span style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#ffffff"
-                }}>
-                  {luxVal ?? "—"}
-                </span>
-                {luxStatus && (
-                  <span style={{
-                    padding: "3px 10px",
-                    borderRadius: 4,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    background: statusColor.bg,
-                    color: statusColor.text,
-                    letterSpacing: "0.05em",
-                    border: `1px solid ${statusColor.text}33`
-                  }}>
-                    {luxStatus}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-
+      {/* ── Navigation ─────────────────────────────────────────────────────── */}
+      <Navigation
+        projectName={projectName}
+        onProjectNameChange={setProjectName}
+        saving={saving}
+        onSave={handleSave}
+        onExport={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
+        onShare={handleShare}
+        onSignOut={() => signOut(auth)}
+        onShowShortcuts={() => setShowShortcuts(true)}
+        onNavigateToDashboard={() => navigate("/dashboard")}
+        activeTab={navTab}
+        onTabChange={setNavTab}
+        user={user}
+      />
+      {/* TrialBanner sits just below the fixed nav */}
+      <div style={{ paddingTop: 56, flexShrink: 0 }}>
+        <TrialBanner />
+      </div>
 
       {/* ── Main layout ─────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <main style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
 
-        {/* ── Left: Fixture Library / AI Recommender tabs ─────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", width: leftSidebarCollapsed ? 40 : 260, minWidth: leftSidebarCollapsed ? 40 : 260, height: "100%", background: "#0a0a0a", borderRight: "1px solid #222222", overflow: "hidden", transition: "width 0.2s, min-width 0.2s", flexShrink: 0 }}>
-          {leftSidebarCollapsed ? (
-            /* Collapsed: icon-only mode */
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8, gap: 4 }}>
-              <button
-                onClick={() => setLeftSidebarCollapsed(false)}
-                title="Expand sidebar"
-                style={{ width: 32, height: 32, background: "transparent", border: "1px solid #222222", borderRadius: 4, color: "#888888", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-              >›</button>
-              <button
-                onClick={() => { setLeftSidebarCollapsed(false); setLeftTab('fixture') }}
-                title="Fixtures"
-                style={{ width: 32, height: 32, background: leftTab === 'fixture' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'fixture' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-              >▤</button>
-              <button
-                onClick={() => openAiTab()}
-                title="AI Suggest"
-                style={{ width: 32, height: 32, background: leftTab === 'ai' ? "#1a1a1a" : "transparent", border: "1px solid #222222", borderRadius: 4, color: leftTab === 'ai' ? "#d4a843" : "#888888", cursor: "pointer", fontSize: 12, fontFamily: "IBM Plex Mono", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-              >✦</button>
+        {/* ── Left: Sidebar (Nav + content panels) ─────────────────────────── */}
+        <Sidebar activeItem={sidebarView} onItemChange={handleSidebarChange}>
+          {/* Fixture Library — shown when Luminaires or Floor Plan active */}
+          {(sidebarView === 'luminaires' || sidebarView === 'floor-plan') && (
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <FixtureLibraryPanel
+                activeFixtureId={activeFixtureId}
+                onSelect={handleLibrarySelect}
+                userId={user?.uid ?? null}
+                isProfessional={isProfessional()}
+                onProfessionalGate={() => setGateModal({ feature: 'Professional Fixtures', professionalOnly: true })}
+              />
             </div>
-          ) : (
-            <>
-              {/* Tab bar with collapse toggle */}
-              <div style={{ display: "flex", borderBottom: "1px solid #222222", flexShrink: 0 }}>
-                {[{ id: 'fixture', label: 'FIXTURES' }, { id: 'ai', label: 'AI' }, { id: 'my-fixtures', label: 'MY FIX' }].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => tab.id === 'ai' ? openAiTab() : setLeftTab(tab.id)}
-                    style={{
-                      flex: 1, padding: "8px 0", background: leftTab === tab.id ? "#111111" : "transparent",
-                      border: "none", borderBottom: leftTab === tab.id ? "2px solid #d4a843" : "2px solid transparent",
-                      color: leftTab === tab.id ? "#d4a843" : "#888888", fontSize: 10, letterSpacing: "0.1em",
-                      fontFamily: "IBM Plex Mono", cursor: "pointer",
-                    }}
-                  >{tab.label}</button>
-                ))}
-                <button
-                  onClick={() => setLeftSidebarCollapsed(true)}
-                  title="Collapse sidebar"
-                  style={{ width: 30, background: "transparent", border: "none", borderBottom: "2px solid transparent", color: "#555555", cursor: "pointer", fontSize: 14, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
-                >‹</button>
-              </div>
-              {/* Tab content */}
-              <div style={{ flex: 1, overflow: "hidden", display: leftTab === 'fixture' ? "flex" : "none", flexDirection: "column" }}>
-                <FixtureLibraryPanel
-                  activeFixtureId={activeFixtureId}
-                  onSelect={handleLibrarySelect}
-                  userId={user?.uid ?? null}
-                  isProfessional={isProfessional()}
-                  onProfessionalGate={() => setGateModal({ feature: 'Professional Fixtures', professionalOnly: true })}
-                />
-              </div>
-              <div style={{ flex: 1, overflow: "auto", display: leftTab === 'ai' ? "flex" : "none", flexDirection: "column" }}>
-                <AIRecommender
-                  activeRoom={room}
-                  onApplyFixture={handleAIApply}
-                  onApplyAll={handleAIApplyAll}
-                  onClose={() => setLeftTab('fixture')}
-                  panelMode
-                />
-              </div>
-              <div style={{ flex: 1, overflow: "auto", display: leftTab === 'my-fixtures' ? "flex" : "none", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
-                {isProfessional() ? (
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "#555", letterSpacing: "0.12em", marginBottom: 16 }}>NO CUSTOM FIXTURES YET</div>
-                    <button
-                      onClick={() => notify.warning("Custom fixture builder coming soon.")}
-                      style={{ padding: "8px 14px", background: "#d4a843", color: "#000", border: "none", fontFamily: "IBM Plex Mono", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer", borderRadius: 2 }}
-                    >+ ADD CUSTOM FIXTURE</button>
-                  </div>
-                ) : (
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 9, color: "#d4a843", letterSpacing: "0.14em", fontWeight: 700, marginBottom: 8 }}>PROFESSIONAL ONLY</div>
-                    <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.08em", lineHeight: 1.7 }}>
-                      UPGRADE TO PROFESSIONAL<br/>TO SAVE CUSTOM FIXTURES
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
           )}
-        </div>
+
+          {/* AI Recommender — shown when Calculation active */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'calculation' ? "flex" : "none", flexDirection: "column" }}>
+            <AIRecommender
+              activeRoom={room}
+              onApplyFixture={handleAIApply}
+              onApplyAll={handleAIApplyAll}
+              onClose={() => setSidebarView('luminaires')}
+              panelMode
+            />
+          </div>
+
+          {/* Heatmaps info */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'heatmaps' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
+            <div style={{ fontSize: 14, color: "#888888", lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 600, color: "#cccccc", marginBottom: 8 }}>Lux Heatmap</div>
+              <p>The heatmap overlays lux distribution across the room based on fixture placement and beam angles.</p>
+              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#3dba74" }} />
+                  <span>≥ target lux (GOOD)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#d4a843" }} />
+                  <span>80–100% target</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#e05555" }} />
+                  <span>{"< 80% target (UNDERLIT)"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* DALI Bus info */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'dali-bus' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
+            <div style={{ fontSize: 14, color: "#888888", lineHeight: 1.6 }}>
+              <div style={{ fontWeight: 600, color: "#cccccc", marginBottom: 8 }}>DALI 2.0 Bus</div>
+              <p>DALI addressing is auto-assigned to fixtures with DALI protocol. Each bus supports up to 64 devices.</p>
+              <div style={{ marginTop: 12, padding: "10px 12px", background: "#1a1a1a", borderRadius: 6, border: "1px solid #2a2a2a" }}>
+                <div style={{ fontSize: 17, color: "#555555", marginBottom: 4 }}>BUS CAPACITY</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#cccccc" }}>{daliAddresses?.buses?.length ?? 0} <span style={{ fontSize: 14, fontWeight: 400, color: "#666666" }}>buses</span></div>
+              </div>
+            </div>
+          </div>
+        </Sidebar>
 
         {/* ── Center: Canvas Area 1fr ──────────────────────────────────────── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* navTab controls which main view shows: canvas / dali / compliance / library */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d" }}>
+
+          {/* ── DALI Control tab ── */}
+          {navTab === 'dali' && (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#888888", fontFamily: "'Inter', sans-serif" }}>
+              <div style={{ fontSize: 32 }}>⚡</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f1f1f" }}>DALI Control</div>
+              <div style={{ fontSize: 17, color: "#999999" }}>Enable DALI in the toolbar to configure bus addressing</div>
+              <button onClick={() => setNavTab('canvas')} style={{ marginTop: 8, padding: "7px 18px", background: "#d4a843", border: "none", borderRadius: 6, color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>← Back to Canvas</button>
+            </div>
+          )}
+
+          {/* ── Compliance tab ── */}
+          {navTab === 'compliance' && (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#888888", fontFamily: "'Inter', sans-serif" }}>
+              <div style={{ fontSize: 32 }}>📋</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f1f1f" }}>Compliance Check</div>
+              <div style={{ fontSize: 17, color: "#999999" }}>Lux compliance reports are available via Export BOQ</div>
+              <button onClick={() => { setNavTab('canvas'); setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }} style={{ marginTop: 8, padding: "7px 18px", background: "#d4a843", border: "none", borderRadius: 6, color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Open Export</button>
+            </div>
+          )}
+
+          {/* ── Library tab ── */}
+          {navTab === 'library' && (
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <FixtureLibraryPanel
+                activeFixtureId={activeFixtureId}
+                onSelect={(f) => { handleLibrarySelect(f); setNavTab('canvas') }}
+                userId={user?.uid ?? null}
+                isProfessional={isProfessional()}
+                onProfessionalGate={() => setGateModal({ feature: 'Professional Fixtures', professionalOnly: true })}
+              />
+            </div>
+          )}
+
+          {/* ── Canvas tab (default) ── */}
+          {(navTab === 'canvas' || !navTab) && <>
 
           {/* Centered floating toolbar */}
           {/* ── Toolbar ──────────────────────────────────────────────────────── */}
@@ -2610,11 +2264,11 @@ export default function App() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            background: "#0a0a0a",
-            borderBottom: "1px solid #2a2a2a",
-            height: 48,
+            background: "#111111",
+            borderBottom: "1px solid #222222",
+            height: 44,
             flexShrink: 0,
-            fontFamily: "IBM Plex Mono, monospace",
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px" }}>
 
@@ -2622,47 +2276,47 @@ export default function App() {
               <button
                 onClick={autoPlaceLights}
                 title="Auto-place fixtures in room"
-                style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" }}
+                style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" }}
               >Auto Place</button>
 
               <button
                 onClick={() => setSnapToGrid(p => !p)}
                 title="Toggle snap to grid"
-                style={{ background: snapToGrid ? "#2a2010" : "#1a1a1a", border: snapToGrid ? "1px solid #d4a843" : "1px solid #2a2a2a", color: snapToGrid ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
-                onMouseLeave={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+                style={{ background: snapToGrid ? "rgba(212,168,67,0.12)" : "transparent", border: snapToGrid ? "1px solid #d4a843" : "1px solid #2a2a2a", color: snapToGrid ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
+                onMouseLeave={(e) => { if (!snapToGrid) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
               >Snap {snapToGrid ? "On" : "Off"}</button>
 
               <button
                 onClick={() => patchActiveRoom(() => ({ lights: [] }))}
                 title="Clear all fixtures from room"
-                style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#ef4444", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.background = "#450a0a" }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.background = "transparent" }}
+                style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.background = "rgba(239,68,68,0.08)" }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"; e.currentTarget.style.background = "transparent" }}
               >Clear</button>
 
-              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+              <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
 
               {/* ── Group 2: Visualization ────────────────────────────────────── */}
               <button
                 onClick={() => setShowBeam(p => !p)}
                 title="Toggle beam angle visualization"
-                style={{ background: showBeam ? "#2a2010" : "#1a1a1a", border: showBeam ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showBeam ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { if (!showBeam)    { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
-                onMouseLeave={(e) => { if (!showBeam)    { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+                style={{ background: showBeam ? "rgba(212,168,67,0.12)" : "transparent", border: showBeam ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showBeam ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (!showBeam) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
+                onMouseLeave={(e) => { if (!showBeam) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
               >Beam</button>
 
               <button
                 onClick={() => setShowHeatmap(p => !p)}
                 title="Toggle lux heatmap"
-                style={{ background: showHeatmap ? "#2a2010" : "#1a1a1a", border: showHeatmap ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showHeatmap ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#2a2a2a"; e.currentTarget.style.borderColor = "#3a3a3a" } }}
-                onMouseLeave={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#1a1a1a"; e.currentTarget.style.borderColor = "#2a2a2a" } }}
+                style={{ background: showHeatmap ? "rgba(212,168,67,0.12)" : "transparent", border: showHeatmap ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showHeatmap ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
+                onMouseLeave={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
               >Heatmap</button>
 
-              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+              <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
 
               {/* ── Group 3: Electrical / DALI ───────────────────────────────── */}
               <button
@@ -2681,7 +2335,7 @@ export default function App() {
                   }
                 })}
                 title="Toggle DALI protocol system"
-                style={{ display: "flex", alignItems: "center", gap: 6, background: daliEnabled ? "#052e16" : "#450a0a", border: daliEnabled ? "1px solid #4ade80" : "1px solid #ef4444", color: daliEnabled ? "#4ade80" : "#ef4444", padding: "7px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: daliEnabled ? "rgba(74,222,128,0.08)" : "rgba(239,68,68,0.08)", border: daliEnabled ? "1px solid #4ade80" : "1px solid rgba(239,68,68,0.4)", color: daliEnabled ? "#4ade80" : "#ef4444", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 600, letterSpacing: "0.04em", fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: daliEnabled ? "#4ade80" : "#ef4444", flexShrink: 0 }} />
                 DALI {daliEnabled ? "ON" : "OFF"}
@@ -2692,7 +2346,7 @@ export default function App() {
                   value={daliNodeLimit}
                   onChange={(e) => setDaliNodeLimit(Number(e.target.value))}
                   title="DALI node limit per bus"
-                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ffffff", padding: "7px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", outline: "none" }}
+                  style={{ background: "#111111", border: "1px solid #2a2a2a", color: "#888888", padding: "6px 10px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", outline: "none" }}
                 >
                   <option value={64}>64 nodes</option>
                   <option value={128}>128 nodes</option>
@@ -2702,60 +2356,73 @@ export default function App() {
               <button
                 onClick={() => setActiveTool(activeTool === "db"  ? "fixture" : "db")}
                 title="Place Distribution Board marker"
-                style={{ background: activeTool === "db"  ? "#2a2010" : "#1a1a1a", border: activeTool === "db"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "db"  ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: activeTool === "db"  ? "rgba(212,168,67,0.12)" : "transparent", border: activeTool === "db"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "db"  ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >DB</button>
 
               <button
                 onClick={() => setActiveTool(activeTool === "ctr" ? "fixture" : "ctr")}
                 title="Place Contactor / Controller marker"
-                style={{ background: activeTool === "ctr" ? "#2a2010" : "#1a1a1a", border: activeTool === "ctr" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "ctr" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: activeTool === "ctr" ? "rgba(212,168,67,0.12)" : "transparent", border: activeTool === "ctr" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "ctr" ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >CTR</button>
 
               <button
                 onClick={() => setActiveTool(activeTool === "jb"  ? "fixture" : "jb")}
                 title="Place Junction Box marker"
-                style={{ background: activeTool === "jb"  ? "#2a2010" : "#1a1a1a", border: activeTool === "jb"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "jb"  ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: activeTool === "jb"  ? "rgba(212,168,67,0.12)" : "transparent", border: activeTool === "jb"  ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "jb"  ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >JB</button>
 
               <button
                 onClick={() => { setShowEmergency(p => !p); setActiveTool(activeTool === "emergency" ? "fixture" : "emergency") }}
                 title="Toggle emergency lighting mode"
-                style={{ background: (showEmergency || activeTool === "emergency") ? "#2a2010" : "#1a1a1a", border: (showEmergency || activeTool === "emergency") ? "1px solid #d4a843" : "1px solid #2a2a2a", color: (showEmergency || activeTool === "emergency") ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: (showEmergency || activeTool === "emergency") ? "rgba(212,168,67,0.12)" : "transparent", border: (showEmergency || activeTool === "emergency") ? "1px solid #d4a843" : "1px solid #2a2a2a", color: (showEmergency || activeTool === "emergency") ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >Emergency</button>
 
-              <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+              <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
 
               {/* ── Group 4: Project Tools ────────────────────────────────────── */}
               {floorPlan && (
                 <button
                   onClick={() => setActiveTool(activeTool === "draw-room" ? "fixture" : "draw-room")}
                   title="Draw room boundary on the floor plan"
-                  style={{ background: activeTool === "draw-room" ? "#2a2010" : "#1a1a1a", border: activeTool === "draw-room" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "draw-room" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                  style={{ background: activeTool === "draw-room" ? "rgba(212,168,67,0.12)" : "transparent", border: activeTool === "draw-room" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: activeTool === "draw-room" ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
                 >Draw Room</button>
               )}
 
               <button
-                onClick={() => leftTab === 'ai' ? setLeftTab('fixture') : openAiTab()}
+                onClick={async () => {
+                  if (sidebarView === 'calculation') {
+                    setSidebarView('luminaires')
+                  } else {
+                    if (!isProActive()) { setGateModal({ feature: 'AI Recommend' }); return }
+                    if (user) {
+                      try {
+                        const { allowed, used, limit } = await checkAiLimit(user.uid)
+                        if (!allowed) { notify.warning(`AI call limit reached (${used}/${limit} this month). Resets on the 1st.`); return }
+                      } catch (e) { /* non-fatal */ }
+                    }
+                    setSidebarView('calculation')
+                  }
+                }}
                 title="AI Recommend — Get AI-powered fixture suggestions"
-                style={{ background: leftTab === "ai" ? "#2a2010" : "#1a1a1a", border: leftTab === "ai" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: leftTab === "ai" ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: sidebarView === "calculation" ? "rgba(212,168,67,0.12)" : "transparent", border: sidebarView === "calculation" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: sidebarView === "calculation" ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >AI RECOMMEND</button>
 
               <button
                 onClick={() => setShowSettings(p => !p)}
                 title="Configure room dimensions, target lux, and mounting height"
-                style={{ background: showSettings ? "#2a2010" : "#1a1a1a", border: showSettings ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showSettings ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: showSettings ? "rgba(212,168,67,0.12)" : "transparent", border: showSettings ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showSettings ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >Settings</button>
 
               <button
                 onClick={() => setShowVisualEditor(p => !p)}
                 title="Edit fixture size, color, and shape"
-                style={{ background: showVisualEditor ? "#2a2010" : "#1a1a1a", border: showVisualEditor ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showVisualEditor ? "#d4a843" : "#ffffff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", transition: "all 0.2s ease" }}
+                style={{ background: showVisualEditor ? "rgba(212,168,67,0.12)" : "transparent", border: showVisualEditor ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showVisualEditor ? "#d4a843" : "#888888", padding: "6px 12px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >Visual Editor</button>
 
               {/* Protocol selector — only when fixtures selected */}
               {selectedLights.length > 0 && (
                 <>
-                  <div style={{ width: 1, height: 24, background: "#2a2a2a", margin: "0 8px" }} />
+                  <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
                   <select
                     value=""
                     onChange={(e) => {
@@ -2765,7 +2432,7 @@ export default function App() {
                       }
                     }}
                     title={`${selectedLights.length} fixture${selectedLights.length > 1 ? "s" : ""} selected`}
-                    style={{ background: "#1a1a1a", border: "1px solid #d4a843", color: "#d4a843", padding: "7px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: "IBM Plex Mono", outline: "none" }}
+                    style={{ background: "#111111", border: "1px solid #d4a843", color: "#d4a843", padding: "6px 10px", borderRadius: 5, cursor: "pointer", fontSize: 17, fontWeight: 500, fontFamily: "'Inter', sans-serif", outline: "none" }}
                   >
                     <option value="">Protocol ({selectedLights.length})</option>
                     <option value="NON-DIM">NON-DIM</option>
@@ -2801,7 +2468,7 @@ export default function App() {
           />
 
           {/* Scrollable canvas + detail panels */}
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#000000" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d" }}>
 
             {/* Settings panel moved to fixed right slide-in below */}
 
@@ -2814,21 +2481,21 @@ export default function App() {
                   top: visualEditorPos.y,
                   width: 280,
                   maxHeight: '90vh',
-                  background: '#0f0f0f',
+                  background: '#111111',
                   border: '1px solid #2a2a2a',
                   borderRadius: 6,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.9)',
                   zIndex: 10000,
                   display: 'flex',
                   flexDirection: 'column',
-                  fontFamily: 'IBM Plex Mono'
+                  fontFamily: "'Inter', sans-serif"
                 }}
               >
                 <div
                   onMouseDown={startVisualEditorDrag}
                   style={{
                     padding: '10px 12px',
-                    borderBottom: '1px solid #2a2a2a',
+                    borderBottom: '1px solid #1e1e1e',
                     cursor: 'grab',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -2836,7 +2503,7 @@ export default function App() {
                     userSelect: 'none'
                   }}
                 >
-                  <span style={{ fontSize: 11, color: '#d4a843', fontWeight: 'bold' }}>VISUAL EDITOR</span>
+                  <span style={{ fontSize: 17, color: '#d4a843', fontWeight: 600, letterSpacing: '0.08em' }}>VISUAL EDITOR</span>
                   <button
                     onClick={() => setShowVisualEditor(false)}
                     style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 14, padding: 0 }}
@@ -2852,7 +2519,7 @@ export default function App() {
                     const commonShape = shapes.every(s => s === shapes[0]) ? shapes[0] : null
                     return (<>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 6 }}>
+                    <label style={{ fontSize: 14, color: '#d4a843', display: 'block', marginBottom: 6 }}>
                       SIZE: {commonSize ? commonSize + 'px' : 'Mixed'}
                     </label>
                     <input
@@ -2863,7 +2530,7 @@ export default function App() {
                     />
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 6 }}>COLOR</label>
+                    <label style={{ fontSize: 14, color: '#d4a843', display: 'block', marginBottom: 6 }}>COLOR</label>
                     <input
                       type="color"
                       value={commonColor ?? '#ffffff'}
@@ -2872,14 +2539,14 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 10, color: '#d4a843', display: 'block', marginBottom: 6 }}>SHAPE</label>
+                    <label style={{ fontSize: 14, color: '#d4a843', display: 'block', marginBottom: 6 }}>SHAPE</label>
                     <select
                       value={commonShape ?? 'circle'}
                       onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureShape: e.target.value }))}
                       style={{
-                        width: '100%', padding: '8px 6px', background: '#111111',
-                        color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: 3,
-                        fontSize: 10, fontFamily: 'IBM Plex Mono', cursor: 'pointer'
+                        width: '100%', padding: '8px 6px', background: '#1a1a1a',
+                        color: '#cccccc', border: '1px solid #2a2a2a', borderRadius: 3,
+                        fontSize: 14, fontFamily: "'Inter', sans-serif", cursor: 'pointer'
                       }}
                     >
                       <option value="circle">Circle</option>
@@ -2995,7 +2662,7 @@ export default function App() {
             const StatCol = ({ label, children, last }) => (
               <div style={{
                 flex: 1,
-                borderRight: last ? "none" : "1px solid #2a2a2a",
+                borderRight: last ? "none" : "1px solid #1e1e1e",
                 padding: "0 20px",
                 display: "flex",
                 flexDirection: "column",
@@ -3003,8 +2670,8 @@ export default function App() {
                 gap: 4
               }}>
                 <div style={{
-                  fontSize: 9,
-                  color: "#888888",
+                  fontSize: 11,
+                  color: "#999999",
                   letterSpacing: "0.1em",
                   fontWeight: 500,
                   textTransform: "uppercase"
@@ -3018,29 +2685,29 @@ export default function App() {
             return (
               <div style={{
                 height: 68,
-                background: "#0a0a0a",
-                borderTop: "1px solid #2a2a2a",
+                background: "#111111",
+                borderTop: "1px solid #1e1e1e",
                 display: "flex",
                 alignItems: "stretch",
                 flexShrink: 0,
-                fontFamily: "IBM Plex Mono, monospace"
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
               }}>
                 {/* Circuits */}
                 <StatCol label="CIRCUITS">
-                  <span style={{ fontSize: 15, color: "#ffffff", fontWeight: 500 }}>
+                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
                     {circuits.length} circuit{circuits.length !== 1 ? "s" : ""}
                   </span>
-                  <span style={{ fontSize: 11, color: "#888888" }}>
+                  <span style={{ fontSize: 17, color: "#999999" }}>
                     {totalWatt}W total load
                   </span>
                 </StatCol>
 
                 {/* Voltage Drop */}
                 <StatCol label="VOLTAGE DROP">
-                  <span style={{ fontSize: 15, color: vDropColor, fontWeight: 600 }}>
+                  <span style={{ fontSize: 17, color: vDropColor, fontWeight: 600 }}>
                     {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
                   </span>
-                  <span style={{ fontSize: 11, color: "#888888" }}>
+                  <span style={{ fontSize: 17, color: "#999999" }}>
                     {maxVDrop != null
                       ? maxVDrop <= 3 ? "Excellent"
                       : maxVDrop <= 5 ? "Acceptable"
@@ -3052,10 +2719,10 @@ export default function App() {
 
                 {/* Driver Schedule */}
                 <StatCol label="DRIVER SCHEDULE">
-                  <span style={{ fontSize: 15, color: "#ffffff", fontWeight: 500 }}>
+                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
                     {driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}
                   </span>
-                  <span style={{ fontSize: 11, color: "#888888" }}>
+                  <span style={{ fontSize: 17, color: "#999999" }}>
                     {lights.length} fixture{lights.length !== 1 ? "s" : ""}
                   </span>
                 </StatCol>
@@ -3068,7 +2735,7 @@ export default function App() {
                       const load = Math.round(phaseLoads[i])
                       return (
                         <span key={phase} style={{
-                          fontSize: 12,
+                          fontSize: 14,
                           color: colors[i],
                           fontWeight: 600
                         }}>
@@ -3077,13 +2744,15 @@ export default function App() {
                       )
                     })}
                   </div>
-                  <span style={{ fontSize: 11, color: "#888888" }}>
+                  <span style={{ fontSize: 17, color: "#999999" }}>
                     3-phase distribution
                   </span>
                 </StatCol>
               </div>
             )
           })()}
+
+          </>}  {/* end canvas tab */}
 
         </div>
 
@@ -3098,11 +2767,11 @@ export default function App() {
 
           // Enhanced color scheme
           const statusColors = {
-            GOOD:    { text: "#4ade80", bg: "#052e16", label: "OPTIMAL" },
-            OVERLIT: { text: "#fb923c", bg: "#431407", label: "OVERLIT" },
-            DIM:     { text: "#ef4444", bg: "#450a0a", label: "UNDERLIT" },
+            GOOD:    { text: "#4ade80", bg: "rgba(74,222,128,0.1)", label: "OPTIMAL" },
+            OVERLIT: { text: "#fb923c", bg: "rgba(251,146,60,0.1)", label: "OVERLIT" },
+            DIM:     { text: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "UNDERLIT" },
           }
-          const luxColor = statusColors[luxStatus] || { text: "#888888", bg: "#0a0a0a", label: "—" }
+          const luxColor = statusColors[luxStatus] || { text: "#555555", bg: "rgba(85,85,85,0.1)", label: "—" }
 
           // Phase loads for electrical section
           const phaseLoads = [0, 0, 0]
@@ -3110,8 +2779,8 @@ export default function App() {
 
           // Section component
           const Section = ({ title, children }) => (
-            <div style={{ borderBottom: "1px solid #1a1a1a", padding: "16px 16px 20px 16px" }}>
-              <div style={{ fontSize: 9, color: "#666666", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 12, textTransform: "uppercase" }}>
+            <div style={{ borderBottom: "1px solid #1a1a1a", padding: "14px 16px 16px" }}>
+              <div style={{ fontSize: 11, color: "#555555", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 10, textTransform: "uppercase" }}>
                 {title}
               </div>
               {children}
@@ -3120,34 +2789,34 @@ export default function App() {
 
           // Row component
           const MetricRow = ({ label, value, color, subtitle }) => (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={{ fontSize: 11, color: "#666666", letterSpacing: "0.02em" }}>{label}</div>
-              <div style={{ fontSize: 13, color: color || "#ffffff", fontWeight: 600, fontFamily: "IBM Plex Mono" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 17, color: "#666666" }}>{label}</div>
+              <div style={{ fontSize: 17, color: color || "#cccccc", fontWeight: 600, fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 {value}
-                {subtitle && <span style={{ fontSize: 9, color: "#666666", marginLeft: 4 }}>{subtitle}</span>}
+                {subtitle && <span style={{ fontSize: 11, color: "#555555", marginLeft: 4 }}>{subtitle}</span>}
               </div>
             </div>
           )
 
           return (
             <div style={{
-              width: 220,
-              background: "#0a0a0a",
-              borderLeft: "1px solid #2a2a2a",
+              width: 240,
+              background: "#111111",
+              borderLeft: "1px solid #1e1e1e",
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
               flexShrink: 0,
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             }}>
 
               {/* LUX HERO */}
               <div style={{
-                padding: "24px 20px",
-                borderBottom: "1px solid #1a1a1a",
-                background: "linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%)",
+                padding: "14px 16px",
+                borderBottom: "1px solid #1e1e1e",
+                background: "#0d0d0d",
               }}>
-                <div style={{ fontSize: 9, color: "#555555", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 8, textTransform: "uppercase" }}>
+                <div style={{ fontSize: 14, color: "#888888", letterSpacing: "0.06em", fontWeight: 600, marginBottom: 8, textTransform: "uppercase" }}>
                   Average Lux
                 </div>
                 <div style={{
@@ -3156,8 +2825,8 @@ export default function App() {
                   fontWeight: 700,
                   lineHeight: 1,
                   marginBottom: 12,
-                  fontFamily: "IBM Plex Mono, monospace",
-                  textShadow: `0 0 20px ${luxColor.text}40`,
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                  
                 }}>
                   {luxVal ?? "—"}
                 </div>
@@ -3168,7 +2837,7 @@ export default function App() {
                     gap: 6,
                     padding: "4px 12px",
                     borderRadius: 6,
-                    fontSize: 10,
+                    fontSize: 14,
                     fontWeight: 700,
                     letterSpacing: "0.08em",
                     background: luxColor.bg,
@@ -3180,7 +2849,7 @@ export default function App() {
                     {luxColor.label}
                   </div>
                 )}
-                <div style={{ fontSize: 11, color: "#555555", marginTop: 8 }}>
+                <div style={{ fontSize: 17, color: "#555555", marginTop: 8 }}>
                   Target: <span style={{ color: "#888888", fontWeight: 600 }}>{tgtLux} lux</span>
                 </div>
               </div>
@@ -3195,14 +2864,14 @@ export default function App() {
                       // so defaultValue initialises correctly for each fixture.
                       <div key={light.id} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {/* Fixture name */}
-                        <div style={{ fontSize: 14, color: "#ffffff", fontWeight: 600, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <div style={{ fontSize: 17, color: "#cccccc", fontWeight: 600, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {light.label ?? light.name ?? light.category ?? "Unknown"}
                         </div>
                         {/* Specs grid — uncontrolled inputs, commit on blur */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                           {/* WATT */}
                           <div>
-                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>WATT</label>
+                            <label style={{ fontSize: 11, color: "#999999", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>WATT</label>
                             <input
                               type="number" min="0" step="1"
                               defaultValue={light.watt ?? 0}
@@ -3212,13 +2881,13 @@ export default function App() {
                                 updateLight(light.id, { watt: v })
                                 e.target.style.borderColor = "#2a2a2a"
                               }}
-                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3, color: "#cccccc", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px" }}
                               onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
                             />
                           </div>
                           {/* LUMENS */}
                           <div>
-                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>LUMENS</label>
+                            <label style={{ fontSize: 11, color: "#999999", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>LUMENS</label>
                             <input
                               type="number" min="0" step="1"
                               defaultValue={light.lumens ?? 0}
@@ -3228,13 +2897,13 @@ export default function App() {
                                 updateLight(light.id, { lumens: v })
                                 e.target.style.borderColor = "#2a2a2a"
                               }}
-                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3, color: "#cccccc", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px" }}
                               onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
                             />
                           </div>
                           {/* BEAM */}
                           <div>
-                            <label style={{ fontSize: 9, color: "#555555", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>BEAM (°)</label>
+                            <label style={{ fontSize: 11, color: "#999999", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>BEAM (°)</label>
                             <input
                               type="number" min="1" max="180" step="1"
                               defaultValue={light.beamAngle ?? 36}
@@ -3244,44 +2913,44 @@ export default function App() {
                                 updateLight(light.id, { beamAngle: v })
                                 e.target.style.borderColor = "#2a2a2a"
                               }}
-                              style={{ width: "100%", boxSizing: "border-box", background: "#111111", border: "1px solid #2a2a2a", borderRadius: 3, color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px" }}
+                              style={{ width: "100%", boxSizing: "border-box", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3, color: "#cccccc", fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px" }}
                               onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
                             />
                           </div>
                           {/* CCT — read-only, fixture spec */}
                           <div>
-                            <div style={{ fontSize: 9, color: "#555555", marginBottom: 3, letterSpacing: "0.06em" }}>CCT</div>
-                            <div style={{ fontSize: 12, color: "#888888", fontWeight: 600, fontFamily: "IBM Plex Mono", padding: "5px 6px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 3 }}>
+                            <div style={{ fontSize: 11, color: "#555555", marginBottom: 3, letterSpacing: "0.06em" }}>CCT</div>
+                            <div style={{ fontSize: 14, color: "#888888", fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3 }}>
                               {light.cct ? `${light.cct}K` : "—"}
                             </div>
                           </div>
                         </div>
                         {/* Protocol badge */}
                         {light.protocol && light.protocol !== "NON-DIM" && light.protocol !== "Room Default" && (
-                          <div style={{ padding: "6px 10px", borderRadius: 4, background: "#0f0f0f", border: "1px solid #2a2a2a", fontSize: 10, color: "#39c5cf", fontWeight: 600, textAlign: "center" }}>
+                          <div style={{ padding: "6px 10px", borderRadius: 4, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", fontSize: 14, color: "#60a5fa", fontWeight: 600, textAlign: "center" }}>
                             {light.protocol === "DALI" ? `DALI • D:${light.daliAddress ?? "?"}` : light.protocol}
                           </div>
                         )}
                         {/* Visual options */}
                         <div style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
-                          <div style={{ fontSize: 9, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>VISUAL OPTIONS</div>
+                          <div style={{ fontSize: 11, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>VISUAL OPTIONS</div>
                           <div style={{ marginBottom: 8 }}>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {light.fixtureSize ?? 8}</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {light.fixtureSize ?? 8}</label>
                             <input type="range" min="5" max="20" value={light.fixtureSize ?? 8}
                               onChange={(e) => updateLight(light.id, { fixtureSize: Number(e.target.value) })}
                               style={{ width: "100%", cursor: "pointer" }} />
                           </div>
                           <div style={{ marginBottom: 8 }}>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Color</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Color</label>
                             <input type="color" value={light.fixtureColor ?? "#ffffff"}
                               onChange={(e) => updateLight(light.id, { fixtureColor: e.target.value })}
                               style={{ width: "100%", height: 28, cursor: "pointer", border: "none", borderRadius: 3 }} />
                           </div>
                           <div>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape</label>
                             <select value={light.fixtureShape ?? "circle"}
                               onChange={(e) => updateLight(light.id, { fixtureShape: e.target.value })}
-                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 10, fontFamily: "IBM Plex Mono", cursor: "pointer" }}>
+                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 14, fontFamily: "'Inter', sans-serif", cursor: "pointer" }}>
                               <option value="circle">Circle</option>
                               <option value="square">Square</option>
                               <option value="diamond">Diamond</option>
@@ -3301,7 +2970,7 @@ export default function App() {
                             deleteLight(light.id)
                             setSelectedLights([])
                           }}
-                          style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 10, fontFamily: "IBM Plex Mono", width: "100%" }}
+                          style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 14, fontFamily: "'Inter', sans-serif", width: "100%" }}
                         >DELETE</button>
                       </div>
                     )
@@ -3318,29 +2987,29 @@ export default function App() {
                     const allSameShape = shapes.every(v => v === shapes[0])
                     return (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        <div style={{ padding: "8px 10px", borderRadius: 6, background: "#0f0f0f", border: "1px solid #2a2a2a", textAlign: "center" }}>
-                          <div style={{ fontSize: 13, color: "#ffffff", fontWeight: 600, marginBottom: 4 }}>{sel.length} fixtures selected</div>
-                          <div style={{ fontSize: 10, color: "#666666" }}>Edits apply to all</div>
+                        <div style={{ padding: "8px 10px", borderRadius: 6, background: "#1a1a1a", border: "1px solid #2a2a2a", textAlign: "center" }}>
+                          <div style={{ fontSize: 17, color: "#cccccc", fontWeight: 600, marginBottom: 4 }}>{sel.length} fixtures selected</div>
+                          <div style={{ fontSize: 14, color: "#666666" }}>Edits apply to all</div>
                         </div>
                         <div style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
-                          <div style={{ fontSize: 9, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>BATCH EDIT</div>
+                          <div style={{ fontSize: 11, color: "#555555", marginBottom: 8, letterSpacing: "0.08em" }}>BATCH EDIT</div>
                           <div style={{ marginBottom: 8 }}>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {allSameSize ? sizes[0] : "Mixed"}</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Size: {allSameSize ? sizes[0] : "Mixed"}</label>
                             <input type="range" min="5" max="20" value={allSameSize ? sizes[0] : 8}
                               onChange={(e) => batchUpdate({ fixtureSize: Number(e.target.value) })}
                               style={{ width: "100%", cursor: "pointer" }} />
                           </div>
                           <div style={{ marginBottom: 8 }}>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Color{!allSameColor ? " (mixed)" : ""}</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Color{!allSameColor ? " (mixed)" : ""}</label>
                             <input type="color" value={allSameColor ? colors[0] : "#ffffff"}
                               onChange={(e) => batchUpdate({ fixtureColor: e.target.value })}
                               style={{ width: "100%", height: 28, cursor: "pointer", border: "none", borderRadius: 3 }} />
                           </div>
                           <div style={{ marginBottom: 8 }}>
-                            <label style={{ fontSize: 10, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape{!allSameShape ? " (mixed)" : ""}</label>
+                            <label style={{ fontSize: 14, color: "#d4a843", display: "block", marginBottom: 4 }}>Shape{!allSameShape ? " (mixed)" : ""}</label>
                             <select value={allSameShape ? shapes[0] : ""}
                               onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
-                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 10, fontFamily: "IBM Plex Mono", cursor: "pointer" }}>
+                              style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 14, fontFamily: "'Inter', sans-serif", cursor: "pointer" }}>
                               {!allSameShape && <option value="">— Mixed —</option>}
                               <option value="circle">Circle</option>
                               <option value="square">Square</option>
@@ -3359,14 +3028,14 @@ export default function App() {
                               sel.forEach(l => deleteLight(l.id))
                               setSelectedLights([])
                             }}
-                            style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 10, fontFamily: "IBM Plex Mono", width: "100%" }}
+                            style={{ padding: "5px 8px", background: "#1a0000", color: "#ef4444", border: "1px solid #3a0000", borderRadius: 4, cursor: "pointer", fontSize: 14, fontFamily: "'Inter', sans-serif", width: "100%" }}
                           >DELETE ALL {sel.length}</button>
                         </div>
                       </div>
                     )
                   })()
                 ) : (
-                  <div style={{ fontSize: 11, color: "#555555", fontStyle: "italic" }}>
+                  <div style={{ fontSize: 17, color: "#555555", fontStyle: "italic" }}>
                     Click a fixture to inspect
                   </div>
                 )}
@@ -3409,13 +3078,13 @@ export default function App() {
       {showSettings && (
         <div style={{
           position: "fixed", top: 84, right: 0, bottom: 0, width: 320,
-          background: "#0a0a0a", borderLeft: "1px solid #222222",
+          background: "#f9f9f9", borderLeft: "1px solid #e5e5e5",
           display: "flex", flexDirection: "column",
           zIndex: 500, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
-          fontFamily: "IBM Plex Mono",
+          fontFamily: "'Inter', sans-serif",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
-            <span style={{ fontSize: 10, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>ROOM SETTINGS</span>
+            <span style={{ fontSize: 14, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>ROOM SETTINGS</span>
             <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
@@ -3452,17 +3121,17 @@ export default function App() {
         const btnStyle = (color, bg, border) => ({
           display: "flex", flexDirection: "column", alignItems: "flex-start",
           padding: "13px 16px", background: bg, border: `1px solid ${border}`,
-          borderRadius: 4, cursor: "pointer", fontFamily: "IBM Plex Mono", textAlign: "left",
+          borderRadius: 4, cursor: "pointer", fontFamily: "'Inter', sans-serif", textAlign: "left",
           transition: "border-color 0.12s",
         })
         return (
-          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ background: "#0a0a0a", border: "1px solid #2e2e2e", borderRadius: 6, width: 480, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#111111", border: "1px solid #222222", borderRadius: 10, width: 480, maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.9)" }}>
 
               {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 14px", borderBottom: "1px solid #222", flexShrink: 0 }}>
-                <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#39c5cf", letterSpacing: "0.14em" }}>EXPORT</span>
-                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "IBM Plex Mono", fontSize: 13, cursor: "pointer" }}>✕</button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 14px", borderBottom: "1px solid #1e1e1e", flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#d4a843", letterSpacing: "0.08em" }}>EXPORT</span>
+                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "'Inter', sans-serif", fontSize: 17, cursor: "pointer" }}>✕</button>
               </div>
 
               {/* Scrollable body */}
@@ -3470,7 +3139,7 @@ export default function App() {
 
                 {/* Project Details Form */}
                 <div style={{ marginBottom: 22 }}>
-                  <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>PROJECT DETAILS</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#888888", letterSpacing: "0.04em" }}>PROJECT DETAILS</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
                     {[
                       { key: "customerName", label: "Customer Name" },
@@ -3480,16 +3149,16 @@ export default function App() {
                       { key: "preparedBy",   label: "Prepared By" },
                     ].map(({ key, label }) => (
                       <div key={key} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#555", letterSpacing: "0.1em" }}>{label.toUpperCase()}</span>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#999999", letterSpacing: "0.04em" }}>{label.toUpperCase()}</span>
                         <input
                           type="text"
                           value={exportMeta[key]}
                           onChange={e => setExportMeta(prev => ({ ...prev, [key]: e.target.value }))}
                           placeholder={label}
                           style={{
-                            background: "#141414", border: "1px solid #2e2e2e", borderRadius: 3,
-                            padding: "8px 10px", fontFamily: "IBM Plex Mono", fontSize: 10,
-                            color: "#f0f0f0", outline: "none", width: "100%", boxSizing: "border-box"
+                            background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3,
+                            padding: "8px 10px", fontFamily: "'Inter', sans-serif", fontSize: 14,
+                            color: "#cccccc", outline: "none", width: "100%", boxSizing: "border-box"
                           }}
                         />
                       </div>
@@ -3499,7 +3168,7 @@ export default function App() {
 
                 {/* Canvas Page Options */}
                 <div style={{ marginBottom: 22 }}>
-                  <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>CANVAS PAGES TO EXPORT</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#888888", letterSpacing: "0.04em" }}>CANVAS PAGES TO EXPORT</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
                     {[
                       { key: "placement", label: "Fixture Placement + Distances", desc: "Shows fixture positions with spacing measurements" },
@@ -3510,7 +3179,7 @@ export default function App() {
                       return (
                         <label key={key} style={{
                           display: "flex", alignItems: "flex-start", gap: 10,
-                          padding: "10px 12px", background: "#141414",
+                          padding: "10px 12px", background: "#f9f9f9",
                           border: `1px solid ${checked ? "#d4a843" : "#2e2e2e"}`,
                           borderRadius: 3, cursor: "pointer",
                         }}>
@@ -3520,14 +3189,14 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, marginTop: 1,
                           }}>
-                            {checked && <span style={{ fontSize: 9, color: "#000", fontWeight: 700 }}>✓</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000", fontWeight: 700 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked}
                             onChange={() => setExportCanvasOptions(prev => ({ ...prev, [key]: !prev[key] }))}
                             style={{ display: "none" }} />
                           <div>
-                            <div style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: checked ? "#f0f0f0" : "#666" }}>{label}</div>
-                            <div style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#555", marginTop: 2 }}>{desc}</div>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: checked ? "#1f1f1f" : "#666666" }}>{label}</div>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#888888", marginTop: 2 }}>{desc}</div>
                           </div>
                         </label>
                       )
@@ -3538,10 +3207,10 @@ export default function App() {
                 {/* Room selector */}
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#888888", letterSpacing: "0.12em" }}>SELECT ROOMS TO EXPORT</span>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#888888", letterSpacing: "0.04em" }}>SELECT ROOMS TO EXPORT</span>
                     <button
                       onClick={() => setExportRoomIds(allSelected ? [] : allExportRooms.map(r => r.id))}
-                      style={{ background: "transparent", border: "none", fontFamily: "IBM Plex Mono", fontSize: 9, color: "#39c5cf", cursor: "pointer", letterSpacing: "0.06em", padding: 0 }}
+                      style={{ background: "transparent", border: "none", fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#d4a843", cursor: "pointer", letterSpacing: "0.06em", padding: 0 }}
                     >
                       {allSelected ? "Deselect All" : "Select All"}
                     </button>
@@ -3557,7 +3226,7 @@ export default function App() {
                             padding: "8px 12px", background: "#152030",
                             border: `1px solid ${checked ? "#2e2200" : "#252525"}`,
                             borderRadius: 3, cursor: "pointer",
-                            fontFamily: "IBM Plex Mono", fontSize: 10,
+                            fontFamily: "'Inter', sans-serif", fontSize: 14,
                             color: checked ? "#f0f0f0" : "#666",
                             transition: "border-color 0.1s, color 0.1s",
                           }}
@@ -3569,7 +3238,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, transition: "background 0.1s, border-color 0.1s",
                           }}>
-                            {checked && <span style={{ fontSize: 9, color: "#000000", fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000000", fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked} onChange={() => toggleRoom(r.id)} style={{ display: "none" }} />
                           <span>{r.label}</span>
@@ -3578,7 +3247,7 @@ export default function App() {
                     })}
                   </div>
                   {exportRoomIds.length === 0 && (
-                    <div style={{ fontFamily: "IBM Plex Mono", fontSize: 9, color: "#e05252", marginTop: 6 }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#dc2626", marginTop: 6 }}>
                       Select at least one room to include per-room pages
                     </div>
                   )}
@@ -3587,22 +3256,22 @@ export default function App() {
                 {/* Export buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <button style={btnStyle("#d4a843", "#1a1400", "#2e2200")} onClick={() => { setShowExportModal(false); handleExportPDF(exportMeta, exportCanvasOptions) }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#d4a843", letterSpacing: "0.08em" }}>Export PDF Report</span>
-                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#d4a843", letterSpacing: "0.08em" }}>Export PDF Report</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>
                       Summary + {exportRoomIds.length} room detail page{exportRoomIds.length !== 1 ? "s" : ""} + layout snapshot
                     </span>
                   </button>
                   <button style={btnStyle("#3dba74", "#0e1a0e", "#1a4020")} onClick={() => { setShowExportModal(false); handleExportBOQ() }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#3dba74", letterSpacing: "0.08em" }}>Export Excel BOQ</span>
-                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>3 sheets — Fixture BOQ, Electrical, Room Summary</span>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#3dba74", letterSpacing: "0.08em" }}>Export Excel BOQ</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>3 sheets — Fixture BOQ, Electrical, Room Summary</span>
                   </button>
                   <button style={btnStyle("#39c5cf", "#0a1a1e", "#1a3a40")} onClick={() => { setShowExportModal(false); handleExportPNG() }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#39c5cf", letterSpacing: "0.08em" }}>Export Canvas PNG</span>
-                    <span style={{ fontSize: 9, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#39c5cf", letterSpacing: "0.08em" }}>Export Canvas PNG</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
                   </button>
                   <button style={btnStyle("#888", "#181818", "#222222")} onClick={() => { setShowExportModal(false); setShowReport(true) }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", letterSpacing: "0.08em" }}>View Full Report</span>
-                    <span style={{ fontSize: 9, color: "#666", marginTop: 3 }}>Interactive report with print option</span>
+                    <span style={{ fontSize: 17, fontWeight: 700, color: "#aaa", letterSpacing: "0.08em" }}>View Full Report</span>
+                    <span style={{ fontSize: 11, color: "#666", marginTop: 3 }}>Interactive report with print option</span>
                   </button>
                 </div>
 
@@ -3643,28 +3312,28 @@ export default function App() {
           onClick={() => setGateModal(null)}
         >
           <div
-            style={{ background: '#0a0a0a', border: '1px solid #222222', borderRadius: 6, padding: '28px 30px', width: 380, fontFamily: 'IBM Plex Mono' }}
+            style={{ background: '#111111', border: '1px solid #222222', borderRadius: 10, padding: '28px 30px', width: 380, fontFamily: "'Inter', sans-serif" }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ fontSize: 10, color: '#d4a843', letterSpacing: '0.14em', marginBottom: 14 }}>UPGRADE REQUIRED</div>
-            <div style={{ fontSize: 14, color: '#ffffff', fontWeight: 600, marginBottom: 8 }}>{gateModal.feature}</div>
+            <div style={{ fontSize: 14, color: '#d4a843', letterSpacing: '0.14em', marginBottom: 14 }}>UPGRADE REQUIRED</div>
+            <div style={{ fontSize: 14, color: '#f0f0f0', fontWeight: 600, marginBottom: 8 }}>{gateModal.feature}</div>
             {gateModal.professionalOnly ? (
-              <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
+              <div style={{ fontSize: 14, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
                 Chandeliers, Pendants, Track Lights, Cove Lights, Bollards, Flood Lights, and Surface Panels are exclusive to the Professional plan.
               </div>
             ) : (
-              <div style={{ fontSize: 10, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
+              <div style={{ fontSize: 14, color: '#666666', lineHeight: 1.6, marginBottom: 24 }}>
                 Your free trial has expired. Upgrade to PRO to unlock {gateModal.feature}, exports, DALI, floor plan upload, AI recommendations, and more.
               </div>
             )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => { setGateModal(null); navigate('/dashboard', { state: { openTab: 'subscription' } }) }}
-                style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
+                style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 17, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
               >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL →' : 'UPGRADE TO PRO →'}</button>
               <button
                 onClick={() => setGateModal(null)}
-                style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 11, cursor: 'pointer' }}
+                style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 17, cursor: 'pointer' }}
               >✕</button>
             </div>
           </div>
@@ -3675,9 +3344,9 @@ export default function App() {
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "#0a0a0a", border: "1px solid #2e2e2e",
+          background: "#1a1a1a", border: "1px solid #2a2a2a",
           borderRadius: 6, padding: "10px 20px",
-          fontFamily: "IBM Plex Mono", fontSize: 12, color: "#ffffff",
+          fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#cccccc",
           letterSpacing: "0.04em", zIndex: 600,
           boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
           pointerEvents: "none",
@@ -3693,11 +3362,11 @@ export default function App() {
           onClick={() => setShowShortcuts(false)}
         >
           <div
-            style={{ background: "#000000", border: "1px solid #2e2e2e", borderRadius: 10, padding: "24px 28px", width: 520, maxWidth: "calc(100vw - 32px)", fontFamily: "IBM Plex Mono", boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}
+            style={{ background: "#000000", border: "1px solid #2e2e2e", borderRadius: 10, padding: "24px 28px", width: 520, maxWidth: "calc(100vw - 32px)", fontFamily: "'Inter', sans-serif", boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#ffffff", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
               <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
             </div>
             {[
@@ -3729,18 +3398,18 @@ export default function App() {
               ]},
             ].map(({ group, rows }) => (
               <div key={group} style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 8, color: "#555555", letterSpacing: "0.18em", marginBottom: 8 }}>{group}</div>
+                <div style={{ fontSize: 14, color: "#999999", letterSpacing: "0.08em", marginBottom: 8 }}>{group}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: "6px 0" }}>
                   {rows.map(([key, desc]) => (
                     <>
-                      <span key={key + "-k"} style={{ fontSize: 10, color: "#d4a843", letterSpacing: "0.04em", background: "#1a1500", border: "1px solid #2a2000", borderRadius: 3, padding: "2px 8px", display: "inline-block", width: "fit-content" }}>{key}</span>
-                      <span key={key + "-d"} style={{ fontSize: 10, color: "#888888", letterSpacing: "0.04em", alignSelf: "center", paddingLeft: 12 }}>{desc}</span>
+                      <span key={key + "-k"} style={{ fontSize: 14, color: "#d4a843", letterSpacing: "0.04em", background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.3)", borderRadius: 3, padding: "2px 8px", display: "inline-block", width: "fit-content" }}>{key}</span>
+                      <span key={key + "-d"} style={{ fontSize: 14, color: "#666666", letterSpacing: "0.02em", alignSelf: "center", paddingLeft: 12 }}>{desc}</span>
                     </>
                   ))}
                 </div>
               </div>
             ))}
-            <div style={{ borderTop: "1px solid #1e1e1e", marginTop: 8, paddingTop: 12, fontSize: 9, color: "#444", letterSpacing: "0.06em" }}>
+            <div style={{ borderTop: "1px solid #e5e5e5", marginTop: 8, paddingTop: 12, fontSize: 11, color: "#444", letterSpacing: "0.06em" }}>
               Press <span style={{ color: "#d4a843" }}>?</span> or <span style={{ color: "#d4a843" }}>Escape</span> to dismiss
             </div>
           </div>
@@ -3753,10 +3422,10 @@ export default function App() {
           <div className={styles.welcomeModal}>
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em", marginBottom: 6 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em", marginBottom: 6 }}>
                 Welcome to Lumina Design
               </div>
-              <div style={{ fontSize: 11, color: "#555555", letterSpacing: "0.05em" }}>
+              <div style={{ fontSize: 17, color: "#555555", letterSpacing: "0.05em" }}>
                 Professional lighting design &amp; calculation tool
               </div>
             </div>
@@ -3771,17 +3440,17 @@ export default function App() {
               ].map(({ num, title, desc }) => (
                 <div key={num} className={styles.welcomeStepCard}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#1a1500", border: "1px solid #d4a843", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#d4a843", flexShrink: 0 }}>{num}</div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#ffffff", letterSpacing: "0.02em" }}>{title}</span>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#1a1500", border: "1px solid #d4a843", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: 600, color: "#d4a843", flexShrink: 0 }}>{num}</div>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", letterSpacing: "0.02em" }}>{title}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: "#888888", lineHeight: 1.6, letterSpacing: "0.02em", paddingLeft: 32 }}>{desc}</div>
+                  <div style={{ fontSize: 17, color: "#888888", lineHeight: 1.6, letterSpacing: "0.02em", paddingLeft: 32 }}>{desc}</div>
                 </div>
               ))}
             </div>
 
             {/* Footer */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 20, borderTop: "1px solid #2e2e2e" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#555555", cursor: "pointer", userSelect: "none" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, color: "#555555", cursor: "pointer", userSelect: "none" }}>
                 <input
                   type="checkbox"
                   onChange={e => { if (e.target.checked) { try { localStorage.setItem("lumina_welcome_dismissed", "1") } catch {} } }}

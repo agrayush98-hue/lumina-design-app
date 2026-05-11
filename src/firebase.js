@@ -20,18 +20,32 @@ export const auth = getAuth(app)
 export async function saveProject(projectId, projectData, userId) {
   const data = { ...projectData, userId, updatedAt: new Date() }
   if (projectId) {
-    await setDoc(doc(db, "projects", projectId), data)
+    try {
+      await setDoc(doc(db, "projects", projectId), data)
+    } catch (err) {
+      console.error('[firebase] saveProject (update) failed:', err.message)
+      throw err
+    }
     return projectId
-  } else {
+  }
+  try {
     const ref = await addDoc(collection(db, "projects"), data)
     return ref.id
+  } catch (err) {
+    console.error('[firebase] saveProject (create) failed:', err.message)
+    throw err
   }
 }
 
 export async function loadProject(projectId) {
-  const snap = await getDoc(doc(db, "projects", projectId))
-  if (!snap.exists()) throw new Error("Project not found")
-  return { id: snap.id, ...snap.data() }
+  try {
+    const snap = await getDoc(doc(db, "projects", projectId))
+    if (!snap.exists()) throw new Error("Project not found")
+    return { id: snap.id, ...snap.data() }
+  } catch (err) {
+    console.error('[firebase] loadProject failed:', err.message)
+    throw err
+  }
 }
 
 export async function shareProject(projectId) {
@@ -53,27 +67,47 @@ export async function getUserFixtures(userId) {
     collection(db, "users", userId, "fixtures"),
     orderBy("createdAt", "desc")
   )
-  const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  try {
+    const snap = await getDocs(q)
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (err) {
+    console.error('[firebase] getUserFixtures failed:', err.message)
+    throw err
+  }
 }
 
 export async function saveUserFixture(userId, fixture) {
-  const ref = await addDoc(collection(db, "users", userId, "fixtures"), {
-    ...fixture,
-    createdAt: new Date(),
-  })
-  return ref.id
+  try {
+    const ref = await addDoc(collection(db, "users", userId, "fixtures"), {
+      ...fixture,
+      createdAt: new Date(),
+    })
+    return ref.id
+  } catch (err) {
+    console.error('[firebase] saveUserFixture failed:', err.message)
+    throw err
+  }
 }
 
 export async function updateUserFixture(userId, fixtureId, fixture) {
-  await updateDoc(doc(db, "users", userId, "fixtures", fixtureId), {
-    ...fixture,
-    updatedAt: new Date(),
-  })
+  try {
+    await updateDoc(doc(db, "users", userId, "fixtures", fixtureId), {
+      ...fixture,
+      updatedAt: new Date(),
+    })
+  } catch (err) {
+    console.error('[firebase] updateUserFixture failed:', err.message)
+    throw err
+  }
 }
 
 export async function deleteUserFixture(userId, fixtureId) {
-  await deleteDoc(doc(db, "users", userId, "fixtures", fixtureId))
+  try {
+    await deleteDoc(doc(db, "users", userId, "fixtures", fixtureId))
+  } catch (err) {
+    console.error('[firebase] deleteUserFixture failed:', err.message)
+    throw err
+  }
 }
 
 export async function listProjects(userId) {
@@ -82,74 +116,75 @@ export async function listProjects(userId) {
     where("userId", "==", userId),
     orderBy("updatedAt", "desc")
   )
-  const snap = await getDocs(q)
-  return snap.docs.map(d => ({
-    id:         d.id,
-    name:       d.data().name ?? "Untitled Project",
-    updatedAt:  d.data().updatedAt?.toDate?.() ?? null,
-    floorCount: d.data().floorCount ?? null,
-    roomCount:  d.data().roomCount  ?? null,
-  }))
+  try {
+    const snap = await getDocs(q)
+    return snap.docs.map(d => ({
+      id:         d.id,
+      name:       d.data().name        ?? "Untitled Project",
+      updatedAt:  d.data().updatedAt?.toDate?.() ?? null,
+      floorCount: d.data().floorCount  ?? null,
+      roomCount:  d.data().roomCount   ?? null,
+      lightCount: d.data().lightCount  ?? null,
+      totalWatts: d.data().totalWatts  ?? null,
+    }))
+  } catch (err) {
+    console.error('[firebase] listProjects failed:', err.message)
+    throw err
+  }
 }
 
 export async function deleteProject(projectId) {
-  await deleteDoc(doc(db, "projects", projectId))
+  try {
+    await deleteDoc(doc(db, "projects", projectId))
+  } catch (err) {
+    console.error('[firebase] deleteProject failed:', err.message)
+    throw err
+  }
 }
 
 // ── User profile ───────────────────────────────────────────────────────────────
 export async function getUserProfile(userId) {
-  const snap = await getDoc(doc(db, "users", userId, "profile", "data"))
-  return snap.exists() ? snap.data() : null
+  try {
+    const snap = await getDoc(doc(db, "users", userId, "profile", "data"))
+    return snap.exists() ? snap.data() : null
+  } catch (err) {
+    console.error('[firebase] getUserProfile failed:', err.message)
+    throw err
+  }
 }
 
 export async function updateUserProfile(userId, profileData) {
-  await setDoc(doc(db, "users", userId, "profile", "data"), { ...profileData, updatedAt: new Date() }, { merge: true })
+  try {
+    await setDoc(doc(db, "users", userId, "profile", "data"), { ...profileData, updatedAt: new Date() }, { merge: true })
+  } catch (err) {
+    console.error('[firebase] updateUserProfile failed:', err.message)
+    throw err
+  }
 }
 
 // ── Subscription ───────────────────────────────────────────────────────────────
 // getUserSubscription kept for billing-history reads only — subscription
 // status is now read from the root doc via AuthContext userDoc.
 export async function getUserSubscription(userId) {
-  const snap = await getDoc(doc(db, "users", userId))
-  return snap.exists() ? (snap.data().subscription ?? null) : null
+  try {
+    const snap = await getDoc(doc(db, "users", userId))
+    return snap.exists() ? (snap.data().subscription ?? null) : null
+  } catch (err) {
+    console.error('[firebase] getUserSubscription failed:', err.message)
+    throw err
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ⚠️  SECURITY VULNERABILITY — CLIENT-SIDE SUBSCRIPTION WRITE
-//
-// This function runs in the browser and can be called by ANY user from DevTools:
-//   import { createSubscription } from './firebase'
-//   createSubscription(auth.currentUser.uid, 'professional', 'fake_id')
-//   → user gets free Professional plan, no payment required
-//
-// TODO (MUST FIX BEFORE SCALING PAID ACQUISITION):
-//   1. Remove this function entirely, or
-//   2. Restrict with Firestore security rules so only the Firebase Admin SDK
-//      (running in api/verify-payment.js) can write subscription fields.
-//      See SECURITY_AUDIT.md for the exact rules needed.
-//
-// Current status: this exists as a fallback for when api/verify-payment.js
-// fails to initialise its Firebase Admin SDK (FIREBASE_SERVICE_ACCOUNT env
-// var missing or malformed on Vercel). Fix the env var, then delete this.
-// ─────────────────────────────────────────────────────────────────────────────
-export async function createSubscription(userId, plan, razorpayPaymentId) {
-  const now      = new Date()
-  const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-  await setDoc(doc(db, "users", userId), {
-    subscription: {
-      status:            'active',
-      plan,
-      activatedAt:       now,
-      renewsAt,
-      razorpayPaymentId,
-    },
-  }, { merge: true })
-}
-
-export async function cancelSubscription(userId) {
-  await setDoc(doc(db, "users", userId), {
-    subscription: { status: 'cancelled', cancelledAt: new Date() },
-  }, { merge: true })
+// ⚠️  DEPRECATED — DO NOT CALL FROM THE CLIENT.
+// Firestore security rules block client writes to the `subscription` field (VULN-001).
+// This function silently fails in production. Cancellation is handled server-side
+// by api/cancel-subscription.js (Firebase Admin SDK bypasses client rules).
+// Kept here only so any stale call sites surface a clear error rather than
+// silently succeeding without actually writing anything.
+export async function cancelSubscription(_userId) {
+  throw new Error(
+    'cancelSubscription() is deprecated. Use the /api/cancel-subscription serverless endpoint.'
+  )
 }
 
 export async function addBillingRecord(userId, { plan, amount, paymentId, description }) {
@@ -181,14 +216,19 @@ export async function createCheckoutSession(userId, planId, email) {
     // Fallback: open Razorpay inline (requires razorpay script loaded in index.html)
     return null
   }
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, planId, email }),
-  })
-  if (!res.ok) throw new Error("Failed to create checkout session")
-  const { checkoutUrl } = await res.json()
-  return checkoutUrl
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, planId, email }),
+    })
+    if (!res.ok) throw new Error("Failed to create checkout session")
+    const { checkoutUrl } = await res.json()
+    return checkoutUrl
+  } catch (err) {
+    console.error('[firebase] createCheckoutSession failed:', err.message)
+    throw err
+  }
 }
 
 // ── Trial helpers ──────────────────────────────────────────────────────────────

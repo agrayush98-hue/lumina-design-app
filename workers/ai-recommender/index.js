@@ -36,7 +36,7 @@ function corsHeaders(origin) {
 const ROOM_LUX = {
   "Kitchen": 500, "Office": 500, "Conference Room": 500, "Retail": 500,
   "Bathroom": 400, "Dining Room": 300, "Living Room": 300, "Hotel Lobby": 200,
-  "Bedroom": 200, "Restaurant": 150, "Corridor": 150, "Warehouse": 200,
+  "Bedroom": 200, "Restaurant": 150, "Corridor": 100, "Warehouse": 200,
 }
 
 // Pure math — no fixture type decisions

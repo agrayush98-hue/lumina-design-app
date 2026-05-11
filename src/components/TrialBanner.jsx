@@ -10,12 +10,13 @@ export default function TrialBanner() {
 
   if (trial.status === 'active' || trial.status === 'loading') return null
 
-  const isExpired = trial.status === 'expired'
-  const isWarning = trial.status === 'trial' && trial.daysLeft <= 3
+  const isExpired   = trial.status === 'expired'
+  const isCancelled = trial.status === 'cancelled'
+  const isWarning   = trial.status === 'trial' && trial.daysLeft <= 3
 
-  const bg     = isExpired ? '#0f0000' : isWarning ? '#0f0a00' : '#0a0a0a'
-  const border = isExpired ? '#3a1010' : isWarning ? '#3a2800' : '#222222'
-  const color  = isExpired ? '#ef4444' : isWarning ? '#d4a843' : '#888888'
+  const bg     = isExpired ? '#0f0000' : (isWarning || isCancelled) ? '#0f0a00' : '#0a0a0a'
+  const border = isExpired ? '#3a1010' : (isWarning || isCancelled) ? '#3a2800' : '#222222'
+  const color  = isExpired ? '#ef4444' : (isWarning || isCancelled) ? '#d4a843' : '#888888'
 
   function goUpgrade() {
     navigate('/dashboard', { state: { openTab: 'subscription' } })
@@ -31,8 +32,12 @@ export default function TrialBanner() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ ...mono, fontSize: 9, color, letterSpacing: '0.08em' }}>
           {isExpired
-            ? '⚠  FREE TRIAL EXPIRED — upgrade to unlock DALI, exports, floor plan upload, and more'
-            : `FREE TRIAL — ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''} remaining`}
+            ? (trial.subscriptionExpired
+                ? '⚠  SUBSCRIPTION EXPIRED — renew to restore full access'
+                : '⚠  FREE TRIAL EXPIRED — upgrade to unlock DALI, exports, floor plan upload, and more')
+            : isCancelled
+              ? `PLAN CANCELLED — access continues for ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''}`
+              : `FREE TRIAL — ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''} remaining`}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -45,7 +50,7 @@ export default function TrialBanner() {
             letterSpacing: '0.06em',
           }}
         >
-          UPGRADE TO PRO →
+          {isCancelled ? 'REACTIVATE PLAN →' : 'UPGRADE TO PRO →'}
         </button>
         <button
           onClick={logout}

@@ -35,7 +35,7 @@ const CCT_OPTIONS = [
 ]
 
 const CCT_BADGE_MAP = {
-  "tunable":    { text: "TW",  color: "#39c5cf" },
+  "tunable":    { text: "TW",  color: "#4a9eff" },
   "rgbw":       { text: "RGB", color: "#e84080" },
   "dali-dt8":   { text: "DT8", color: "#e8a830" },
   "zigbee-cct": { text: "ZC",  color: "#4d9fff" },
@@ -43,7 +43,7 @@ const CCT_BADGE_MAP = {
 
 const PROTO_BADGE_MAP = {
   "DALI":      { char: "D", color: "#e8a830" },
-  "ZIGBEE":    { char: "Z", color: "#39c5cf" },
+  "ZIGBEE":    { char: "Z", color: "#4a9eff" },
   "0-10V":     { char: "A", color: "#3dba74" },
   "PHASE-CUT": { char: "T", color: "#a78bfa" },
 }
@@ -371,21 +371,50 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return "rgb(255,0,0)"
   }
 
+  // ── Physics helpers for heatmap ──────────────────────────────
+  const MAINT_FACTOR_HM = 0.8  // standard maintenance factor
+
+  /** Cosine exponent n from full beam angle: I(θ) = I₀·cosⁿ(θ) */
+  function cosineExp(beamDeg) {
+    if (beamDeg >= 270) return 0     // omnidirectional
+    if (beamDeg >= 180) return 0.5
+    const halfRad = (beamDeg / 2) * (Math.PI / 180)
+    const cosH = Math.cos(halfRad)
+    return cosH > 0 && cosH < 1 ? Math.log(0.5) / Math.log(cosH) : 1
+  }
+
+  /** Peak candela from lumens and beam angle */
+  function peakCandela(lumens, halfBeamRad) {
+    if (lumens <= 0) return 0
+    const solidAngle = halfBeamRad >= Math.PI
+      ? 4 * Math.PI
+      : 2 * Math.PI * (1 - Math.cos(halfBeamRad))
+    return (lumens * MAINT_FACTOR_HM) / Math.max(solidAngle, 0.001)
+  }
+
   // Collect all point-like sources (fixtures + sampled strip segments)
+  // Each source stores precomputed { x, y, I0, n, halfBeamR } for fast lux calculation
   function buildSources(lightList) {
     const SAMPLE_M   = 0.2
     const SAMPLE_PX  = SAMPLE_M * SCALE * 1000
     const sources = []
 
+    function pushSource(x, y, lumens, halfBeamR) {
+      if (lumens <= 0) return
+      const beamDeg = halfBeamR * 2 * (180 / Math.PI)
+      sources.push({
+        x, y,
+        I0: peakCandela(lumens, halfBeamR),
+        n:  cosineExp(beamDeg),
+        halfBeamR,
+      })
+    }
+
     for (const light of lightList) {
       if (light.category !== "LED_STRIP") {
         if ((light.lumens ?? 0) > 0) {
-          sources.push({
-            x: light.x ?? 0,
-            y: light.y ?? 0,
-            lumens:    light.lumens,
-            halfBeamR: ((light.beamAngle ?? 36) / 2) * (Math.PI / 180),
-          })
+          const halfBeamR = ((light.beamAngle ?? 36) / 2) * (Math.PI / 180)
+          pushSource(light.x ?? 0, light.y ?? 0, light.lumens, halfBeamR)
         }
         continue
       }
@@ -395,6 +424,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       const totalLenM   = light.lengthM ?? 0
       if (totalLumens <= 0 || totalLenM <= 0) continue
       const lumPerSample = (totalLumens / totalLenM) * SAMPLE_M
+      const stripHalfR   = Math.PI / 2  // 180° for strips (Lambertian, hemisphere)
 
       if (light.shape === "circle") {
         const { cx = 0, cy = 0, radiusPx = 0 } = light
@@ -402,7 +432,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         const n     = Math.max(4, Math.round(circM / SAMPLE_M))
         for (let i = 0; i < n; i++) {
           const ang = (2 * Math.PI * i) / n
-          sources.push({ x: cx + radiusPx * Math.cos(ang), y: cy + radiusPx * Math.sin(ang), lumens: lumPerSample, halfBeamR: Math.PI / 2 })
+          pushSource(cx + radiusPx * Math.cos(ang), cy + radiusPx * Math.sin(ang), lumPerSample, stripHalfR)
         }
       } else if (light.shape === "freehand") {
         const pts  = light.points ?? []
@@ -411,7 +441,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         for (let i = 0; i <= n; i++) {
           const t   = i / n
           const idx = Math.min(Math.floor(t * (pts.length / 2 - 1)) * 2, pts.length - 2)
-          sources.push({ x: pts[idx] ?? 0, y: pts[idx + 1] ?? 0, lumens: lumPerSample, halfBeamR: Math.PI / 2 })
+          pushSource(pts[idx] ?? 0, pts[idx + 1] ?? 0, lumPerSample, stripHalfR)
         }
       } else {
         // line (default)
@@ -421,7 +451,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         const n     = Math.max(2, Math.round((lenPx / (SCALE * 1000)) / SAMPLE_M))
         for (let i = 0; i <= n; i++) {
           const t = i / n
-          sources.push({ x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1), lumens: lumPerSample, halfBeamR: Math.PI / 2 })
+          pushSource(x1 + t * (x2 - x1), y1 + t * (y2 - y1), lumPerSample, stripHalfR)
         }
       }
     }
@@ -446,19 +476,26 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         let totalLux = 0
 
         for (const src of sources) {
-          // Convert pixel offsets to metres for physically correct distances
+          // Convert pixel offsets to metres — physically correct
           const dxM       = (cx - src.x) / (SCALE * 1000)
           const dyM       = (cy - src.y) / (SCALE * 1000)
           const horzDistM = Math.sqrt(dxM * dxM + dyM * dyM)
-          // Clamp to 0.1 m minimum to prevent near-zero divide when a cell
-          // centre lands exactly on (or very close to) a fixture position
-          const totalDistM = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
-          const incAngle   = Math.atan2(horzDistM, mountingHeight)
+          // incAngle = angle from vertical axis (nadir)
+          const incAngle = Math.atan2(horzDistM, mountingHeight)
+          // Hard cutoff outside beam cone
           if (incAngle > src.halfBeamR) continue
-          totalLux += (src.lumens * 0.8) / (Math.PI * totalDistM * totalDistM) * Math.cos(incAngle)
+          // 3D distance — clamp min 0.1 m to avoid divide-by-zero
+          const distM = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
+          // cosTheta = cosine of incidence angle at work-plane
+          const cosTheta = mountingHeight / distM
+          // Angle-dependent intensity: I(θ) = I₀ · cosⁿ(θ)
+          const relI = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
+          // Illuminance (lux): E = I(θ) · cos(θ) / d²
+          // cosTheta again for Lambert cosine law at the surface
+          totalLux += (src.I0 * relI * cosTheta) / (distM * distM)
         }
 
-        cells.push({ x: px, y: py, color: luxToColor(totalLux) })
+        cells.push({ x: px, y: py, lux: totalLux, color: luxToColor(totalLux) })
       }
     }
     return cells
@@ -792,8 +829,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           fillLinearGradientColorStops={gradStops}
           opacity={0.85}
         />
-        <Rect x={lx} y={ly} width={W} height={H} stroke="#1a2b3c" strokeWidth={0.5} fill="transparent" />
-        <Text x={lx} y={ly - 16} text="LUX" fontSize={8} fontFamily="IBM Plex Mono" fill="#4a7a96" letterSpacing={1} />
+        <Rect x={lx} y={ly} width={W} height={H} stroke="#cccccc" strokeWidth={0.5} fill="transparent" />
+        <Text x={lx} y={ly - 16} text="LUX" fontSize={8} fontFamily="Inter, sans-serif" fill="#999999" letterSpacing={1} />
         {labels.map(({ frac, text }) => (
           <Text
             key={frac}
@@ -801,8 +838,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             y={ly + frac * H - 5}
             text={text}
             fontSize={8}
-            fontFamily="IBM Plex Mono"
-            fill="#4a7a96"
+            fontFamily="Inter, sans-serif"
+            fill="#999999"
           />
         ))}
       </Group>
@@ -953,16 +990,16 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return (
       <Group listening={false}>
         {/* Left wall */}
-        <Line points={[fx, fy, rL, fy]} stroke="#00d4ff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
+        <Line points={[fx, fy, rL, fy]} stroke="#4a9eff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
         <MeasLabel x={rL + (fx - rL) / 2} y={fy - 9} text={fmtDist(fx - rL)} />
         {/* Right wall */}
-        <Line points={[fx, fy, rR, fy]} stroke="#00d4ff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
+        <Line points={[fx, fy, rR, fy]} stroke="#4a9eff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
         <MeasLabel x={fx + (rR - fx) / 2} y={fy - 9} text={fmtDist(rR - fx)} />
         {/* Top wall */}
-        <Line points={[fx, fy, fx, rT]} stroke="#00d4ff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
+        <Line points={[fx, fy, fx, rT]} stroke="#4a9eff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
         <MeasLabel x={fx + 24} y={rT + (fy - rT) / 2} text={fmtDist(fy - rT)} />
         {/* Bottom wall */}
-        <Line points={[fx, fy, fx, rB]} stroke="#00d4ff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
+        <Line points={[fx, fy, fx, rB]} stroke="#4a9eff" strokeWidth={1} dash={[4, 4]} opacity={0.7} listening={false} />
         <MeasLabel x={fx + 24} y={fy + (rB - fy) / 2} text={fmtDist(rB - fy)} />
         {/* Nearest fixture spacing */}
         {nearFx && nearDist < Infinity && (
@@ -1072,9 +1109,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           <Circle
             radius={r + 6}
             fill="transparent"
-            stroke="#39c5cf"
+            stroke="#4a9eff"
             strokeWidth={2}
-            shadowColor="#39c5cf"
+            shadowColor="#4a9eff"
             shadowBlur={8}
             shadowOpacity={0.6}
             listening={false}
@@ -1110,7 +1147,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         {(() => {
           const shape          = light.fixtureShape ?? "circle"
           const bodyFill       = light.fixtureColor ?? fill
-          const bodyStroke     = isSelected ? "#39c5cf" : stroke
+          const bodyStroke     = isSelected ? "#4a9eff" : stroke
           const bodyStrokeWidth = isSelected ? 2 : 1.5
 
           switch (shape) {
@@ -1208,6 +1245,142 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                 </>
               )
 
+            // ── Octagon — UFO high bay, canopy lights ─────────────
+            case "octagon":
+              return <RegularPolygon sides={8} radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.35} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+
+            // ── Ring — inground uplights (annular shape) ──────────
+            case "ring":
+              return (
+                <>
+                  {/* Outer disc */}
+                  <Circle radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Inner hole — canvas dark bg */}
+                  <Circle radius={r * 0.42} fill="#1a1a1a" listening={false} />
+                  {/* Inner ring edge */}
+                  <Circle radius={r * 0.42} fill="transparent" stroke={bodyStroke} strokeWidth={1} opacity={0.5} listening={false} />
+                </>
+              )
+
+            // ── Semicircle — wall sconce / bracket ───────────────
+            case "semicircle":
+              return (
+                <>
+                  {/* Hit target */}
+                  <Rect x={-r} y={-r} width={r*2} height={r} fill="transparent" listening={true} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} />
+                  {/* Flat base (wall) */}
+                  <Line points={[-r, 0, r, 0]} stroke={bodyStroke} strokeWidth={2.5} listening={false} />
+                  {/* Arc half-dome */}
+                  <Arc innerRadius={0} outerRadius={r} angle={180} rotation={180} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.3} listening={false} />
+                </>
+              )
+
+            // ── Pill / capsule — rigid LED bar ────────────────────
+            case "pill":
+              return (
+                <>
+                  <Rect x={-r*1.8} y={-r*0.38} width={r*3.6} height={r*0.76} cornerRadius={r*0.38} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                </>
+              )
+
+            // ── Cross-dot — emergency / exit fixtures ────────────
+            case "cross-dot":
+              return (
+                <>
+                  <Circle radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  <Line points={[-r*0.55, 0, r*0.55, 0]} stroke={bodyStroke} strokeWidth={2} listening={false} />
+                  <Line points={[0, -r*0.55, 0, r*0.55]} stroke={bodyStroke} strokeWidth={2} listening={false} />
+                </>
+              )
+
+            // ── Spike — garden / spike light ─────────────────────
+            case "spike":
+              return (
+                <>
+                  {/* Ground plate */}
+                  <Rect x={-r*0.7} y={r*0.2} width={r*1.4} height={r*0.35} cornerRadius={2} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={3} shadowOpacity={0.2} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Lamp head */}
+                  <RegularPolygon sides={3} radius={r * 0.7} rotation={0} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.4} listening={false} />
+                  {/* Spike stem */}
+                  <Line points={[0, r*0.55, 0, r*0.9]} stroke={bodyStroke} strokeWidth={2} listening={false} />
+                </>
+              )
+
+            // ── Double-ring — floodlight / projector ─────────────
+            case "floodlight":
+              return (
+                <>
+                  {/* Outer body disc */}
+                  <Circle radius={r} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={6} shadowOpacity={0.35} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Inner ring */}
+                  <Circle radius={r * 0.55} fill="transparent" stroke={bodyStroke} strokeWidth={1.5} opacity={0.6} listening={false} />
+                  {/* Aim dot */}
+                  <Circle radius={r * 0.18} fill={bodyStroke} opacity={0.8} listening={false} />
+                </>
+              )
+
+            // ── Street-light head (cobra-arm silhouette) ─────────
+            case "streetlight":
+              return (
+                <>
+                  {/* Horizontal arm */}
+                  <Rect x={-r*1.4} y={-r*0.18} width={r*2.8} height={r*0.36} cornerRadius={r*0.18} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.25} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Lamp housing - wider flat disc on right */}
+                  <Circle x={r*0.9} y={0} radius={r*0.45} fill={bodyStroke} opacity={0.55} listening={false} />
+                </>
+              )
+
+            // ── Panel with grid detail ───────────────────────────
+            case "panel-grid":
+              return (
+                <>
+                  <Rect x={-r} y={-r} width={r*2} height={r*2} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Inner grid lines */}
+                  <Line points={[0, -r+2, 0, r-2]} stroke={bodyStroke} strokeWidth={0.8} opacity={0.5} listening={false} />
+                  <Line points={[-r+2, 0, r-2, 0]} stroke={bodyStroke} strokeWidth={0.8} opacity={0.5} listening={false} />
+                </>
+              )
+
+            // ── Gimbal ring — adjustable downlight ───────────────
+            case "gimbal":
+              return (
+                <>
+                  {/* Outer ring */}
+                  <Circle radius={r} fill="transparent" stroke={bodyStroke} strokeWidth={2} shadowColor={bodyFill} shadowBlur={4} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* Filled inner lamp offset to show tilt */}
+                  <Circle x={r*0.22} y={r*0.1} radius={r*0.58} fill={bodyFill} stroke={bodyStroke} strokeWidth={1} listening={false} />
+                </>
+              )
+
+            // ── Chandelier — multi-arm ────────────────────────────
+            case "chandelier":
+              return (
+                <>
+                  {/* Suspension rod */}
+                  <Line points={[0, -r*2, 0, -r*0.8]} stroke={bodyStroke} strokeWidth={1.5} listening={false} />
+                  {/* Central body */}
+                  <Circle radius={r*0.6} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.3} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                  {/* 6 arms */}
+                  {[0,60,120,180,240,300].map(deg => {
+                    const rad = deg * Math.PI / 180
+                    return <Line key={deg} points={[Math.cos(rad)*r*0.6, Math.sin(rad)*r*0.6, Math.cos(rad)*r, Math.sin(rad)*r]} stroke={bodyStroke} strokeWidth={1.2} listening={false} />
+                  })}
+                  {/* 6 tip dots */}
+                  {[0,60,120,180,240,300].map(deg => {
+                    const rad = deg * Math.PI / 180
+                    return <Circle key={`dot-${deg}`} x={Math.cos(rad)*r} y={Math.sin(rad)*r} radius={r*0.18} fill={bodyStroke} listening={false} />
+                  })}
+                </>
+              )
+
+            // ── Cove slot — very thin rect with end caps ──────────
+            case "cove-slot":
+              return (
+                <>
+                  <Rect x={-r*2.6} y={-r*0.22} width={r*5.2} height={r*0.44} cornerRadius={r*0.22} fill={bodyFill} stroke={bodyStroke} strokeWidth={bodyStrokeWidth} shadowColor={bodyFill} shadowBlur={5} shadowOpacity={0.35} onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onSelectLight?.(light, e.evt.ctrlKey) }} onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteLight?.(light.id) }} listening={true} />
+                </>
+              )
+
             default:
               return (
                 <Circle
@@ -1255,9 +1428,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           return (
             <>
               <Rect x={-12} y={r + 10} width={24} height={12}
-                fill="#001a2e" stroke="#00d4ff" strokeWidth={0.5} cornerRadius={2} listening={false} />
+                fill="#001a2e" stroke="#4a9eff" strokeWidth={0.5} cornerRadius={2} listening={false} />
               <Text x={-12} y={r + 11} width={24} text={`D:${daliEntry.address}`}
-                fontSize={7} fontFamily="IBM Plex Mono" fill="#00d4ff" align="center" listening={false} />
+                fontSize={7} fontFamily="IBM Plex Mono" fill="#4a9eff" align="center" listening={false} />
             </>
           )
         })()}
@@ -1289,7 +1462,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         <Line points={[x1, y1, x2, y2]} stroke={fill} strokeWidth={8} opacity={0.3} listening={false} />
         <Line
           points={[x1, y1, x2, y2]}
-          stroke={isSelected ? "#39c5cf" : fill}
+          stroke={isSelected ? "#4a9eff" : fill}
           strokeWidth={isSelected ? 5 : 4}
           onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
           onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
@@ -1326,7 +1499,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           innerRadius={Math.max(1, Math.abs(safeRadius - 3))}
           outerRadius={Math.max(1, Math.abs(safeRadius + 3))}
           angle={arcDeg} rotation={startDeg}
-          fill={isSelected ? "#39c5cf" : fill}
+          fill={isSelected ? "#4a9eff" : fill}
           closed={false}
           onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
           onDblClick={(e) => { e.evt.stopPropagation(); onDeleteLight?.(light.id) }}
@@ -1360,7 +1533,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         <Line points={points} stroke={fill} strokeWidth={8} opacity={0.3} tension={0.5} lineCap="round" lineJoin="round" listening={false} />
         <Line
           points={points}
-          stroke={isSelected ? "#39c5cf" : fill}
+          stroke={isSelected ? "#4a9eff" : fill}
           strokeWidth={isSelected ? 5 : 4}
           tension={0.5} lineCap="round" lineJoin="round"
           onClick={(e) => { e.cancelBubble = true; onSelectLight?.(light, e.evt.ctrlKey) }}
@@ -1382,8 +1555,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     }
     return (
       <Group x={marker.x} y={marker.y} draggable onDragEnd={handleDragEnd}>
-        <Rect x={-S} y={-S} width={S * 2} height={S * 2} fill="#2a1400" stroke="#e8a830" strokeWidth={1.5} onDblClick={() => onDeleteMarker("db", marker.id)} />
-        <Text text="DB" fontSize={8} fontFamily="IBM Plex Mono" fill="#e8a830" offsetX={6} offsetY={4} listening={false} />
+        <Rect x={-S} y={-S} width={S * 2} height={S * 2} fill="rgba(212,168,67,0.12)" stroke="#d4a843" strokeWidth={1.5} onDblClick={() => onDeleteMarker("db", marker.id)} />
+        <Text text="DB" fontSize={8} fontFamily="Inter, sans-serif" fill="#d4a843" offsetX={6} offsetY={4} listening={false} />
       </Group>
     )
   }
@@ -1398,10 +1571,10 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     }
     return (
       <Group x={marker.x} y={marker.y} draggable onDragEnd={handleDragEnd}>
-        <Circle radius={R} fill="#071e1e" stroke="#39c5cf" strokeWidth={1.5} onDblClick={() => onDeleteMarker("ctr", marker.id)} />
-        <Line points={[-R + 3, 0, R - 3, 0]} stroke="#39c5cf" strokeWidth={1} listening={false} />
-        <Line points={[0, -R + 3, 0, R - 3]} stroke="#39c5cf" strokeWidth={1} listening={false} />
-        <Text text="CTR" fontSize={6} fontFamily="IBM Plex Mono" fill="#39c5cf" offsetX={7} offsetY={3} listening={false} />
+        <Circle radius={R} fill="rgba(74,158,255,0.1)" stroke="#4a9eff" strokeWidth={1.5} onDblClick={() => onDeleteMarker("ctr", marker.id)} />
+        <Line points={[-R + 3, 0, R - 3, 0]} stroke="#4a9eff" strokeWidth={1} listening={false} />
+        <Line points={[0, -R + 3, 0, R - 3]} stroke="#4a9eff" strokeWidth={1} listening={false} />
+        <Text text="CTR" fontSize={6} fontFamily="Inter, sans-serif" fill="#4a9eff" offsetX={7} offsetY={3} listening={false} />
       </Group>
     )
   }
@@ -1416,8 +1589,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     }
     return (
       <Group x={marker.x} y={marker.y} draggable onDragEnd={handleDragEnd}>
-        <Line points={[0, -S, S, 0, 0, S, -S, 0]} closed fill="#1a0e2a" stroke="#a78bfa" strokeWidth={1.5} onDblClick={() => onDeleteMarker("jb", marker.id)} />
-        <Text text="JB" fontSize={7} fontFamily="IBM Plex Mono" fill="#a78bfa" offsetX={5} offsetY={3.5} listening={false} />
+        <Line points={[0, -S, S, 0, 0, S, -S, 0]} closed fill="rgba(167,139,250,0.1)" stroke="#a78bfa" strokeWidth={1.5} onDblClick={() => onDeleteMarker("jb", marker.id)} />
+        <Text text="JB" fontSize={7} fontFamily="Inter, sans-serif" fill="#a78bfa" offsetX={5} offsetY={3.5} listening={false} />
       </Group>
     )
   }
@@ -1465,7 +1638,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const luxColor =
     lights.length === 0 ? "#2d4f68"
     : lux < 150         ? "#d94f4f"
-    : lux < 500         ? "#39c5cf"
+    : lux < 500         ? "#4a9eff"
     :                     "#e8a830"
 
   const MODES = [
@@ -1521,7 +1694,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   // ── Context menu style helpers ────────────────────────────────
   const CM = {
     bg:     "rgba(15,20,30,0.97)",
-    border: "#00d4ff",
+    border: "#4a9eff",
     dim:    "#2d4f68",
     label:  "#4a7a96",
     value:  "#cdd9e5",
@@ -1587,7 +1760,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       )}
 
       {/* Canvas + zoom controls wrapper */}
-      <div style={{ position: "relative", width: CANVAS_W, height: CANVAS_H, background: "#000000", backgroundImage: "radial-gradient(circle, #111111 1px, transparent 1px)", backgroundSize: "24px 24px", borderRadius: isStripMode ? "0 0 6px 6px" : 6 }}>
+      <div style={{ position: "relative", width: CANVAS_W, height: CANVAS_H, background: "#1a1a1a", backgroundImage: "radial-gradient(circle, #2a2a2a 1px, transparent 1px)", backgroundSize: "24px 24px", borderRadius: isStripMode ? "0 0 6px 6px" : 6 }}>
         <Stage
           ref={stageRef}
           width={CANVAS_W}
@@ -1637,20 +1810,20 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     <Rect
                       name="room-fill"
                       x={rX} y={rY} width={rpxW} height={rpxH}
-                      fill="rgba(255,255,255,0.025)"
+                      fill="rgba(212,168,67,0.03)"
                       onClick={isStripMode || floorPlan ? undefined : handleRoomClick}
                       listening={!floorPlan}
                     />
                   )}
 
-                  {/* Room border — bright cyan for active, faint dashed gray for inactive */}
+                  {/* Room border — gold for active, faint dashed gray for inactive */}
                   <Rect
                     x={rX} y={rY} width={rpxW} height={rpxH}
-                    stroke={isActive ? "#39c5cf" : "#2e2e2e"}
+                    stroke={isActive ? "#999999" : "#cccccc"}
                     strokeWidth={isActive ? 2 : 1}
-                    dash={isActive ? undefined : [5, 5]}
+                    dash={isActive ? undefined : [6, 4]}
                     fill="transparent"
-                    opacity={isActive ? 1 : 0.15}
+                    opacity={isActive ? 1 : 0.5}
                     cornerRadius={3}
                     listening={!isActive}
                     onClick={() => {
@@ -1666,7 +1839,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                       x={rX + 4} y={rY + 4}
                       width={Math.max(0, rpxW - 8)}
                       height={Math.max(0, rpxH - 8)}
-                      stroke="#00d4ff"
+                      stroke="#4a9eff"
                       strokeWidth={1}
                       opacity={0.3}
                       fill="transparent"
@@ -1682,7 +1855,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     text={r.name ?? `Room ${r.id}`}
                     fontSize={isActive ? 11 : 9}
                     fontFamily="IBM Plex Mono"
-                    fill={isActive ? "#39c5cf" : "#555"}
+                    fill={isActive ? "#4a9eff" : "#555"}
                     opacity={isActive ? 1 : 0.6}
                     fontStyle={isActive ? "bold" : "normal"}
                     listening={false}
@@ -1700,31 +1873,31 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             <HeatmapLegend />
 
             {/* Room label */}
-            <Text x={ROOM_X} y={ROOM_Y - 22} text={`${(roomWidth/1000).toFixed(2)}m × ${(roomHeight/1000).toFixed(2)}m`} fill="#2d4f68" fontSize={12} fontFamily="IBM Plex Mono" listening={false} />
+            <Text x={ROOM_X} y={ROOM_Y - 22} text={`${(roomWidth/1000).toFixed(2)}m × ${(roomHeight/1000).toFixed(2)}m`} fill="#999999" fontSize={12} fontFamily="Inter, sans-serif" listening={false} />
 
             {/* Lux + stats */}
             <Text x={CANVAS_W - 160} y={18}  text={lights.length === 0 ? "Lux: —" : `Lux: ${Math.round(lux)}`} fill={luxColor} fontSize={18} fontFamily="IBM Plex Mono" listening={false} />
-            <Text x={CANVAS_W - 160} y={40}  text={`${lights.length} fixture${lights.length !== 1 ? "s" : ""}  ·  ${snapToGrid ? "snap on" : "snap off"}`} fill="#2d4f68" fontSize={10} fontFamily="IBM Plex Mono" listening={false} />
-            <Text x={CANVAS_W - 160} y={56}  text={`RCR ${(rcr ?? 0).toFixed(2)}`}  fill="#4a7a96" fontSize={10} fontFamily="IBM Plex Mono" listening={false} />
-            <Text x={CANVAS_W - 160} y={70}  text={`UF  ${(uf  ?? 0).toFixed(2)}`}  fill="#4a7a96" fontSize={10} fontFamily="IBM Plex Mono" listening={false} />
+            <Text x={CANVAS_W - 160} y={40}  text={`${lights.length} fixture${lights.length !== 1 ? "s" : ""}  ·  ${snapToGrid ? "snap on" : "snap off"}`} fill="#bbbbbb" fontSize={10} fontFamily="Inter, sans-serif" listening={false} />
+            <Text x={CANVAS_W - 160} y={56}  text={`RCR ${(rcr ?? 0).toFixed(2)}`}  fill="#aaaaaa" fontSize={10} fontFamily="Inter, sans-serif" listening={false} />
+            <Text x={CANVAS_W - 160} y={70}  text={`UF  ${(uf  ?? 0).toFixed(2)}`}  fill="#aaaaaa" fontSize={10} fontFamily="Inter, sans-serif" listening={false} />
             {lights.length > 0 && (() => {
               const s = lux < targetLux * 0.8 ? { text: "UNDERLIT", fill: "#d94f4f" } : lux <= targetLux * 1.2 ? { text: "GOOD", fill: "#3dba74" } : { text: "OVERLIT", fill: "#e8a830" }
-              return <Text x={CANVAS_W - 160} y={86} text={s.text} fill={s.fill} fontSize={10} fontFamily="IBM Plex Mono" listening={false} />
+              return <Text x={CANVAS_W - 160} y={86} text={s.text} fill={s.fill} fontSize={10} fontFamily="Inter, sans-serif" listening={false} />
             })()}
 
             {/* Active mode indicator */}
             {indicatorText && (
-              <Text x={CANVAS_W - 160} y={104} text={indicatorText} fill={STRIP_FILL} fontSize={9} fontFamily="IBM Plex Mono" listening={false} />
+              <Text x={CANVAS_W - 160} y={104} text={indicatorText} fill={STRIP_FILL} fontSize={9} fontFamily="Inter, sans-serif" listening={false} />
             )}
             {!isStripMode && activeTool !== "fixture" && (
               <Text x={CANVAS_W - 160} y={104} text={`placing: ${activeTool?.toUpperCase()}`}
                 fill={
                   activeTool === "db"        ? "#e8a830"
-                  : activeTool === "ctr"     ? "#39c5cf"
+                  : activeTool === "ctr"     ? "#4a9eff"
                   : activeTool === "emergency" ? "#3dba74"
                   : "#a78bfa"
                 }
-                fontSize={9} fontFamily="IBM Plex Mono" listening={false}
+                fontSize={9} fontFamily="Inter, sans-serif" listening={false}
               />
             )}
 
@@ -1760,9 +1933,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             {isStripMode && stripDrawMode === "line" && stripDraw.drawing && (
               <>
                 <Line points={[stripDraw.x1, stripDraw.y1, stripDraw.x2, stripDraw.y2]} stroke="#f0d0ff" strokeWidth={8} opacity={0.2} dash={[10, 6]} listening={false} />
-                <Line points={[stripDraw.x1, stripDraw.y1, stripDraw.x2, stripDraw.y2]} stroke="#00d4ff" strokeWidth={2} opacity={1} dash={[10, 6]} listening={false} />
-                <Circle x={stripDraw.x1} y={stripDraw.y1} radius={3} fill="#00d4ff" listening={false} />
-                <Text x={stripDraw.x2 + 10} y={stripDraw.y2 - 10} text={`${previewLineLen.toFixed(2)}m`} fontSize={9} fontFamily="IBM Plex Mono" fill="#00d4ff" listening={false} />
+                <Line points={[stripDraw.x1, stripDraw.y1, stripDraw.x2, stripDraw.y2]} stroke="#4a9eff" strokeWidth={2} opacity={1} dash={[10, 6]} listening={false} />
+                <Circle x={stripDraw.x1} y={stripDraw.y1} radius={3} fill="#4a9eff" listening={false} />
+                <Text x={stripDraw.x2 + 10} y={stripDraw.y2 - 10} text={`${previewLineLen.toFixed(2)}m`} fontSize={9} fontFamily="IBM Plex Mono" fill="#4a9eff" listening={false} />
               </>
             )}
 
@@ -1817,7 +1990,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           </span>
           <button onClick={zoomOut}   style={zoomBtnStyle}>−</button>
           <button onClick={zoomIn}    style={zoomBtnStyle}>+</button>
-          <button onClick={zoomReset} style={{ ...zoomBtnStyle, color: "#39c5cf", border: "1px solid #1e4060" }}>RESET</button>
+          <button onClick={zoomReset} style={{ ...zoomBtnStyle, color: "#4a9eff", border: "1px solid #1e4060" }}>RESET</button>
         </div>
 
         {/* Pan hint */}
@@ -1968,7 +2141,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             {/* Header */}
             <div style={{ padding: "7px 12px", borderBottom: `1px solid #1a2b3c`,
               display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#00d4ff", opacity: 0.7 }} />
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4a9eff", opacity: 0.7 }} />
               <span style={{ fontSize: 10, color: CM.value, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {contextMenu.lightLabel}
               </span>
@@ -2021,8 +2194,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                 }}
                 onClick={e => { e.stopPropagation(); e.preventDefault(); applyContextMenuAll() }}
                 style={{
-                  flex: 1, padding: "5px 0", background: "#0a1a28", border: "1px solid #39c5cf",
-                  borderRadius: 3, color: "#39c5cf", fontFamily: "IBM Plex Mono",
+                  flex: 1, padding: "5px 0", background: "#0a1a28", border: "1px solid #4a9eff",
+                  borderRadius: 3, color: "#4a9eff", fontFamily: "IBM Plex Mono",
                   fontSize: 8, letterSpacing: "0.06em", cursor: "pointer",
                 }}
               >ALL SAME TYPE</button>

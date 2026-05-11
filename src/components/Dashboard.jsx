@@ -10,7 +10,7 @@ import {
   listProjects, loadProject, deleteProject, saveProject,
   getUserProfile, updateUserProfile,
   getBillingHistory,
-  cancelSubscription, createSubscription, addBillingRecord,
+  addBillingRecord,
   checkProjectLimit,
 } from "../firebase"
 import NewProjectWizard        from "./NewProjectWizard"
@@ -21,10 +21,14 @@ import "./Dashboard.css"
 
 async function sendEmail(to, subject, html) {
   try {
+    const idToken = await auth.currentUser?.getIdToken?.()
     await fetch('/api/send-email', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ to, subject, html }),
+      headers: {
+        'Content-Type':  'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+      },
+      body: JSON.stringify({ to, subject, html }),
     })
   } catch (err) {
     console.warn('[Dashboard] email send failed:', err)
@@ -272,6 +276,13 @@ function ProjectsTab({ user }) {
             </div>
             <div className="dash-stat-divider" />
             <div className="dash-stat">
+              <div className="dash-stat-value" style={{ color: isPaid ? (aiUsed >= aiLimit ? "#ef4444" : "#4ade80") : "#555555" }}>
+                {isPaid ? `${aiLimit - aiUsed}` : "—"}
+              </div>
+              <div className="dash-stat-label">AI Calls Left</div>
+            </div>
+            <div className="dash-stat-divider" />
+            <div className="dash-stat">
               <div className="dash-stat-value" style={{ color: planStatColor }}>{planStatValue}</div>
               <div className="dash-stat-label">{planStatLabel}</div>
             </div>
@@ -315,7 +326,7 @@ function ProjectsTab({ user }) {
                 <>
                   <div className="dash-section-header">
                     <div className="dash-section-title">ALL PROJECTS</div>
-                    <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px" }} onClick={handleNewProject}>+ NEW</button>
+                    <button className="btn-secondary" style={{ fontSize: 13, padding: "5px 12px" }} onClick={handleNewProject}>+ NEW</button>
                   </div>
                   <div className="projects-grid">
                     {projects.map(proj => {
@@ -335,16 +346,20 @@ function ProjectsTab({ user }) {
                             <div className="project-card-meta">
                               {proj.floorCount != null && <span>{proj.floorCount} floor{proj.floorCount !== 1 ? "s" : ""}</span>}
                               {proj.roomCount  != null && <span>{proj.roomCount} room{proj.roomCount !== 1 ? "s" : ""}</span>}
-                              {proj.updatedAt  && <span style={{ marginLeft: "auto" }}>{timeAgo(proj.updatedAt)}</span>}
+                              {proj.lightCount != null && proj.lightCount > 0 && <span style={{ color: "#d4a843" }}>{proj.lightCount} fixtures</span>}
+                            </div>
+                            <div className="project-card-meta" style={{ marginTop: 2 }}>
+                              {proj.totalWatts != null && proj.totalWatts > 0 && <span style={{ color: "#888" }}>{proj.totalWatts}W total</span>}
+                              {proj.updatedAt && <span style={{ marginLeft: "auto", color: "#444" }}>{timeAgo(proj.updatedAt)}</span>}
                             </div>
                           </div>
                           <div className="project-card-actions" onClick={e => e.stopPropagation()}>
-                            <button className="btn-secondary" style={{ fontSize: 9, padding: "5px 12px", flex: 1 }} onClick={() => handleOpen(proj)}>
+                            <button className="btn-secondary" style={{ fontSize: 13, padding: "5px 12px", flex: 1 }} onClick={() => handleOpen(proj)}>
                               OPEN →
                             </button>
                             <button
                               className="btn-danger"
-                              style={{ fontSize: 9, padding: "5px 10px" }}
+                              style={{ fontSize: 13, padding: "5px 10px" }}
                               disabled={deletingId === proj.id}
                               onClick={e => handleDelete(e, proj.id)}
                             >
@@ -428,39 +443,44 @@ function ProjectsTab({ user }) {
             {/* ── Right panel — independently scrollable ── */}
             <div className="dash-right-col">
 
+              {/* Lux Standards Reference */}
               <div className="dash-widget">
-                <div className="dash-widget-title">KEYBOARD SHORTCUTS</div>
-                <div className="dash-tips-list">
+                <div className="dash-widget-title">LUX STANDARDS (IS/IEC)</div>
+                <div className="lux-ref-list">
                   {[
-                    { icon: "⚡", key: "A",          tip: "Auto-place fixtures" },
-                    { icon: "⌫", key: "Del",         tip: "Delete selected" },
-                    { icon: "💾", key: "Ctrl+S",      tip: "Save project" },
-                    { icon: "🔍", key: "Scroll",      tip: "Zoom in / out" },
-                    { icon: "✋", key: "Space+drag",  tip: "Pan canvas" },
-                    { icon: "⬚", key: "Click+drag",  tip: "Multi-select" },
-                  ].map(({ icon, key, tip }) => (
-                    <div key={key} className="dash-tip-row">
-                      <span className="dash-tip-icon">{icon}</span>
-                      <span className="dash-tip-key">{key}</span>
-                      <span className="dash-tip-text">{tip}</span>
+                    { space: "Open-plan Office",    lux: 500,  color: "#4da6ff" },
+                    { space: "Conference Room",     lux: 500,  color: "#4da6ff" },
+                    { space: "Reception / Lobby",   lux: 300,  color: "#4ade80" },
+                    { space: "Retail Store",        lux: 750,  color: "#d4a843" },
+                    { space: "Hotel Bedroom",       lux: 200,  color: "#4ade80" },
+                    { space: "Restaurant Dining",   lux: 150,  color: "#4ade80" },
+                    { space: "Corridor / Passage",  lux: 100,  color: "#888888" },
+                    { space: "Warehouse / Storage", lux: 200,  color: "#888888" },
+                    { space: "Car Park",            lux: 75,   color: "#555555" },
+                  ].map(({ space, lux, color }) => (
+                    <div key={space} className="lux-ref-row">
+                      <span className="lux-ref-space">{space}</span>
+                      <span className="lux-ref-value" style={{ color }}>{lux} lx</span>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Design Checklist */}
               <div className="dash-widget">
-                <div className="dash-widget-title">SMART SUGGESTIONS</div>
-                <div className="dash-suggestions-list">
+                <div className="dash-widget-title">DESIGN CHECKLIST</div>
+                <div className="checklist-list">
                   {[
-                    { icon: "◎", text: "Recommended lux for offices: 500 lux" },
-                    { icon: "◈", text: "Use Heatmap to check illuminance uniformity" },
-                    { icon: "⚡", text: "Auto-place saves 80% of design time" },
-                    { icon: "◫", text: "DALI protocol allows per-fixture dimming" },
-                    { icon: "▦", text: "Panel lights ideal for uniform coverage" },
-                  ].map(({ icon, text }, i) => (
-                    <div key={i} className="dash-suggestion-row">
-                      <span className="dash-suggestion-icon">{icon}</span>
-                      <span className="dash-suggestion-text">{text}</span>
+                    { step: "Set room dimensions & ceiling height" },
+                    { step: "Choose fixture type for space function" },
+                    { step: "Place fixtures or use Auto-place (A)" },
+                    { step: "Run Heatmap — check uniformity ratio" },
+                    { step: "Set dimming protocol (DALI / 0-10V)" },
+                    { step: "Export PDF report for client" },
+                  ].map(({ step }, i) => (
+                    <div key={i} className="checklist-row">
+                      <span className="checklist-num">{i + 1}</span>
+                      <span className="checklist-text">{step}</span>
                     </div>
                   ))}
                 </div>
@@ -843,7 +863,7 @@ function SettingsTab({ user }) {
             <div className="settings-danger-desc">
               Permanently delete your account and all projects. This cannot be undone.
             </div>
-            <button className="btn-danger" style={{ alignSelf: "flex-start", fontSize: 9 }} disabled={deleting} onClick={() => setReAuthModal(true)}>
+            <button className="btn-danger" style={{ alignSelf: "flex-start", fontSize: 13 }} disabled={deleting} onClick={() => setReAuthModal(true)}>
               {deleting ? "DELETING…" : "DELETE ACCOUNT"}
             </button>
           </div>
@@ -875,8 +895,8 @@ function SettingsTab({ user }) {
             )}
             {reAuthErr && <div className="reauth-modal-err">{reAuthErr}</div>}
             <div className="reauth-modal-actions">
-              <button className="btn-secondary" style={{ fontSize: 9 }} onClick={() => setReAuthModal(false)}>CANCEL</button>
-              <button className="btn-danger" style={{ fontSize: 9 }} disabled={reAuthing || deleting} onClick={handleReAuth}>
+              <button className="btn-secondary" style={{ fontSize: 13 }} onClick={() => setReAuthModal(false)}>CANCEL</button>
+              <button className="btn-danger" style={{ fontSize: 13 }} disabled={reAuthing || deleting} onClick={handleReAuth}>
                 {reAuthing || deleting ? "VERIFYING…" : isGoogle ? "CONFIRM WITH GOOGLE" : "DELETE ACCOUNT"}
               </button>
             </div>
@@ -952,15 +972,13 @@ function SubscriptionTab({ user }) {
             const vData = await vRes.json()
             if (!vRes.ok) throw new Error(vData.error ?? "Verification failed")
 
-            // Step 4: client-side fallback write if server couldn't reach Firestore
-            const now    = new Date()
+            // Subscription is written server-side by verify-payment.js (Admin SDK).
+            // onSnapshot in AuthContext will pick up the change automatically.
+            const now      = new Date()
             const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-            const amount = plan.amountPaise / 100
-            if (!vData.firestoreWritten) {
-              await createSubscription(user.uid, plan.id, response.razorpay_payment_id)
-            }
+            const amount   = plan.amountPaise / 100
 
-            // Step 5: record billing
+            // Record billing
             await addBillingRecord(user.uid, {
               plan:        plan.id,
               amount,
@@ -1009,12 +1027,23 @@ function SubscriptionTab({ user }) {
     if (!ok) return
     setCancelling(true)
     try {
-      const accessUntil = sub?.renewsAt?.toDate?.() ?? sub?.renewsAt ?? null
-      await cancelSubscription(user.uid)
+      const accessUntilLocal = sub?.renewsAt?.toDate?.() ?? sub?.renewsAt ?? null
+
+      // Server-side cancel — requires Firebase ID token so Admin SDK can bypass Firestore rules
+      const idToken = await auth.currentUser.getIdToken()
+      const res  = await fetch('/api/cancel-subscription', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body:    JSON.stringify({ userId: user.uid }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Cancellation failed')
+
       // onSnapshot will auto-update sub from root doc — no setSub needed
       toast.warning("Subscription cancelled. Access continues until the billing period ends.")
 
       // Send cancellation email (fire-and-forget)
+      const accessUntil = data.accessUntil ? new Date(data.accessUntil) : accessUntilLocal
       sendEmail(
         user.email,
         'Your Lumina Design subscription has been cancelled',
@@ -1074,7 +1103,7 @@ function SubscriptionTab({ user }) {
       {/* Cancel button — only for active paid subscriptions */}
       {sub?.status === "active" && (
         <div style={{ marginBottom: 24 }}>
-          <button className="btn-danger" style={{ fontSize: 9 }} disabled={cancelling} onClick={handleCancel}>
+          <button className="btn-danger" style={{ fontSize: 13 }} disabled={cancelling} onClick={handleCancel}>
             {cancelling ? "CANCELLING…" : "CANCEL PLAN"}
           </button>
         </div>
@@ -1097,11 +1126,11 @@ function SubscriptionTab({ user }) {
                 ))}
               </ul>
               {isCurrent ? (
-                <button className="btn-secondary" disabled style={{ fontSize: 9 }}>CURRENT PLAN</button>
+                <button className="btn-secondary" disabled style={{ fontSize: 13 }}>CURRENT PLAN</button>
               ) : (
                 <button
                   className="btn-primary"
-                  style={{ fontSize: 9 }}
+                  style={{ fontSize: 13 }}
                   disabled={paying === plan.id}
                   onClick={() => handleUpgrade(plan)}
                 >

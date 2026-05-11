@@ -4,15 +4,8 @@ export function useFirebaseConnection() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const handleOnline = () => {
-      console.log('🟢 Browser: ONLINE');
-      setIsOnline(true);
-    };
-
-    const handleOffline = () => {
-      console.log('🔴 Browser: OFFLINE');
-      setIsOnline(false);
-    };
+    const handleOnline = () => { setIsOnline(true); };
+    const handleOffline = () => { setIsOnline(false); };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);

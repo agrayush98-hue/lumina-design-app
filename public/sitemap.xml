@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   SITEMAP — Lumina Design
-  Last updated: 2026-05-09
+  Last updated: 2026-05-11
 
-  IMPORTANT: Replace https://luminadesign.app with your actual production domain.
+  IMPORTANT: Replace https://lumina-design-rho.vercel.app with your actual production domain.
 
   Routes NOT included:
     /dashboard and /app — require authentication, not meaningful for crawlers.
@@ -14,24 +14,24 @@
 
   <!-- Homepage / marketing landing -->
   <url>
-    <loc>https://luminadesign.app/</loc>
-    <lastmod>2026-05-09</lastmod>
+    <loc>https://lumina-design-rho.vercel.app/</loc>
+    <lastmod>2026-05-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Features page -->
   <url>
-    <loc>https://luminadesign.app/features</loc>
-    <lastmod>2026-05-09</lastmod>
+    <loc>https://lumina-design-rho.vercel.app/features</loc>
+    <lastmod>2026-05-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- Pricing page -->
   <url>
-    <loc>https://luminadesign.app/pricing</loc>
-    <lastmod>2026-05-09</lastmod>
+    <loc>https://lumina-design-rho.vercel.app/pricing</loc>
+    <lastmod>2026-05-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

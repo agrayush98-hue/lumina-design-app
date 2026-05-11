@@ -15,7 +15,11 @@
       "Bash(sed -i 's/\"#1a1a1a\"/\"#0f1e2e\"/g' src/App.jsx)",
       "Bash(git push *)",
       "Bash(vercel --prod)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(python3)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Skill(design-shotgun)",
+      "Skill(design-shotgun:*)"
     ]
   }
 }

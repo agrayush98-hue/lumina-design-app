@@ -1,0 +1,74 @@
+name: Code Quality & YC Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Build validation
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
+  yc-technical-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run YC Audit
+        run: node scripts/yc-audit.js
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: yc-audit-report
+          path: yc-audit-report.md
+
+      - name: Print audit summary
+        if: always()
+        run: |
+          echo "=== YC AUDIT SUMMARY ==="
+          grep -E "^##|CRITICAL|HIGH PRIORITY|PASSED" yc-audit-report.md || true
+
+      - name: Fail on critical issues
+        run: |
+          if grep -q "🔴 CRITICAL ISSUES ([^0]" yc-audit-report.md; then
+            echo "❌ Critical issues found — see yc-audit-report.md artifact"
+            exit 1
+          fi
+          echo "✅ No critical issues"

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // ── Design tokens ─────────────────────────────────────────────
@@ -365,6 +366,13 @@ const FAQS = [
 
 export default function PricingPage() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
+    link.rel  = 'canonical'
+    link.href = 'https://lumina-design-rho.vercel.app/pricing'
+    if (!link.parentNode) document.head.appendChild(link)
+  }, [])
 
   return (
     <div style={S.page}>
