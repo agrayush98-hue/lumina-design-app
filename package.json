@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "audit:security": "npm audit",
     "audit:yc": "node scripts/yc-audit.js",
-    "audit:all": "npm run audit:security && npm run audit:yc"
+    "audit:all": "npm run audit:security && npm run audit:yc",
+    "prepare": "husky",
+    "agents": "node scripts/agents/orchestrator.js",
+    "agents:no-open": "node scripts/agents/orchestrator.js --no-open"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -31,6 +34,8 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.4.1",
-    "vite": "^5.4.2"
+    "husky": "^9.1.7",
+    "vite": "^5.4.2",
+    "ws": "^8.20.0"
   }
 }

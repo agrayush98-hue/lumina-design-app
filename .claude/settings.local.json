@@ -19,7 +19,11 @@
       "Bash(python3)",
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Skill(design-shotgun)",
-      "Skill(design-shotgun:*)"
+      "Skill(design-shotgun:*)",
+      "Bash(node scripts/yc-audit.js)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(node -e \"require\\('ws'\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\)\")"
     ]
   }
 }

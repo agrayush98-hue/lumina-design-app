@@ -1,6 +1,6 @@
 # YC Technical Audit Report
-Generated: 2026-05-11 05:01:32 UTC
-Audit score: **83/100 (B)**
+Generated: 2026-05-11 15:33:15 UTC
+Audit score: **82/100 (B)**
 
 ---
 
@@ -8,13 +8,13 @@ Audit score: **83/100 (B)**
 _None — excellent!_
 
 ## 🟠 HIGH PRIORITY (1 found)
-- Firestore operation without .catch() or try/catch — `src/firebase.js:132`
+- Firestore operation without .catch() or try/catch — `src/firebase.js:191`
 
 ## 🟡 MEDIUM PRIORITY (0 found)
 _None_
 
-## 🟢 LOW PRIORITY (9 found)
-- Large file — 3461 lines (max 500) — `src/App.jsx`
+## 🟢 LOW PRIORITY (10 found)
+- Large file — 3473 lines (max 500) — `src/App.jsx`
 - Large file — 1274 lines (max 500) — `src/components/Dashboard.jsx`
 - Large file — 2227 lines (max 500) — `src/components/DesignCanvas.jsx`
 - Large file — 728 lines (max 500) — `src/components/FixtureLibraryModal.jsx`
@@ -23,6 +23,7 @@ _None_
 - Large file — 626 lines (max 500) — `src/components/ReportPanel.jsx`
 - Large file — 752 lines (max 500) — `src/emails/templates.js`
 - Large file — 1103 lines (max 500) — `src/engines_v3.ts`
+- Large file — 715 lines (max 500) — `src/pages/LandingPage.jsx`
 
 ---
 
@@ -46,16 +47,16 @@ _None_
 ## 📊 CODE METRICS
 | Metric | Value |
 |--------|-------|
-| Total files scanned | 71 |
-| Total lines of code | 22,862 |
-| Largest file | `src/App.jsx` (3461 lines) |
-| Files > 500 lines | 9 |
-| API routes | 9 |
+| Total files scanned | 79 |
+| Total lines of code | 23,678 |
+| Largest file | `src/App.jsx` (3473 lines) |
+| Files > 500 lines | 10 |
+| API routes | 10 |
 | API routes without auth | 0 |
 | API routes with wildcard CORS | 0 |
 
 ### Files over 500 lines
-- `src/App.jsx` — 3461 lines
+- `src/App.jsx` — 3473 lines
 - `src/components/Dashboard.jsx` — 1274 lines
 - `src/components/DesignCanvas.jsx` — 2227 lines
 - `src/components/FixtureLibraryModal.jsx` — 728 lines
@@ -64,6 +65,7 @@ _None_
 - `src/components/ReportPanel.jsx` — 626 lines
 - `src/emails/templates.js` — 752 lines
 - `src/engines_v3.ts` — 1103 lines
+- `src/pages/LandingPage.jsx` — 715 lines
 
 ---
 
