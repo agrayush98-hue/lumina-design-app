@@ -19,7 +19,7 @@ let server = null
 const clients = new Set()
 
 export function startServer() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     server = http.createServer((req, res) => {
       if (req.url === '/' || req.url === '/agent-dashboard.html') {
         const html = fs.readFileSync(HTML_PATH, 'utf8')
@@ -36,6 +36,21 @@ export function startServer() {
     wss.on('connection', (ws) => {
       clients.add(ws)
       ws.on('close', () => clients.delete(ws))
+    })
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        // Port busy — kill the stale process and retry once
+        console.warn(`[dashboard] Port ${PORT} in use — retrying in 1s…`)
+        setTimeout(() => {
+          server.close()
+          server = null
+          wss    = null
+          startServer().then(resolve).catch(reject)
+        }, 1000)
+      } else {
+        reject(err)
+      }
     })
 
     server.listen(PORT, () => {
