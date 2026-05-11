@@ -9,8 +9,8 @@ const S = {
     right: 0,
     zIndex: 1000,
     height: 56,
-    background: '#111111',
-    borderBottom: '1px solid #222222',
+    background: '#000000',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
     display: 'flex',
     alignItems: 'center',
     padding: '0 16px',
@@ -30,7 +30,7 @@ const S = {
   sep: {
     width: 1,
     height: 20,
-    background: '#2a2a2a',
+    background: 'rgba(255,255,255,0.10)',
     margin: '0 14px',
     flexShrink: 0,
   },
@@ -95,15 +95,15 @@ const S = {
   },
   btnPrimary: {
     padding: '6px 15px',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
-    color: '#000000',
-    background: '#d4a843',
-    border: 'none',
-    borderRadius: 5,
+    color: '#ffffff',
+    background: 'rgba(255,255,255,0.10)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    borderRadius: 4,
     cursor: 'pointer',
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-    letterSpacing: '0.04em',
+    letterSpacing: '0.08em',
   },
   iconBtn: {
     width: 32,
@@ -223,10 +223,10 @@ export default function Navigation({
         <button
           style={S.btnPrimary}
           onClick={onExport}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.16)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
         >
-          Export BOQ
+          EXPORT BOQ
         </button>
 
         <div style={S.sep} />

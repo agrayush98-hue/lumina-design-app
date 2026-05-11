@@ -7,6 +7,7 @@ import DashboardRoute from './components/DashboardRoute.jsx'
 import LandingPage from './pages/LandingPage.jsx'
 import PricingPage from './pages/PricingPage.jsx'
 import FeaturesPage from './pages/FeaturesPage.jsx'
+import ContactPage  from './pages/ContactPage.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider }   from './components/Toast.jsx'
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/"                 element={<LandingPage />} />
           <Route path="/pricing"          element={<PricingPage />} />
           <Route path="/features"         element={<FeaturesPage />} />
+          <Route path="/contact"          element={<ContactPage />} />
           <Route path="/share/:projectId" element={<SharedView />} />
           <Route path="/dashboard"        element={<DashboardRoute />} />
           <Route path="/app"              element={<App />} />

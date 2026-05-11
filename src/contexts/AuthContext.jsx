@@ -40,11 +40,16 @@ async function dispatchEmail(to, subject, html) {
         'Content-Type': 'application/json',
         ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
       },
-      body: JSON.stringify({ to, subject, html }),
+      body: JSON.stringify({
+        to,
+        subject,
+        html,
+        from: 'Lumina Design <business@lightillumina.com>',
+      }),
     })
     const data = await r.json().catch(() => ({}))
     if (!r.ok) {
-      console.error('[AuthContext] dispatchEmail — Resend rejected (HTTP', r.status + '):', data)
+      console.error('[AuthContext] dispatchEmail — email send failed (HTTP', r.status + '):', data)
     }
   } catch (err) {
     console.error('[AuthContext] dispatchEmail — network error:', err.message)
