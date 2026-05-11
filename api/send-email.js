@@ -29,7 +29,7 @@ const INTERNAL_RECIPIENTS = new Set([
 
 // Contact form always lands here; reply-to is set to submitter's address
 const CONTACT_FORM_RECIPIENT = 'support@lightillumina.com'
-const CONTACT_FORM_FROM      = 'Lumina Contact Form <onboarding@resend.dev>'
+const CONTACT_FORM_FROM      = 'Lumina Contact Form <noreply@lightillumina.com>'
 
 // Default from for authenticated (user) emails
 const USER_EMAIL_FROM = 'Lumina Design <onboarding@resend.dev>'
