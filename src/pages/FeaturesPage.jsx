@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LegalLinkRow } from './legal/LegalLayout.jsx'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 
@@ -178,6 +179,7 @@ export default function FeaturesPage() {
             >{label}</span>
           ))}
         </div>
+        <LegalLinkRow navigate={navigate} />
       </footer>
     </div>
   )

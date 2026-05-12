@@ -35,7 +35,8 @@
       "Bash(node -e \"require\\('@anthropic-ai/sdk'\\)\")",
       "Bash(node --input-type=module -e \"import Anthropic from '@anthropic-ai/sdk'; console.log\\('sdk ok'\\)\")",
       "Bash(rm -rf .husky && rm -rf scripts/agents && rm -f public/agent-dashboard.html && echo \"deleted\")",
-      "Bash(npm prune *)"
+      "Bash(npm prune *)",
+      "Bash(Remove-Item -Force \"C:\\\\Projects\\\\lumina-design-app\\\\.env\" -ErrorAction SilentlyContinue)"
     ]
   }
 }

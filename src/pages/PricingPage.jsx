@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LegalLinkRow } from './legal/LegalLayout.jsx'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 
@@ -72,6 +73,7 @@ function Check() {
 
 export default function PricingPage() {
   const navigate = useNavigate()
+  const [termsAgreed, setTermsAgreed] = useState(false)
 
   useEffect(() => {
     const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
@@ -134,10 +136,12 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <button onClick={() => navigate('/app')}
-            style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: '#ffffff', color: '#000000', border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: FONT, textTransform: 'uppercase' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.88)'}
-            onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
+          <button
+            onClick={() => termsAgreed && navigate('/app')}
+            disabled={!termsAgreed}
+            style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: termsAgreed ? '#ffffff' : 'rgba(255,255,255,0.15)', color: termsAgreed ? '#000000' : 'rgba(255,255,255,0.35)', border: 'none', borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'background 0.15s, color 0.15s' }}
+            onMouseEnter={e => { if (termsAgreed) e.currentTarget.style.background = 'rgba(255,255,255,0.88)' }}
+            onMouseLeave={e => { if (termsAgreed) e.currentTarget.style.background = '#ffffff' }}
           >Get Pro</button>
         </div>
 
@@ -154,12 +158,32 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-          <button onClick={() => navigate('/app')}
-            style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: 'transparent', color: T.text, border: `1px solid ${T.border}`, borderRadius: 4, cursor: 'pointer', fontFamily: FONT, textTransform: 'uppercase' }}
-            onMouseEnter={e => { e.currentTarget.style.background = T.btnGray; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = T.border }}
+          <button
+            onClick={() => termsAgreed && navigate('/app')}
+            disabled={!termsAgreed}
+            style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: 'transparent', color: termsAgreed ? T.text : 'rgba(255,255,255,0.25)', border: `1px solid ${termsAgreed ? T.border : 'rgba(255,255,255,0.06)'}`, borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'color 0.15s, border-color 0.15s' }}
+            onMouseEnter={e => { if (termsAgreed) { e.currentTarget.style.background = T.btnGray; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' } }}
+            onMouseLeave={e => { if (termsAgreed) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = T.border } }}
           >Get Professional</button>
         </div>
+      </div>
+
+      {/* T&C checkbox */}
+      <div style={{ maxWidth: 1040, margin: '-48px auto 64px', padding: '0 32px', display: 'flex', justifyContent: 'center' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+          <input
+            type="checkbox"
+            checked={termsAgreed}
+            onChange={e => setTermsAgreed(e.target.checked)}
+            style={{ width: 15, height: 15, accentColor: '#ffffff', cursor: 'pointer', flexShrink: 0 }}
+          />
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
+            I agree to the{' '}
+            <span onClick={() => navigate('/terms')} style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'underline', cursor: 'pointer' }}>Terms &amp; Conditions</span>
+            {' '}and{' '}
+            <span onClick={() => navigate('/privacy')} style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
+          </span>
+        </label>
       </div>
 
       {/* FAQ */}
@@ -187,6 +211,7 @@ export default function PricingPage() {
             >{label}</span>
           ))}
         </div>
+        <LegalLinkRow navigate={navigate} />
       </footer>
     </div>
   )
