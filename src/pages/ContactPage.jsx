@@ -77,7 +77,6 @@ export default function ContactPage() {
     description: 'Have a question about Lumina Design? Contact our team for support, billing enquiries, or feature requests. We respond within 2 business days.',
     canonical:   'https://app.lightillumina.com/contact',
   })
-  }, [])
 
   function set(field) {
     return e => setForm(f => ({ ...f, [field]: e.target.value }))
