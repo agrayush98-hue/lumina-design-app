@@ -2,8 +2,8 @@
 // Required env vars: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
 
 const PLAN_AMOUNTS = {
-  pro:          117900, // ₹1,179 in paise
-  professional: 294900, // ₹2,949 in paise
+  pro:          99900,  // ₹999 in paise
+  professional: 149900, // ₹1,499 in paise
 }
 
 const ALLOWED_ORIGINS = [

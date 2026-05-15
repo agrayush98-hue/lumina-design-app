@@ -59,7 +59,7 @@ const PLANS = [
       { text: "All standard fixtures",            highlight: true },
       { text: "Email support",                    highlight: false },
     ],
-    amountPaise: 117900,
+    amountPaise: 99900,
   },
   {
     id: "professional",

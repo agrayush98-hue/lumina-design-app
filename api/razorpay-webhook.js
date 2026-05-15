@@ -46,8 +46,8 @@ function extractPlanId(payload) {
 
   // Last resort: infer from amount
   const amount = payload?.payload?.payment?.entity?.amount ?? 0
-  if (amount >= 294900) return 'professional'
-  if (amount >= 117900) return 'pro'
+  if (amount >= 149900) return 'professional'
+  if (amount >= 99900)  return 'pro'
   return null
 }
 
