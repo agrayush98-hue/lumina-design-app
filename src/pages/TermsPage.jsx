@@ -50,7 +50,7 @@ export default function TermsPage() {
         <Ul items={[
           'Free: ₹0/month — limited to 3 projects and 5 AI calls per month',
           'Pro: ₹1,179/month — 10 projects, 50 AI calls, DALI planning, Excel export',
-          'Professional: ₹2,949/month — unlimited projects, 200 AI calls, branded reports',
+          'Professional: ₹1,499/month — unlimited projects, 200 AI calls, branded reports',
         ]} />
         <P><strong style={{ color: '#ffffff' }}>Free Trial:</strong> New accounts receive a 14-day trial with Pro-level access. No credit card is required for the trial. At the end of the trial period, the account automatically reverts to the Free plan unless a paid subscription is activated.</P>
         <P><strong style={{ color: '#ffffff' }}>Auto-Renewal:</strong> Paid subscriptions renew automatically at the end of each monthly billing cycle. You will be charged the subscription fee on the renewal date using the payment method on file. You may cancel auto-renewal at any time from your account dashboard.</P>

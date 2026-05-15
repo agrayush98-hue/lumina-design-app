@@ -78,7 +78,7 @@ export default function PricingPage() {
 
   useSEO({
     title:       'Pricing — Lumina Design | Free, Pro & Professional Plans',
-    description: 'Start free forever. Upgrade to Pro (₹1,179/mo) or Professional (₹2,949/mo) for more projects, AI calls, DALI planning, and branded exports. 14-day free trial.',
+    description: 'Start free forever. Upgrade to Pro (₹1,179/mo) or Professional (₹1,499/mo) for more projects, AI calls, DALI planning, and branded exports. 14-day free trial.',
     canonical:   'https://app.lightillumina.com/pricing',
   })
 
@@ -147,7 +147,7 @@ export default function PricingPage() {
         {/* Professional */}
         <div style={{ flex: '1 1 280px', padding: '40px 32px', background: T.cardBg, display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', color: T.muted, textTransform: 'uppercase', marginBottom: 20 }}>Professional</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>₹2,949</div>
+          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>₹1,499</div>
           <div style={{ fontSize: 13, color: T.muted, marginBottom: 32 }}>/month · billed monthly</div>
           <hr style={{ border: 'none', borderTop: `1px solid ${T.border}`, marginBottom: 28 }} />
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', flex: 1 }}>

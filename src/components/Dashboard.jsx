@@ -64,7 +64,7 @@ const PLANS = [
   {
     id: "professional",
     name: "PROFESSIONAL",
-    price: "₹2,949",
+    price: "₹1,499",
     period: "/month",
     features: [
       { text: "Unlimited projects & rooms",             highlight: true },
@@ -77,7 +77,7 @@ const PLANS = [
       { text: "Project folders",                        highlight: true },
       { text: "Priority email support",                 highlight: true },
     ],
-    amountPaise: 294900,
+    amountPaise: 149900,
   },
 ]
 

@@ -12,7 +12,7 @@ const COMPARISON = [
   { feature: 'BOQ / Excel export',     lumina: 'Yes (Pro/Professional)',    dialux: 'Limited' },
   { feature: 'Floor plan upload',      lumina: 'PNG, JPG, PDF',            dialux: 'DWG/DXF (AutoCAD required)' },
   { feature: 'AI fixture recommender', lumina: 'Yes',                      dialux: 'No' },
-  { feature: 'Pricing (INR)',          lumina: 'Free / ₹1,179 / ₹2,949 per month', dialux: 'Free (but Windows-only)' },
+  { feature: 'Pricing (INR)',          lumina: 'Free / ₹1,179 / ₹1,499 per month', dialux: 'Free (but Windows-only)' },
   { feature: 'Mobile / tablet use',    lumina: 'Yes (responsive web)',     dialux: 'No' },
   { feature: 'Cloud project storage',  lumina: 'Yes — all projects synced', dialux: 'Local files only' },
   { feature: 'Collaboration',          lumina: 'Share project via URL',    dialux: 'Email files manually' },

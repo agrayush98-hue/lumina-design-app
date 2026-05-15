@@ -392,7 +392,7 @@ export function emailTrialExpired({ name }) {
               <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;
                          font-size:10px;font-weight:700;color:#888888;letter-spacing:0.12em;">PROFESSIONAL</p>
               <p style="margin:0 0 8px 0;">
-                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;">₹2,949</span>
+                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;">₹1,499</span>
                 <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#555555;">/mo</span>
               </p>
               <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#666666;">Unlimited projects</p>

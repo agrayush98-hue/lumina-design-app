@@ -16,7 +16,7 @@ Lumina Design is a professional web application that provides real-time lux calc
 
 - **Free**: ₹0/month — 3 projects, 5 AI calls/month, PDF export
 - **Pro**: ₹1,179/month — 10 projects, 50 AI calls/month, DALI planning, Excel export
-- **Professional**: ₹2,949/month — unlimited projects, 200 AI calls/month, branded reports
+- **Professional**: ₹1,499/month — unlimited projects, 200 AI calls/month, branded reports
 - **Free Trial**: 14 days of Pro-level access. No credit card required.
 
 ## Target Users
