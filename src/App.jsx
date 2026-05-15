@@ -1215,7 +1215,13 @@ export default function App() {
     const newCustom  = []
     const existing   = lights ?? []
     for (const { fixture, quantity } of zones) {
-      allLights.push(...placeFixtureGroup(fixture, quantity, id, [...existing, ...allLights]))
+      // Each zone is placed independently against only the user's pre-existing lights.
+      // We deliberately do NOT pass allLights from previous zones here — different
+      // fixture types (downlights, strips, spots) are at different ceiling heights in
+      // 3D and don't collide. Passing allLights caused zone 2+ to share the same
+      // computed grid positions as zone 1 (d=0), triggering the overlap check and
+      // silently dropping most fixtures from later zones.
+      allLights.push(...placeFixtureGroup(fixture, quantity, id, existing))
       id += quantity + 1
       newCustom.push(fixture)
     }
