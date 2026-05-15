@@ -7,11 +7,17 @@ import DashboardRoute from './components/DashboardRoute.jsx'
 import LandingPage from './pages/LandingPage.jsx'
 import PricingPage from './pages/PricingPage.jsx'
 import FeaturesPage from './pages/FeaturesPage.jsx'
-import ContactPage       from './pages/ContactPage.jsx'
-import TermsPage         from './pages/TermsPage.jsx'
-import PrivacyPage       from './pages/PrivacyPage.jsx'
-import RefundPage        from './pages/RefundPage.jsx'
-import CancellationPage  from './pages/CancellationPage.jsx'
+import ContactPage            from './pages/ContactPage.jsx'
+import TermsPage              from './pages/TermsPage.jsx'
+import PrivacyPage            from './pages/PrivacyPage.jsx'
+import RefundPage             from './pages/RefundPage.jsx'
+import CancellationPage       from './pages/CancellationPage.jsx'
+import FeatureDetailPage      from './pages/features/FeatureDetailPage.jsx'
+import SolutionPage           from './pages/solutions/SolutionPage.jsx'
+import DiaLuxAlternativePage  from './pages/compare/DiaLuxAlternativePage.jsx'
+import LuxCalculatorPage      from './pages/tools/LuxCalculatorPage.jsx'
+import BlogIndexPage          from './pages/blog/BlogIndexPage.jsx'
+import BlogPostPage           from './pages/blog/BlogPostPage.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider }   from './components/Toast.jsx'
@@ -50,8 +56,19 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/terms"            element={<TermsPage />} />
           <Route path="/privacy"          element={<PrivacyPage />} />
           <Route path="/refund"           element={<RefundPage />} />
-          <Route path="/cancellation"     element={<CancellationPage />} />
-          <Route path="/share/:projectId" element={<SharedView />} />
+          <Route path="/cancellation"                   element={<CancellationPage />} />
+          {/* Feature sub-pages */}
+          <Route path="/features/:slug"               element={<FeatureDetailPage />} />
+          {/* Solutions pages */}
+          <Route path="/solutions/:slug"              element={<SolutionPage />} />
+          {/* Comparison pages */}
+          <Route path="/compare/dialux-alternative"   element={<DiaLuxAlternativePage />} />
+          {/* Tool pages */}
+          <Route path="/tools/lux-calculator"         element={<LuxCalculatorPage />} />
+          {/* Blog */}
+          <Route path="/blog"                         element={<BlogIndexPage />} />
+          <Route path="/blog/:slug"                   element={<BlogPostPage />} />
+          <Route path="/share/:projectId"             element={<SharedView />} />
           <Route path="/dashboard"        element={<DashboardRoute />} />
           <Route path="/app"              element={<App />} />
           <Route path="*"                 element={<App />} />

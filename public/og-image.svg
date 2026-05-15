@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+
+    <!-- Background glow (right side) -->
+    <radialGradient id="bgGlow" cx="80%" cy="50%" r="35%">
+      <stop offset="0%"   stop-color="#D4A843" stop-opacity="0.07"/>
+      <stop offset="60%"  stop-color="#D4A843" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Fixture radial gradients -->
+    
+  <radialGradient id="fg0" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg1" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg2" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg3" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg4" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg5" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg6" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg7" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg8" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg9" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg10" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg11" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg12" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg13" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg14" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg15" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg16" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg17" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg18" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg19" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg20" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg21" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg22" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg23" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg24" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg25" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg26" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg27" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg28" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="fg29" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFDC78" stop-opacity="0.22"/>
+    <stop offset="25%"  stop-color="#D4A843" stop-opacity="0.12"/>
+    <stop offset="60%"  stop-color="#B48C3C" stop-opacity="0.05"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+  </radialGradient>
+
+    <!-- Right panel fade -->
+    <linearGradient id="rightFade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Vertical accent line -->
+    <linearGradient id="accentLine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#D4A843" stop-opacity="0"/>
+      <stop offset="20%"  stop-color="#D4A843" stop-opacity="0.5"/>
+      <stop offset="80%"  stop-color="#D4A843" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#D4A843" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Tagline divider -->
+    <linearGradient id="divider" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="70%"  stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Clip for right panel fade -->
+    <clipPath id="rightClip">
+      <rect x="680" y="0" width="520" height="630"/>
+    </clipPath>
+
+  </defs>
+
+  <!-- Black background -->
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Background glow -->
+  <rect width="1200" height="630" fill="url(#bgGlow)"/>
+
+  <!-- Room outline (faint) -->
+  <rect x="700" y="60" width="440" height="510"
+    fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+
+  <!-- Fixture glows -->
+  
+  <ellipse cx="755" cy="115" rx="90" ry="90" fill="url(#fg0)"/>
+  <ellipse cx="837.5" cy="115" rx="90" ry="90" fill="url(#fg1)"/>
+  <ellipse cx="920" cy="115" rx="90" ry="90" fill="url(#fg2)"/>
+  <ellipse cx="1002.5" cy="115" rx="90" ry="90" fill="url(#fg3)"/>
+  <ellipse cx="1085" cy="115" rx="90" ry="90" fill="url(#fg4)"/>
+  <ellipse cx="755" cy="195" rx="90" ry="90" fill="url(#fg5)"/>
+  <ellipse cx="837.5" cy="195" rx="90" ry="90" fill="url(#fg6)"/>
+  <ellipse cx="920" cy="195" rx="90" ry="90" fill="url(#fg7)"/>
+  <ellipse cx="1002.5" cy="195" rx="90" ry="90" fill="url(#fg8)"/>
+  <ellipse cx="1085" cy="195" rx="90" ry="90" fill="url(#fg9)"/>
+  <ellipse cx="755" cy="275" rx="90" ry="90" fill="url(#fg10)"/>
+  <ellipse cx="837.5" cy="275" rx="90" ry="90" fill="url(#fg11)"/>
+  <ellipse cx="920" cy="275" rx="90" ry="90" fill="url(#fg12)"/>
+  <ellipse cx="1002.5" cy="275" rx="90" ry="90" fill="url(#fg13)"/>
+  <ellipse cx="1085" cy="275" rx="90" ry="90" fill="url(#fg14)"/>
+  <ellipse cx="755" cy="355" rx="90" ry="90" fill="url(#fg15)"/>
+  <ellipse cx="837.5" cy="355" rx="90" ry="90" fill="url(#fg16)"/>
+  <ellipse cx="920" cy="355" rx="90" ry="90" fill="url(#fg17)"/>
+  <ellipse cx="1002.5" cy="355" rx="90" ry="90" fill="url(#fg18)"/>
+  <ellipse cx="1085" cy="355" rx="90" ry="90" fill="url(#fg19)"/>
+  <ellipse cx="755" cy="435" rx="90" ry="90" fill="url(#fg20)"/>
+  <ellipse cx="837.5" cy="435" rx="90" ry="90" fill="url(#fg21)"/>
+  <ellipse cx="920" cy="435" rx="90" ry="90" fill="url(#fg22)"/>
+  <ellipse cx="1002.5" cy="435" rx="90" ry="90" fill="url(#fg23)"/>
+  <ellipse cx="1085" cy="435" rx="90" ry="90" fill="url(#fg24)"/>
+  <ellipse cx="755" cy="515" rx="90" ry="90" fill="url(#fg25)"/>
+  <ellipse cx="837.5" cy="515" rx="90" ry="90" fill="url(#fg26)"/>
+  <ellipse cx="920" cy="515" rx="90" ry="90" fill="url(#fg27)"/>
+  <ellipse cx="1002.5" cy="515" rx="90" ry="90" fill="url(#fg28)"/>
+  <ellipse cx="1085" cy="515" rx="90" ry="90" fill="url(#fg29)"/>
+
+  <!-- Contour rings -->
+  
+  <ellipse cx="755" cy="115" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="115" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="115" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="115" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="115" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="115" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="115" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="115" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="115" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="115" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="115" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="115" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="115" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="115" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="115" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="195" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="195" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="195" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="195" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="195" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="195" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="195" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="195" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="195" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="195" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="195" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="195" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="195" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="195" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="195" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="275" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="275" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="275" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="275" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="275" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="275" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="275" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="275" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="275" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="275" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="275" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="275" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="275" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="275" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="275" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="355" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="355" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="355" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="355" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="355" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="355" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="355" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="355" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="355" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="355" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="355" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="355" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="355" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="355" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="355" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="435" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="435" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="435" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="435" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="435" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="435" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="435" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="435" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="435" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="435" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="435" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="435" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="435" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="435" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="435" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="515" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="515" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="755" cy="515" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="515" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="515" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="837.5" cy="515" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="515" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="515" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="920" cy="515" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="515" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="515" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1002.5" cy="515" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="515" rx="28" ry="22"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="515" rx="56" ry="44"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+  <ellipse cx="1085" cy="515" rx="84" ry="66"
+    fill="none" stroke="#D4A843" stroke-opacity="0.06" stroke-width="0.8"/>
+
+  <!-- Fixture dots -->
+  
+  <circle cx="755" cy="115" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="115" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="115" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="115" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="115" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="115" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="115" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="115" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="115" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="115" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="755" cy="195" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="195" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="195" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="195" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="195" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="195" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="195" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="195" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="195" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="195" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="755" cy="275" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="275" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="275" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="275" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="275" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="275" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="275" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="275" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="275" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="275" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="755" cy="355" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="355" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="355" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="355" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="355" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="355" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="355" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="355" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="355" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="355" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="755" cy="435" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="435" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="435" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="435" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="435" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="435" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="435" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="435" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="435" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="435" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="755" cy="515" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="755" cy="515" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="837.5" cy="515" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="837.5" cy="515" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="920" cy="515" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="920" cy="515" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1002.5" cy="515" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1002.5" cy="515" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+  <circle cx="1085" cy="515" r="5" fill="#D4A843" fill-opacity="0.18"/>
+  <circle cx="1085" cy="515" r="2" fill="#FFE68C" fill-opacity="0.75"/>
+
+  <!-- Right-panel fade overlay -->
+  <rect x="680" y="0" width="40" height="630" fill="url(#rightFade)"/>
+
+  <!-- Vertical accent line -->
+  <line x1="88" y1="100" x2="88" y2="530" stroke="url(#accentLine)" stroke-width="1"/>
+
+  <!-- Category label -->
+  <text x="118" y="178"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="14" font-weight="600" fill="#D4A843" fill-opacity="0.7"
+    letter-spacing="2">LIGHTING DESIGN SOFTWARE</text>
+
+  <!-- LUMINA -->
+  <text x="118" y="300"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="118" font-weight="700" fill="#ffffff"
+    letter-spacing="-2">LUMINA</text>
+
+  <!-- DESIGN (amber) -->
+  <text x="118" y="415"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="118" font-weight="700" fill="#D4A843"
+    letter-spacing="-2">DESIGN</text>
+
+  <!-- Divider -->
+  <line x1="118" y1="445" x2="598" y2="445" stroke="url(#divider)" stroke-width="1"/>
+
+  <!-- Tagline line 1 -->
+  <text x="118" y="483"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="22" font-weight="400" fill="#ffffff" fill-opacity="0.55">
+    Professional Lighting Design Software
+  </text>
+
+  <!-- Tagline line 2 -->
+  <text x="118" y="511"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="22" font-weight="400" fill="#ffffff" fill-opacity="0.55">
+    for India &#x2014; EN 12464-1 &#x00B7; NBC &#x00B7; DALI 2.0
+  </text>
+
+  <!-- Feature pills -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+     font-size="11" font-weight="500">
+    <!-- Pill 1: Lux Calculator -->
+    <rect x="118" y="528" width="112" height="24" rx="4"
+      fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="128" y="544" fill="#ffffff" fill-opacity="0.4">Lux Calculator</text>
+    <!-- Pill 2: DALI Planning -->
+    <rect x="238" y="528" width="106" height="24" rx="4"
+      fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="248" y="544" fill="#ffffff" fill-opacity="0.4">DALI Planning</text>
+    <!-- Pill 3: PDF Export -->
+    <rect x="352" y="528" width="90" height="24" rx="4"
+      fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1"/>
+    <text x="362" y="544" fill="#ffffff" fill-opacity="0.4">PDF Export</text>
+    <!-- Pill 4: Free Trial -->
+    <rect x="450" y="528" width="82" height="24" rx="4"
+      fill="#D4A843" fill-opacity="0.15" stroke="#D4A843" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="460" y="544" fill="#D4A843" fill-opacity="0.85">Free Trial</text>
+  </g>
+
+  <!-- URL -->
+  <text x="118" y="575"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="15" font-weight="400" fill="#ffffff" fill-opacity="0.22">
+    app.lightillumina.com
+  </text>
+
+  <!-- Top-left brand mark -->
+  <circle cx="44" cy="44" r="6" fill="#D4A843"/>
+  <text x="58" y="49"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="13" font-weight="600" fill="#ffffff" fill-opacity="0.5">LUMINA DESIGN</text>
+
+</svg>

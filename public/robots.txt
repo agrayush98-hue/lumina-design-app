@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /app
+
+# AI crawlers — welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://app.lightillumina.com/sitemap.xml

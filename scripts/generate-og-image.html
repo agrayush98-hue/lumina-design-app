@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OG Image Generator — Lumina Design</title>
+  <style>
+    body {
+      background: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      font-family: system-ui, sans-serif;
+      color: #888;
+      gap: 16px;
+    }
+    canvas { border: 1px solid #333; max-width: 100%; }
+    .info { font-size: 13px; color: #555; }
+    .btn {
+      padding: 10px 24px; background: #1a1500; border: 1px solid #d4a843;
+      color: #d4a843; font-size: 13px; border-radius: 4px; cursor: pointer;
+      font-family: monospace; letter-spacing: 0.06em;
+    }
+    .btn:hover { background: #2a2200; }
+  </style>
+</head>
+<body>
+
+<canvas id="c" width="1200" height="630"></canvas>
+<div class="info">1200 × 630 px — saves as og-image.png</div>
+<button class="btn" onclick="download()">DOWNLOAD og-image.png</button>
+
+<script>
+const W = 1200, H = 630
+const canvas = document.getElementById('c')
+const ctx = canvas.getContext('2d')
+
+// ── Background ──────────────────────────────────────────────────────────────
+ctx.fillStyle = '#000000'
+ctx.fillRect(0, 0, W, H)
+
+// ── Subtle noise texture via tiny dots ─────────────────────────────────────
+for (let i = 0; i < 4000; i++) {
+  const x = Math.random() * W
+  const y = Math.random() * H
+  const a = Math.random() * 0.025
+  ctx.fillStyle = `rgba(255,255,255,${a})`
+  ctx.fillRect(x, y, 1, 1)
+}
+
+// ── Right-side ambient glow (warm backdrop) ─────────────────────────────────
+const bgGlow = ctx.createRadialGradient(960, 315, 0, 960, 315, 420)
+bgGlow.addColorStop(0,   'rgba(212,168,67,0.07)')
+bgGlow.addColorStop(0.6, 'rgba(212,168,67,0.03)')
+bgGlow.addColorStop(1,   'rgba(0,0,0,0)')
+ctx.fillStyle = bgGlow
+ctx.fillRect(0, 0, W, H)
+
+// ── Right panel: room + fixture heatmap ────────────────────────────────────
+// Room boundary (faint)
+const roomX = 700, roomY = 60, roomW = 440, roomH = 510
+ctx.strokeStyle = 'rgba(255,255,255,0.06)'
+ctx.lineWidth = 1
+ctx.strokeRect(roomX, roomY, roomW, roomH)
+
+// Grid of fixture positions inside the room
+const cols = 5, rows = 6
+const padX = 55, padY = 55
+const stepX = (roomW - padX * 2) / (cols - 1)
+const stepY = (roomH - padY * 2) / (rows - 1)
+
+const fixtures = []
+for (let r = 0; r < rows; r++) {
+  for (let c = 0; c < cols; c++) {
+    fixtures.push([
+      roomX + padX + c * stepX,
+      roomY + padY + r * stepY,
+    ])
+  }
+}
+
+// Draw overlapping radial gradients → heatmap effect
+fixtures.forEach(([fx, fy]) => {
+  const radius = 90
+  const grd = ctx.createRadialGradient(fx, fy, 0, fx, fy, radius)
+  grd.addColorStop(0,    'rgba(255,220,120,0.22)')
+  grd.addColorStop(0.25, 'rgba(212,168,67,0.12)')
+  grd.addColorStop(0.6,  'rgba(180,140,60,0.05)')
+  grd.addColorStop(1,    'rgba(0,0,0,0)')
+  ctx.fillStyle = grd
+  ctx.beginPath()
+  ctx.arc(fx, fy, radius, 0, Math.PI * 2)
+  ctx.fill()
+})
+
+// Fixture dots (small circles with glow)
+fixtures.forEach(([fx, fy]) => {
+  // outer ring
+  ctx.beginPath()
+  ctx.arc(fx, fy, 5, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(212,168,67,0.18)'
+  ctx.fill()
+  // center dot
+  ctx.beginPath()
+  ctx.arc(fx, fy, 2, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(255,230,140,0.75)'
+  ctx.fill()
+})
+
+// Floor lux contour lines (concentric ellipses per fixture — simplified)
+ctx.save()
+ctx.strokeStyle = 'rgba(212,168,67,0.06)'
+ctx.lineWidth = 0.8
+for (let r = 0; r < rows; r++) {
+  for (let c = 0; c < cols; c++) {
+    const [fx, fy] = fixtures[r * cols + c]
+    for (let ring = 1; ring <= 3; ring++) {
+      ctx.beginPath()
+      ctx.ellipse(fx, fy, ring * 28, ring * 22, 0, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+  }
+}
+ctx.restore()
+
+// Right-panel edge fade (gradient over room toward center)
+const rightFade = ctx.createLinearGradient(680, 0, 720, 0)
+rightFade.addColorStop(0, 'rgba(0,0,0,1)')
+rightFade.addColorStop(1, 'rgba(0,0,0,0)')
+ctx.fillStyle = rightFade
+ctx.fillRect(0, 0, 720, H)
+
+// Left-panel edge fade (right edge of left panel)
+// (already handled by right fade — left content area is 0..680)
+
+// ── Vertical accent line ────────────────────────────────────────────────────
+const lineGrad = ctx.createLinearGradient(88, 100, 88, 530)
+lineGrad.addColorStop(0,   'rgba(212,168,67,0)')
+lineGrad.addColorStop(0.2, 'rgba(212,168,67,0.5)')
+lineGrad.addColorStop(0.8, 'rgba(212,168,67,0.5)')
+lineGrad.addColorStop(1,   'rgba(212,168,67,0)')
+ctx.strokeStyle = lineGrad
+ctx.lineWidth = 1
+ctx.beginPath()
+ctx.moveTo(88, 100)
+ctx.lineTo(88, 530)
+ctx.stroke()
+
+// ── Typography ──────────────────────────────────────────────────────────────
+const LEFT = 118
+
+// Category label
+ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = 'rgba(212,168,67,0.7)'
+ctx.fillText('LIGHTING DESIGN SOFTWARE', LEFT, 178)
+
+// LUMINA — bold white
+ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = '#ffffff'
+ctx.fillText('LUMINA', LEFT, 300)
+
+// DESIGN — amber accent
+ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = '#d4a843'
+ctx.fillText('DESIGN', LEFT, 416)
+
+// Thin divider
+const divGrad = ctx.createLinearGradient(LEFT, 0, LEFT + 360, 0)
+divGrad.addColorStop(0,   'rgba(255,255,255,0.20)')
+divGrad.addColorStop(0.7, 'rgba(255,255,255,0.08)')
+divGrad.addColorStop(1,   'rgba(255,255,255,0)')
+ctx.strokeStyle = divGrad
+ctx.lineWidth = 1
+ctx.beginPath()
+ctx.moveTo(LEFT, 445)
+ctx.lineTo(LEFT + 480, 445)
+ctx.stroke()
+
+// Tagline
+ctx.font = '400 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = 'rgba(255,255,255,0.55)'
+ctx.fillText('Professional Lighting Design Software', LEFT, 484)
+ctx.fillText('for India — EN 12464-1 · NBC · DALI 2.0', LEFT, 512)
+
+// URL
+ctx.font = '400 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = 'rgba(255,255,255,0.22)'
+ctx.fillText('app.lightillumina.com', LEFT, 575)
+
+// ── Feature pills ───────────────────────────────────────────────────────────
+function pill(label, x, y) {
+  const pad = 10, h = 24
+  ctx.font = '500 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+  const tw = ctx.measureText(label).width
+  const w  = tw + pad * 2
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.roundRect(x, y - h + 6, w, h, 4)
+  ctx.stroke()
+  ctx.fillStyle = 'rgba(255,255,255,0.05)'
+  ctx.fill()
+
+  ctx.fillStyle = 'rgba(255,255,255,0.40)'
+  ctx.fillText(label, x + pad, y)
+  return w + 8
+}
+
+// Draw pills row
+let px = LEFT
+const pills = ['Lux Calculator', 'DALI Planning', 'PDF Export', 'Free Trial']
+const pillY = 543
+pills.forEach(p => { px += pill(p, px, pillY) })
+
+// ── Top-left brand mark (small dot + "LUMINA") ─────────────────────────────
+ctx.beginPath()
+ctx.arc(44, 44, 6, 0, Math.PI * 2)
+ctx.fillStyle = '#d4a843'
+ctx.fill()
+
+ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial'
+ctx.fillStyle = 'rgba(255,255,255,0.5)'
+ctx.fillText('LUMINA DESIGN', 58, 49)
+
+// Done
+console.log('Canvas rendered.')
+
+// ── Auto-download ───────────────────────────────────────────────────────────
+function download() {
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'og-image.png'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, 'image/png')
+}
+
+// Auto-trigger after 800ms so canvas renders first
+setTimeout(download, 800)
+</script>
+</body>
+</html>

@@ -1075,7 +1075,20 @@ export default function App() {
     // Cap wall offset to 20% of smaller room dimension
     const rawWallOff = aiRoomGeom().wallOff
     const wallOff    = Math.min(rawWallOff, RPX_W * 0.2, RPX_H * 0.2)
-    const n   = Math.max(1, quantity)
+
+    // ── Bug fix 3: LED_STRIP / COVE_LIGHT auto-expand quantity ───────────────
+    // AI says "quantity: 1" meaning "one continuous strip around the room" but
+    // we place individual points — expand to cover the perimeter properly.
+    const isStripType = fixture.category === "LED_STRIP" || fixture.category === "COVE_LIGHT"
+    let n = Math.max(1, quantity)
+    let effectivePlacement = fixture.placement ?? "grid"
+    if (isStripType) {
+      effectivePlacement = "perimeter"  // always perimeter for strips
+      const perimMm   = 2 * (RPX_W + RPX_H) / Math.max(pxPerMm, 0.001)
+      const autoCount = Math.round(perimMm / 700)  // 1 point per ~700mm of perimeter
+      n = Math.min(Math.max(n, autoCount, 8), 48)  // at least 8 points, cap at 48
+    }
+
     let   id  = startId ?? Date.now()
     const out = []
 
@@ -1083,18 +1096,24 @@ export default function App() {
     const minX = RX + wallOff, maxX = RX + RPX_W - wallOff
     const minY = RY + wallOff, maxY = RY + RPX_H - wallOff
 
-    // Overlap check: 0.5m minimum spacing between any two fixtures
-    const minSpacingPx = 500 * pxPerMm  // 500mm = 0.5m
-    const overlapR2    = minSpacingPx > 0 ? minSpacingPx ** 2 : -1  // -1 disables check if pxPerMm=0
-    const allSoFar     = [...existingLights]  // reference; out grows as we place
+    // ── Bug fix 1 & 2: two separate thresholds ────────────────────────────────
+    // existingLights (user lights + other AI zones): 50mm exact-overlap only.
+    //   Previously used 500mm which silently dropped fixtures whenever a user
+    //   light was anywhere near a calculated grid position, and caused Apply All
+    //   to block later zones from placing near earlier zones.
+    // out (same batch, same zone): 200mm to prevent actual visual stacking
+    //   of fixtures within the same placement call.
+    const exactPx2 = Math.max(1, (50  * pxPerMm) ** 2)
+    const batchPx2 = Math.max(1, (200 * pxPerMm) ** 2)
 
     function tooClose(x, y) {
-      let minDist2 = Infinity
-      for (const l of [...allSoFar, ...out]) {
+      for (const l of existingLights) {
         const dx = (l.x ?? 0) - x, dy = (l.y ?? 0) - y
-        const d2 = dx * dx + dy * dy
-        if (d2 < minDist2) minDist2 = d2
-        if (d2 < overlapR2) return true
+        if (dx * dx + dy * dy < exactPx2) return true
+      }
+      for (const l of out) {
+        const dx = (l.x ?? 0) - x, dy = (l.y ?? 0) - y
+        if (dx * dx + dy * dy < batchPx2) return true
       }
       return false
     }
@@ -1107,11 +1126,12 @@ export default function App() {
 
     const isPerimeter = fixture.category === "WALL_WASHER"
       || fixture.category === "LED_STRIP"
-      || fixture.placement === "perimeter"
-      || fixture.placement === "corners"
+      || fixture.category === "COVE_LIGHT"
+      || effectivePlacement === "perimeter"
+      || effectivePlacement === "corners"
 
-    const isSideWalls = fixture.placement === "side-walls"
-    const isCorners   = fixture.placement === "corners"
+    const isSideWalls = effectivePlacement === "side-walls"
+    const isCorners   = effectivePlacement === "corners"
 
     if (isCorners) {
       // Place one in each corner (at wallOff inset)

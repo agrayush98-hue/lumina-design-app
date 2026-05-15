@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import LegalLayout, { Section, P, Ul, Highlight } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 export default function TermsPage() {
-  useEffect(() => {
-    document.title = 'Terms & Conditions — Lumina Design'
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel = 'canonical'; link.href = 'https://lumina-design-rho.vercel.app/terms'
-    if (!link.parentNode) document.head.appendChild(link)
-  }, [])
+  useSEO({
+    title:     'Terms & Conditions — Lumina Design',
+    description: 'Terms & Conditions governing your use of Lumina Design lighting design software. Governed by Indian law, jurisdiction in Bengaluru.',
+    canonical: 'https://app.lightillumina.com/terms',
+  })
 
   return (
     <LegalLayout

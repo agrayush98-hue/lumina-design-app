@@ -1,39 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  SITEMAP — Lumina Design
-  Last updated: 2026-05-11
-
-  IMPORTANT: Replace https://lumina-design-rho.vercel.app with your actual production domain.
-
-  Routes NOT included:
-    /dashboard and /app — require authentication, not meaningful for crawlers.
-    /share/:projectId   — dynamic; submit individual share URLs separately if
-                          you build a public project gallery page.
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- Homepage / marketing landing -->
-  <url>
-    <loc>https://lumina-design-rho.vercel.app/</loc>
-    <lastmod>2026-05-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
+  <!-- Core marketing pages -->
+  <url><loc>https://app.lightillumina.com/</loc><lastmod>2026-05-15</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://app.lightillumina.com/features</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://app.lightillumina.com/pricing</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://app.lightillumina.com/contact</loc><lastmod>2026-05-15</lastmod><changefreq>yearly</changefreq><priority>0.6</priority></url>
 
-  <!-- Features page -->
-  <url>
-    <loc>https://lumina-design-rho.vercel.app/features</loc>
-    <lastmod>2026-05-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!-- Feature sub-pages -->
+  <url><loc>https://app.lightillumina.com/features/lux-calculation</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/features/dali-planning</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/features/heat-map</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://app.lightillumina.com/features/floor-plan-upload</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://app.lightillumina.com/features/pdf-excel-export</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
 
-  <!-- Pricing page -->
-  <url>
-    <loc>https://lumina-design-rho.vercel.app/pricing</loc>
-    <lastmod>2026-05-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!-- Solutions pages -->
+  <url><loc>https://app.lightillumina.com/solutions/offices</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/solutions/warehouses</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/solutions/hospitals</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://app.lightillumina.com/solutions/retail</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://app.lightillumina.com/solutions/classrooms</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- Blog -->
+  <url><loc>https://app.lightillumina.com/blog</loc><lastmod>2026-05-15</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/blog/how-to-calculate-lux-for-office-lighting</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/blog/en-12464-1-lux-requirements-complete-table</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://app.lightillumina.com/blog/dali-2-explained-addressing-bus-load-driver-scheduling</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- Tool pages -->
+  <url><loc>https://app.lightillumina.com/tools/lux-calculator</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+
+  <!-- Comparison pages -->
+  <url><loc>https://app.lightillumina.com/compare/dialux-alternative</loc><lastmod>2026-05-15</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+
+  <!-- Legal pages -->
+  <url><loc>https://app.lightillumina.com/terms</loc><lastmod>2026-05-15</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://app.lightillumina.com/privacy</loc><lastmod>2026-05-15</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://app.lightillumina.com/refund</loc><lastmod>2026-05-15</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://app.lightillumina.com/cancellation</loc><lastmod>2026-05-15</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>
 
 </urlset>

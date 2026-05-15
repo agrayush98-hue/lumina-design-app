@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LegalLinkRow } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 const MONO = "'SF Mono', 'Fira Code', 'Consolas', monospace"
@@ -494,13 +494,11 @@ const FEATURE_TILES = [
 export default function LandingPage() {
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel  = 'canonical'
-    link.href = 'https://lumina-design-rho.vercel.app/'
-    if (!link.parentNode) document.head.appendChild(link)
-    document.title = 'Lumina Design — Precision Lighting Design Software'
-  }, [])
+  useSEO({
+    title:       'Lumina Design — Lighting Design Software for Architects & Engineers',
+    description: 'Cloud-based lighting design software with real-time lux calculations, DALI 2.0 automation, heat maps, and PDF/Excel exports. Free 14-day trial. No credit card required.',
+    canonical:   'https://app.lightillumina.com/',
+  })
 
   function go(path) {
     if (path.startsWith('http')) window.location.href = path

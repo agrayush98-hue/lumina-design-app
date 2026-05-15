@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LegalLinkRow } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 
@@ -95,13 +95,11 @@ function Nav({ navigate }) {
 export default function FeaturesPage() {
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel  = 'canonical'
-    link.href = 'https://lumina-design-rho.vercel.app/features'
-    if (!link.parentNode) document.head.appendChild(link)
-    document.title = 'Features — Lumina Design'
-  }, [])
+  useSEO({
+    title:       'Features — Lumina Design | Lux Calculations, DALI Planning & More',
+    description: 'Real-time lux calculations (IES Lumen Method), DALI 2.0 automation, heat map visualisation, floor plan upload, and professional PDF/Excel exports. Built for lighting professionals.',
+    canonical:   'https://app.lightillumina.com/features',
+  })
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: FONT }}>

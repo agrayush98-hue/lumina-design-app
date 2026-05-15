@@ -1,0 +1,40 @@
+# Lumina Design
+> Cloud-based lighting design software for architects, electrical consultants, and lighting engineers.
+
+Lumina Design is a professional web application that provides real-time lux calculations, DALI 2.0 automation, heat map visualisation, and professional PDF/Excel exports. It is designed for lighting designers, MEP engineers, and architects working on commercial and residential projects in India and globally.
+
+## Product
+
+- **Lux Calculations**: IES Lumen Method with real-time updates. Checks compliance against EN 12464-1 and NBC India standards. Status indicators: GOOD, OVERLIT, UNDERLIT.
+- **DALI 2.0 Planning**: Auto-assign DALI addresses, calculate bus load, generate driver schedules.
+- **Heat Map Visualisation**: 6-stop colour gradient heat maps at 0.5m grid resolution.
+- **Floor Plan Upload**: Upload PNG, JPG, or PDF floor plans. Draw room boundaries with custom dimensions.
+- **Professional Exports**: PDF (8-page report), Excel BOQ, or PNG. Client-ready output.
+- **Fixture Library**: Standard and branded luminaires (Philips, Havells, Wipro on Professional plan).
+
+## Pricing (INR, inclusive of GST)
+
+- **Free**: ₹0/month — 3 projects, 5 AI calls/month, PDF export
+- **Pro**: ₹1,179/month — 10 projects, 50 AI calls/month, DALI planning, Excel export
+- **Professional**: ₹2,949/month — unlimited projects, 200 AI calls/month, branded reports
+- **Free Trial**: 14 days of Pro-level access. No credit card required.
+
+## Target Users
+
+Lighting designers, electrical consultants, MEP engineers, architects, and interior designers working on commercial, industrial, healthcare, and residential lighting projects.
+
+## Standards Supported
+
+- EN 12464-1 (European lighting standard)
+- NBC India 2016 (National Building Code)
+- IES Lumen Method
+- CIBSE guidelines
+- DALI 2.0 (IEC 62386)
+
+## Company
+
+- **Website**: https://app.lightillumina.com
+- **Support**: support@lightillumina.com
+- **Location**: India
+- **Pricing page**: https://app.lightillumina.com/pricing
+- **Features page**: https://app.lightillumina.com/features

@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import LegalLayout, { Section, P, Ul, Highlight } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 export default function CancellationPage() {
-  useEffect(() => {
-    document.title = 'Cancellation Policy — Lumina Design'
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel = 'canonical'; link.href = 'https://lumina-design-rho.vercel.app/cancellation'
-    if (!link.parentNode) document.head.appendChild(link)
-  }, [])
+  useSEO({
+    title:       'Cancellation Policy — Lumina Design',
+    description: 'Cancel your Lumina Design subscription anytime — no fees, no penalties. Access continues until the end of your billing period. Your data is never deleted.',
+    canonical:   'https://app.lightillumina.com/cancellation',
+  })
 
   return (
     <LegalLayout

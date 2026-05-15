@@ -296,17 +296,21 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onApplyAll, 
   }
 
   function handleApplyZone(zone) {
-    const fixture = buildFixture(zone)
-    const watt    = zone.wattage ?? zone.watt ?? "?"
-    const count   = onApplyFixture(fixture, zone.quantity ?? 1)
-    setApplied({ count: count ?? zone.quantity, zones: 1, label: `${zone.quantity} × ${zone.type.replace(/_/g, " ")} ${watt}W` })
+    const fixture  = buildFixture(zone)
+    const watt     = zone.wattage ?? zone.watt ?? "?"
+    const placed   = onApplyFixture(fixture, zone.quantity ?? 1)
+    const requested = zone.quantity ?? 1
+    const label = placed != null && placed !== requested
+      ? `${placed} of ${requested} × ${zone.type.replace(/_/g, " ")} ${watt}W placed`
+      : `${requested} × ${zone.type.replace(/_/g, " ")} ${watt}W placed`
+    setApplied({ count: placed ?? requested, zones: 1, label })
   }
 
   function handleApplyAll() {
     if (!result?.zones?.length) return
-    const count = onApplyAll(result.zones.map(z => ({ fixture: buildFixture(z), quantity: z.quantity ?? 1 })))
-    const total = result.zones.reduce((s, z) => s + (z.quantity ?? 0), 0)
-    setApplied({ count: count ?? total, zones: result.zones.length, label: null })
+    const placed = onApplyAll(result.zones.map(z => ({ fixture: buildFixture(z), quantity: z.quantity ?? 1 })))
+    const requested = result.zones.reduce((s, z) => s + (z.quantity ?? 0), 0)
+    setApplied({ count: placed ?? requested, zones: result.zones.length, label: null })
   }
 
   const zones = result?.zones ?? []
@@ -444,8 +448,8 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onApplyAll, 
                   <span>✓</span>
                   <span>
                     {applied.label
-                      ? `Applied ${applied.label} to canvas`
-                      : `Applied ${applied.count} fixtures across ${applied.zones} zones to canvas`}
+                      ? applied.label
+                      : `Applied ${applied.count} fixtures across ${applied.zones} zones`}
                   </span>
                 </div>
               )}

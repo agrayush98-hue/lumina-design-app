@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LegalLinkRow } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 
@@ -71,12 +72,11 @@ export default function ContactPage() {
   const [status, setStatus]   = useState('idle') // idle | sending | success | error
   const [errMsg, setErrMsg]   = useState('')
 
-  useEffect(() => {
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel  = 'canonical'
-    link.href = 'https://lumina-design-rho.vercel.app/contact'
-    if (!link.parentNode) document.head.appendChild(link)
-    document.title = 'Contact — Lumina Design'
+  useSEO({
+    title:       'Contact — Lumina Design | Get in Touch',
+    description: 'Have a question about Lumina Design? Contact our team for support, billing enquiries, or feature requests. We respond within 2 business days.',
+    canonical:   'https://app.lightillumina.com/contact',
+  })
   }, [])
 
   function set(field) {

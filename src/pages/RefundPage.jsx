@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import LegalLayout, { Section, P, Ul, Highlight } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 export default function RefundPage() {
-  useEffect(() => {
-    document.title = 'Refund Policy — Lumina Design'
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel = 'canonical'; link.href = 'https://lumina-design-rho.vercel.app/refund'
-    if (!link.parentNode) document.head.appendChild(link)
-  }, [])
+  useSEO({
+    title:       'Refund Policy — Lumina Design',
+    description: '7-day refund window on all paid plans. No charges during the 14-day free trial. Refunds processed via Razorpay within 5–12 business days.',
+    canonical:   'https://app.lightillumina.com/refund',
+  })
 
   return (
     <LegalLayout

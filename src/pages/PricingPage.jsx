@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LegalLinkRow } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif"
 
@@ -75,13 +76,11 @@ export default function PricingPage() {
   const navigate = useNavigate()
   const [termsAgreed, setTermsAgreed] = useState(false)
 
-  useEffect(() => {
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel  = 'canonical'
-    link.href = 'https://lumina-design-rho.vercel.app/pricing'
-    if (!link.parentNode) document.head.appendChild(link)
-    document.title = 'Pricing — Lumina Design'
-  }, [])
+  useSEO({
+    title:       'Pricing — Lumina Design | Free, Pro & Professional Plans',
+    description: 'Start free forever. Upgrade to Pro (₹1,179/mo) or Professional (₹2,949/mo) for more projects, AI calls, DALI planning, and branded exports. 14-day free trial.',
+    canonical:   'https://app.lightillumina.com/pricing',
+  })
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: FONT }}>

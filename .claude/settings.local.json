@@ -36,7 +36,16 @@
       "Bash(node --input-type=module -e \"import Anthropic from '@anthropic-ai/sdk'; console.log\\('sdk ok'\\)\")",
       "Bash(rm -rf .husky && rm -rf scripts/agents && rm -f public/agent-dashboard.html && echo \"deleted\")",
       "Bash(npm prune *)",
-      "Bash(Remove-Item -Force \"C:\\\\Projects\\\\lumina-design-app\\\\.env\" -ErrorAction SilentlyContinue)"
+      "Bash(Remove-Item -Force \"C:\\\\Projects\\\\lumina-design-app\\\\.env\" -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Skill(browse)",
+      "Skill(browse:*)",
+      "Bash(cd /tmp)",
+      "Bash(bash claude-seo/install.sh)",
+      "Read(//c/Users/coola/.claude/skills/seo/assets/**)",
+      "Read(//c/Users/coola/.claude/skills/seo-plan/assets/**)",
+      "Read(//c/Users/coola/.claude/skills/**)"
     ]
   }
 }

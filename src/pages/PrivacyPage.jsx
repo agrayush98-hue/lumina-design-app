@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import LegalLayout, { Section, P, Ul, Highlight } from './legal/LegalLayout.jsx'
+import useSEO from '../hooks/useSEO.js'
 
 export default function PrivacyPage() {
-  useEffect(() => {
-    document.title = 'Privacy Policy — Lumina Design'
-    const link = document.querySelector("link[rel='canonical']") || document.createElement('link')
-    link.rel = 'canonical'; link.href = 'https://lumina-design-rho.vercel.app/privacy'
-    if (!link.parentNode) document.head.appendChild(link)
-  }, [])
+  useSEO({
+    title:       'Privacy Policy — Lumina Design',
+    description: 'How Lumina Design collects, uses, and protects your personal data. Compliant with the IT Act 2000 and Indian data protection law.',
+    canonical:   'https://app.lightillumina.com/privacy',
+  })
 
   return (
     <LegalLayout
