@@ -70,7 +70,7 @@ export default function FeatureDetailPage() {
       {/* FAQ */}
       {data.faq?.length > 0 && (
         <div style={{ maxWidth: 760, margin: '0 auto', padding: '0 32px 64px' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 32, paddingTop: 8, borderTop: `1px solid ${T.border}`, paddingTop: 40 }}>Frequently asked questions</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 32, paddingTop: 40, borderTop: `1px solid ${T.border}` }}>Frequently asked questions</h2>
           {data.faq.map((item, i) => (
             <div key={i} style={{ padding: '20px 0', borderBottom: `1px solid ${T.border}` }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: T.text, marginBottom: 8 }}>{item.q}</div>
