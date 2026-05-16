@@ -439,45 +439,56 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   const STEP_PX = Math.max(4, heatmapCellSize)  // user-controlled cell size (px)
 
-  const heatmapCells = useMemo(() => {
-    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return []
+  // ── Smooth heatmap canvas (blur-blended, single KonvaImage) ──────────────
+  // Draws cells at STEP_PX with a Gaussian blur so adjacent pools blend
+  // into smooth gradients — same technique as RoomOverlay.jsx.
+  const heatmapCanvas = useMemo(() => {
+    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return null
 
     const sources = buildSources(lights)
-    if (sources.length === 0) return []
+    if (sources.length === 0) return null
 
-    const mh2 = mountingHeight * mountingHeight
-    const cells = []
+    const mh2     = mountingHeight * mountingHeight
+    const blurPx  = Math.max(STEP_PX * 1.5, 8)   // blur radius scales with cell size
+    const pad     = Math.ceil(blurPx * 2)          // extra padding so blur doesn't clip at edges
+    const W       = Math.ceil(ROOM_PX_W) + pad * 2
+    const H       = Math.ceil(ROOM_PX_H) + pad * 2
 
-    for (let py = ROOM_Y; py < ROOM_Y + ROOM_PX_H; py += STEP_PX) {
-      for (let px = ROOM_X; px < ROOM_X + ROOM_PX_W; px += STEP_PX) {
-        const cx = px + STEP_PX / 2
-        const cy = py + STEP_PX / 2
+    const canvas  = document.createElement('canvas')
+    canvas.width  = W
+    canvas.height = H
+    const ctx     = canvas.getContext('2d')
+
+    ctx.filter = `blur(${blurPx}px)`
+
+    // Scan slightly outside room so blur fills right to the walls
+    for (let py = -pad; py < ROOM_PX_H + pad; py += STEP_PX) {
+      for (let px = -pad; px < ROOM_PX_W + pad; px += STEP_PX) {
+        // World coords of this cell centre (relative to room origin)
+        const worldX = ROOM_X + px + STEP_PX / 2
+        const worldY = ROOM_Y + py + STEP_PX / 2
         let totalLux = 0
 
         for (const src of sources) {
-          // Convert pixel offsets to metres — physically correct
-          const dxM       = (cx - src.x) / (SCALE * 1000)
-          const dyM       = (cy - src.y) / (SCALE * 1000)
+          const dxM       = (worldX - src.x) / (SCALE * 1000)
+          const dyM       = (worldY - src.y) / (SCALE * 1000)
           const horzDistM = Math.sqrt(dxM * dxM + dyM * dyM)
-          // incAngle = angle from vertical axis (nadir)
-          const incAngle = Math.atan2(horzDistM, mountingHeight)
-          // Hard cutoff outside beam cone
+          const incAngle  = Math.atan2(horzDistM, mountingHeight)
           if (incAngle > src.halfBeamR) continue
-          // 3D distance — clamp min 0.1 m to avoid divide-by-zero
-          const distM = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
-          // cosTheta = cosine of incidence angle at work-plane
+          const distM    = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
           const cosTheta = mountingHeight / distM
-          // Angle-dependent intensity: I(θ) = I₀ · cosⁿ(θ)
-          const relI = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
-          // Illuminance (lux): E = I(θ) · cos(θ) / d²
-          // cosTheta again for Lambert cosine law at the surface
-          totalLux += (src.I0 * relI * cosTheta) / (distM * distM)
+          const relI     = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
+          totalLux      += (src.I0 * relI * cosTheta) / (distM * distM)
         }
 
-        cells.push({ x: px, y: py, lux: totalLux, color: luxToColor(totalLux) })
+        if (totalLux < 0.5) continue   // skip near-zero cells for performance
+        ctx.fillStyle = luxToColor(totalLux)
+        ctx.fillRect(pad + px, pad + py, STEP_PX, STEP_PX)
       }
     }
-    return cells
+
+    ctx.filter = 'none'
+    return { canvas, pad }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
 
@@ -750,29 +761,22 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap rendering components ─────────────────────────────
   function HeatmapLayer() {
-    if (!showHeatmap || heatmapCells.length === 0) return null
-    const w = Math.ceil(STEP_PX)
-    const h = Math.ceil(STEP_PX)
+    if (!showHeatmap || !heatmapCanvas) return null
+    const { canvas, pad } = heatmapCanvas
     return (
-      <Group
+      <KonvaImage
+        image={canvas}
+        x={ROOM_X - pad}
+        y={ROOM_Y - pad}
+        width={canvas.width}
+        height={canvas.height}
+        opacity={0.80}
         listening={false}
-        clipX={ROOM_X}
-        clipY={ROOM_Y}
+        clipX={pad}
+        clipY={pad}
         clipWidth={ROOM_PX_W}
         clipHeight={ROOM_PX_H}
-      >
-        {heatmapCells.map((cell, i) => (
-          <Rect
-            key={i}
-            x={cell.x}
-            y={cell.y}
-            width={w}
-            height={h}
-            fill={cell.color}
-            opacity={0.70}
-          />
-        ))}
-      </Group>
+      />
     )
   }
 
