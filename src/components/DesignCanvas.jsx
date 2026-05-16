@@ -372,25 +372,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return "rgb(255,0,0)"
   }
 
-  // RGB array version — used by the smooth canvas renderer
-  function luxToRGB(lux) {
-    if (targetLux <= 0) return [0, 0, 170]
-    const ratio = Math.min(1.5, lux / targetLux)
-    for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
-      const [r0, c0] = HEATMAP_STOPS[i]
-      const [r1, c1] = HEATMAP_STOPS[i + 1]
-      if (ratio <= r1) {
-        const t = (ratio - r0) / (r1 - r0)
-        return [
-          Math.round(c0[0] + t * (c1[0] - c0[0])),
-          Math.round(c0[1] + t * (c1[1] - c0[1])),
-          Math.round(c0[2] + t * (c1[2] - c0[2])),
-        ]
-      }
-    }
-    return [255, 0, 0]
-  }
-
   // ── Physics helpers for heatmap ──────────────────────────────
   const MAINT_FACTOR_HM = 0.8  // standard maintenance factor
 
@@ -521,65 +502,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return cells
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
-
-  // ── Smooth heatmap canvas — bilinear interpolation between lux grid cells ──
-  const heatmapCanvas = useMemo(() => {
-    if (!showHeatmap || heatmapCells.length === 0) return null
-
-    const W      = Math.ceil(ROOM_PX_W)
-    const H      = Math.ceil(ROOM_PX_H)
-    const cols_n = Math.max(1, Math.ceil(ROOM_PX_W / STEP_PX))
-    const rows_n = Math.max(1, Math.ceil(ROOM_PX_H / STEP_PX))
-
-    // Build 2D lux grid indexed by [row][col]
-    const luxGrid = new Float32Array(rows_n * cols_n)
-    for (const cell of heatmapCells) {
-      const col = Math.round((cell.x - ROOM_X) / STEP_PX)
-      const row = Math.round((cell.y - ROOM_Y) / STEP_PX)
-      if (row >= 0 && row < rows_n && col >= 0 && col < cols_n) {
-        luxGrid[row * cols_n + col] = cell.lux
-      }
-    }
-
-    const canvas = document.createElement('canvas')
-    canvas.width  = W
-    canvas.height = H
-    const ctx       = canvas.getContext('2d')
-    const imageData = ctx.createImageData(W, H)
-    const d         = imageData.data
-
-    for (let py = 0; py < H; py++) {
-      for (let px = 0; px < W; px++) {
-        // Fractional grid coordinate
-        const gx  = px / STEP_PX
-        const gy  = py / STEP_PX
-        const gx0 = Math.floor(gx)
-        const gy0 = Math.floor(gy)
-        const gx1 = Math.min(gx0 + 1, cols_n - 1)
-        const gy1 = Math.min(gy0 + 1, rows_n - 1)
-        const tx  = gx - gx0
-        const ty  = gy - gy0
-
-        // Bilinear interpolation of raw lux values
-        const lux =
-          luxGrid[gy0 * cols_n + gx0] * (1 - tx) * (1 - ty) +
-          luxGrid[gy0 * cols_n + gx1] * tx        * (1 - ty) +
-          luxGrid[gy1 * cols_n + gx0] * (1 - tx)  * ty       +
-          luxGrid[gy1 * cols_n + gx1] * tx         * ty
-
-        const [r, g, b] = luxToRGB(lux)
-        const idx = (py * W + px) * 4
-        d[idx]     = r
-        d[idx + 1] = g
-        d[idx + 2] = b
-        d[idx + 3] = lux > 0.5 ? 185 : 0   // transparent where no light reaches
-      }
-    }
-
-    ctx.putImageData(imageData, 0, 0)
-    return canvas
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHeatmap, heatmapCells, ROOM_PX_W, ROOM_PX_H, STEP_PX, ROOM_X, ROOM_Y, targetLux])
 
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
@@ -848,19 +770,31 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     }
   }
 
-  // ── Heatmap rendering — single smooth canvas image ───────────
+  // ── Heatmap rendering components ─────────────────────────────
   function HeatmapLayer() {
-    if (!showHeatmap || !heatmapCanvas) return null
+    if (!showHeatmap || heatmapCells.length === 0) return null
+    const w = Math.ceil(STEP_PX)
+    const h = Math.ceil(STEP_PX)
     return (
-      <KonvaImage
-        image={heatmapCanvas}
-        x={ROOM_X}
-        y={ROOM_Y}
-        width={ROOM_PX_W}
-        height={ROOM_PX_H}
-        opacity={0.78}
+      <Group
         listening={false}
-      />
+        clipX={ROOM_X}
+        clipY={ROOM_Y}
+        clipWidth={ROOM_PX_W}
+        clipHeight={ROOM_PX_H}
+      >
+        {heatmapCells.map((cell, i) => (
+          <Rect
+            key={i}
+            x={cell.x}
+            y={cell.y}
+            width={w}
+            height={h}
+            fill={cell.color}
+            opacity={0.70}
+          />
+        ))}
+      </Group>
     )
   }
 
