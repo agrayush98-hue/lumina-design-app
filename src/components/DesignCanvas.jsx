@@ -503,6 +503,22 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
 
+  // ── Convert cell array → single offscreen canvas (1 KonvaImage vs 3000+ Rects) ──
+  const heatmapImage = useMemo(() => {
+    if (!showHeatmap || heatmapCells.length === 0) return null
+    const canvas = document.createElement('canvas')
+    canvas.width  = Math.ceil(ROOM_PX_W)
+    canvas.height = Math.ceil(ROOM_PX_H)
+    const ctx = canvas.getContext('2d')
+    const w   = Math.ceil(STEP_PX)
+    for (const cell of heatmapCells) {
+      ctx.fillStyle = cell.color
+      ctx.fillRect(cell.x - ROOM_X, cell.y - ROOM_Y, w, w)
+    }
+    return canvas
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showHeatmap, heatmapCells, ROOM_PX_W, ROOM_PX_H, STEP_PX, ROOM_X, ROOM_Y])
+
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
     const snapped = origin + Math.round((val - origin) / GRID_PX) * GRID_PX
@@ -772,29 +788,17 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap rendering components ─────────────────────────────
   function HeatmapLayer() {
-    if (!showHeatmap || heatmapCells.length === 0) return null
-    const w = Math.ceil(STEP_PX)
-    const h = Math.ceil(STEP_PX)
+    if (!showHeatmap || !heatmapImage) return null
     return (
-      <Group
+      <KonvaImage
+        image={heatmapImage}
+        x={ROOM_X}
+        y={ROOM_Y}
+        width={ROOM_PX_W}
+        height={ROOM_PX_H}
+        opacity={0.70}
         listening={false}
-        clipX={ROOM_X}
-        clipY={ROOM_Y}
-        clipWidth={ROOM_PX_W}
-        clipHeight={ROOM_PX_H}
-      >
-        {heatmapCells.map((cell, i) => (
-          <Rect
-            key={i}
-            x={cell.x}
-            y={cell.y}
-            width={w}
-            height={h}
-            fill={cell.color}
-            opacity={0.70}
-          />
-        ))}
-      </Group>
+      />
     )
   }
 
