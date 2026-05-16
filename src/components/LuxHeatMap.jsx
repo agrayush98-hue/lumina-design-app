@@ -2,45 +2,17 @@ import { useMemo, useRef, useEffect } from 'react'
 import Konva from 'konva'
 import { Group, Rect, Text, Line, Image } from 'react-konva'
 import { getTotalLuxAtPoint } from '../utils/luxCalculator'
+import { HEATMAP_STOPS, luxToColor as _luxToColor } from '../utils/heatmapColors'
 
-const HEATMAP_STOPS = [
-  [0.00, [0,   0, 170]],
-  [0.25, [0, 170, 255]],
-  [0.50, [0, 204,  68]],
-  [0.75, [255, 238,  0]],
-  [1.00, [255, 136,  0]],
-  [1.50, [255,   0,  0]],
-]
-
-function luxToColor(lux, targetLux) {
-  if (targetLux <= 0) return 'rgba(0,0,170,0)'
-  const ratio = Math.min(1.5, lux / targetLux)
-  for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
-    const [r0, c0] = HEATMAP_STOPS[i]
-    const [r1, c1] = HEATMAP_STOPS[i + 1]
-    if (ratio <= r1) {
-      const t = (ratio - r0) / (r1 - r0)
-      const r = Math.round(c0[0] + t * (c1[0] - c0[0]))
-      const g = Math.round(c0[1] + t * (c1[1] - c0[1]))
-      const b = Math.round(c0[2] + t * (c1[2] - c0[2]))
-      const alpha = ratio < 0.05 ? 0 : 0.85
-      return `rgba(${r},${g},${b},${alpha})`
-    }
-  }
-  return 'rgba(255,0,0,0.85)'
-}
+function luxToColor(lux, targetLux) { return _luxToColor(lux, targetLux, true) }
 
 function LuxLegend({ x, y, targetLux }) {
   const W = 18
   const H = 150
-  const labels = ['150%', '100%', '75%', '50%', '25%', '0%']
-  const ratios = [1.5, 1.0, 0.75, 0.5, 0.25, 0.0]
+  // Gradient from canonical stops (top = 150% hot, bottom = 0% cold)
   const gradStops = []
-  for (let i = 0; i <= 20; i++) {
-    const t = i / 20
-    const ratio = 1.5 * (1 - t)
-    const color = luxToColor(ratio * targetLux, targetLux)
-    gradStops.push(t, color)
+  for (const [ratio, [r, g, b]] of [...HEATMAP_STOPS].reverse()) {
+    gradStops.push(1 - ratio / 1.5, `rgb(${r},${g},${b})`)
   }
   return (
     <Group>
@@ -51,13 +23,12 @@ function LuxLegend({ x, y, targetLux }) {
         fillLinearGradientColorStops={gradStops}
         stroke="#1a2b3c" strokeWidth={0.5}
       />
-      {labels.map((label, i) => {
-        const ly = y + (i / (labels.length - 1)) * H
-        const lux = Math.round(ratios[i] * targetLux)
+      {[...HEATMAP_STOPS].reverse().map(([ratio]) => {
+        const ly = y + (1 - ratio / 1.5) * H
         return (
-          <Group key={i}>
+          <Group key={ratio}>
             <Line points={[x + W, ly, x + W + 4, ly]} stroke="#4a7a96" strokeWidth={0.5} />
-            <Text x={x + W + 6} y={ly - 4} text={`${lux}`} fontSize={7} fontFamily="IBM Plex Mono" fill="#4a7a96" />
+            <Text x={x + W + 6} y={ly - 4} text={`${Math.round(ratio * targetLux)}`} fontSize={7} fontFamily="IBM Plex Mono" fill="#4a7a96" />
           </Group>
         )
       })}

@@ -24,6 +24,7 @@ import Sidebar from "./components/Sidebar"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
+import { SIDEBAR_LEGEND } from "./utils/heatmapColors"
 import { getTemplate } from "./templates/projectTemplates"
 import { useToast as useToastNotify } from "./components/Toast"
 import { useConfirm }                 from "./components/ConfirmModal"
@@ -2308,16 +2309,9 @@ export default function App() {
               <div style={{ fontWeight: 600, color: "#cccccc", marginBottom: 8 }}>Lux Heatmap</div>
               <p style={{ marginBottom: 12 }}>Shows lux distribution across the floor. Colors represent % of your target lux level.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                {[
-                  { color: "#1a237e", label: "0% — No light" },
-                  { color: "#1565c0", label: "25% — Very underlit" },
-                  { color: "#00897b", label: "50% — Below target" },
-                  { color: "#f9a825", label: "100% — At target ✓" },
-                  { color: "#e65100", label: "125% — Over target" },
-                  { color: "#b71c1c", label: "150%+ — Overlit" },
-                ].map(({ color, label }) => (
+                {SIDEBAR_LEGEND.map(({ rgb, label }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 12, height: 12, borderRadius: 2, background: color, flexShrink: 0 }} />
+                    <div style={{ width: 12, height: 12, borderRadius: 2, background: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`, flexShrink: 0 }} />
                     <span style={{ fontSize: 12 }}>{label}</span>
                   </div>
                 ))}

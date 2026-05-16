@@ -1,31 +1,15 @@
 import { useMemo } from 'react'
 import { Image as KonvaImage } from 'react-konva'
 import { getTotalLuxAtPoint } from '../utils/luxCalculator'
+import { luxToColor as _luxToColor } from '../utils/heatmapColors'
 
 const CANVAS_W = 1000
 const CANVAS_H = 700
 
 // ── Lux → colour ──────────────────────────────────────────────────
-const STOPS = [
-  [0.00, [0,   0, 170]],
-  [0.25, [0, 170, 255]],
-  [0.50, [0, 204,  68]],
-  [0.75, [255, 238,  0]],
-  [1.00, [255, 136,  0]],
-  [1.50, [255,   0,  0]],
-]
 function luxToColor(lux, targetLux) {
-  if (targetLux <= 0) return null
-  const ratio = Math.min(1.5, lux / targetLux)
-  if (ratio < 0.05) return null
-  for (let i = 0; i < STOPS.length - 1; i++) {
-    const [r0, c0] = STOPS[i], [r1, c1] = STOPS[i + 1]
-    if (ratio <= r1) {
-      const t = (ratio - r0) / (r1 - r0)
-      return `rgb(${Math.round(c0[0]+t*(c1[0]-c0[0]))},${Math.round(c0[1]+t*(c1[1]-c0[1]))},${Math.round(c0[2]+t*(c1[2]-c0[2]))})`
-    }
-  }
-  return 'rgb(255,0,0)'
+  if (targetLux <= 0 || lux / targetLux < 0.05) return null
+  return _luxToColor(lux, targetLux)
 }
 
 // ── Per-room pxToMm converter ─────────────────────────────────────

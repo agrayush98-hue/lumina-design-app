@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star, Wedge } from "react-konva"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
 import { useToast } from "./Toast"
+import { HEATMAP_STOPS, luxToColor as _luxToColor } from "../utils/heatmapColors"
 
 const CANVAS_W = 1400
 const CANVAS_H = 750
@@ -345,32 +346,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const pxPerMm   = (roomOffsetX != null && drawnWidthPx != null && roomWidth > 0) ? drawnWidthPx / roomWidth : SCALE
   const dimUnit   = getStoredUnit()
 
-  // ── Heatmap: colour scale & grid computation ──────────────────
-  const HEATMAP_STOPS = [
-    [0.00, [0,   50, 200]],   // deep blue   — 0% of target (darker, richer)
-    [0.25, [0, 190, 255]],    // cyan        — 25% (more vibrant)
-    [0.50, [0, 230,  90]],    // green       — 50% (brighter green)
-    [0.75, [255, 220,  0]],   // yellow      — 75% (pure yellow)
-    [1.00, [255, 140,  0]],   // orange      — 100% (at target lux)
-    [1.50, [255,  30,  30]],  // red         — 150%+ (overlit, more saturated)
-  ]
-
-  function luxToColor(lux) {
-    if (targetLux <= 0) return "rgb(0,0,170)"
-    const ratio = Math.min(1.5, lux / targetLux)
-    for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
-      const [r0, c0] = HEATMAP_STOPS[i]
-      const [r1, c1] = HEATMAP_STOPS[i + 1]
-      if (ratio <= r1) {
-        const t  = (ratio - r0) / (r1 - r0)
-        const ri = Math.round(c0[0] + t * (c1[0] - c0[0]))
-        const gi = Math.round(c0[1] + t * (c1[1] - c0[1]))
-        const bi = Math.round(c0[2] + t * (c1[2] - c0[2]))
-        return `rgb(${ri},${gi},${bi})`
-      }
-    }
-    return "rgb(255,0,0)"
-  }
+  // ── Heatmap: colour scale (imported from heatmapColors.js) ───
+  // luxToColor wraps the shared fn, binding this room's targetLux
+  function luxToColor(lux) { return _luxToColor(lux, targetLux) }
 
   // ── Physics helpers for heatmap ──────────────────────────────
   const MAINT_FACTOR_HM = 0.8  // standard maintenance factor
@@ -800,27 +778,25 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   function HeatmapLegend() {
     if (!showHeatmap) return null
-    const lx  = ROOM_X + ROOM_PX_W + 15
-    const ly  = ROOM_Y + 50
-    const W   = 18
-    const H   = 150
-    const MF  = 0.8
-    // Gradient bar: top=hot (red), bottom=cold (blue)
-    // Match HEATMAP_STOPS exactly (top = hot/overlit, bottom = dark/zero)
-    const gradStops = [
-      0,    "rgb(255,30,30)",   // red   — 150%+ (overlit)
-      0.25, "rgb(255,140,0)",   // orange — 100% (at target)
-      0.4,  "rgb(255,220,0)",   // yellow — 75%
-      0.55, "rgb(0,230,90)",    // green  — 50%
-      0.75, "rgb(0,190,255)",   // cyan   — 25%
-      1,    "rgb(0,50,200)",    // blue   — 0%
-    ]
-    const labels = [
-      { frac: 0,    text: `${Math.round(targetLux * 1.5)} lx` },
-      { frac: 1/3,  text: `${Math.round(targetLux)}     lx` },
-      { frac: 2/3,  text: `${Math.round(targetLux * 0.5)} lx` },
-      { frac: 1,    text: "0 lx" },
-    ]
+    const lx = ROOM_X + ROOM_PX_W + 15
+    const ly = ROOM_Y + 50
+    const W  = 18
+    const H  = 150
+
+    // Build gradient from canonical stops (top = hot 150%, bottom = cold 0%)
+    // Each stop ratio maps to fraction 1 - ratio/1.5 along the bar (inverted)
+    const gradStops = []
+    for (const [ratio, [r, g, b]] of [...HEATMAP_STOPS].reverse()) {
+      const frac = 1 - ratio / 1.5
+      gradStops.push(frac, `rgb(${r},${g},${b})`)
+    }
+
+    // Label rows: one per canonical stop, ordered top→bottom
+    const labelRows = [...HEATMAP_STOPS].reverse().map(([ratio]) => ({
+      frac:  1 - ratio / 1.5,
+      text: `${Math.round(ratio * targetLux)} lx`,
+    }))
+
     return (
       <Group listening={false}>
         <Rect
@@ -832,7 +808,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         />
         <Rect x={lx} y={ly} width={W} height={H} stroke="#cccccc" strokeWidth={0.5} fill="transparent" />
         <Text x={lx} y={ly - 16} text="LUX" fontSize={8} fontFamily="Inter, sans-serif" fill="#999999" letterSpacing={1} />
-        {labels.map(({ frac, text }) => (
+        {labelRows.map(({ frac, text }) => (
           <Text
             key={frac}
             x={lx + W + 4}
