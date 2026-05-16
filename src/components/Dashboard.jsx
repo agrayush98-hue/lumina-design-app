@@ -73,8 +73,6 @@ const PLANS = [
       { text: "Floor plan upload",                      highlight: true },
       { text: "DALI 2.0 planning",                      highlight: true },
       { text: "Branded fixtures (Philips/Havells/Wipro)", highlight: true },
-      { text: "Branded client reports",                 highlight: true },
-      { text: "Project folders",                        highlight: true },
       { text: "Priority email support",                 highlight: true },
     ],
     amountPaise: 149900,
@@ -1098,14 +1096,47 @@ function SubscriptionTab({ user }) {
         </div>
       </div>
 
-      {/* Cancel button — only for active paid subscriptions */}
-      {sub?.status === "active" && (
-        <div style={{ marginBottom: 24 }}>
-          <button className="btn-danger" style={{ fontSize: 13 }} disabled={cancelling} onClick={handleCancel}>
-            {cancelling ? "CANCELLING…" : "CANCEL PLAN"}
-          </button>
-        </div>
-      )}
+      {/* Renew / Reactivate / Cancel buttons */}
+      {(() => {
+        const renewsAt = sub?.renewsAt?.toDate?.() ?? sub?.renewsAt ?? null
+        const daysUntilRenewal = renewsAt ? Math.ceil((renewsAt - new Date()) / 86_400_000) : null
+        const currentPlan = PLANS.find(p => p.id === sub?.plan)
+        const trialStatus = getTrialStatus()
+        const isExpiredSub = trialStatus.subscriptionExpired === true
+
+        return (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+            {/* Reactivate — expired paid subscription */}
+            {isExpiredSub && currentPlan && (
+              <button
+                className="btn-primary"
+                style={{ fontSize: 13, background: '#d4a843', border: 'none' }}
+                disabled={paying === currentPlan.id}
+                onClick={() => handleUpgrade(currentPlan)}
+              >
+                {paying === currentPlan.id ? "OPENING…" : "REACTIVATE PLAN →"}
+              </button>
+            )}
+            {/* Renew — active but within 7 days of renewal */}
+            {sub?.status === "active" && daysUntilRenewal !== null && daysUntilRenewal <= 7 && currentPlan && (
+              <button
+                className="btn-primary"
+                style={{ fontSize: 13, background: '#d4a843', border: 'none' }}
+                disabled={paying === currentPlan.id}
+                onClick={() => handleUpgrade(currentPlan)}
+              >
+                {paying === currentPlan.id ? "OPENING…" : `RENEW PLAN →`}
+              </button>
+            )}
+            {/* Cancel — active paid subscriptions only */}
+            {sub?.status === "active" && (
+              <button className="btn-danger" style={{ fontSize: 13 }} disabled={cancelling} onClick={handleCancel}>
+                {cancelling ? "CANCELLING…" : "CANCEL PLAN"}
+              </button>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Plan cards */}
       <div className="plans-grid">

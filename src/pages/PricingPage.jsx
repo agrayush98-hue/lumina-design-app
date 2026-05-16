@@ -27,7 +27,7 @@ const NAV_LINKS = [
 
 const FREE_FEATURES    = ['3 projects', '2 rooms per project', '5 AI calls / month', 'PDF export', 'Standard fixture library']
 const PRO_FEATURES     = ['10 projects', '5 rooms per project', '50 AI calls / month', 'PDF + Excel export', 'Floor plan image upload', 'DALI 2.0 planning', 'Heatmap + beam analysis', 'All standard fixtures', 'Email support']
-const PRO_FEATURES_ALL = ['Unlimited projects & rooms', '200 AI calls / month', 'PDF + Excel export', 'Floor plan image upload', 'DALI 2.0 planning', 'Branded fixtures (Philips / Havells / Wipro)', 'Branded client reports', 'Project folders', 'Priority email support']
+const PRO_FEATURES_ALL = ['Unlimited projects & rooms', '200 AI calls / month', 'PDF + Excel export', 'Floor plan image upload', 'DALI 2.0 planning', 'Branded fixtures (Philips / Havells / Wipro)', 'Priority email support']
 
 const FAQS = [
   { q: 'Can I cancel at any time?', a: 'Yes. Cancel from your dashboard. Your plan stays active until the billing period ends — no proration, no hidden fees.' },

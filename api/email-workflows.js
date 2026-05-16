@@ -245,25 +245,31 @@ function tplPaymentFailed({ name, email, planId, failureReason }) {
 }
 
 function tplSubscriptionExpiring({ name, email, planId, renewsAt, daysLeft }) {
-  const firstName = (name ?? email ?? '').split(/[\s@]/)[0] || 'there'
-  const dayWord   = daysLeft === 1 ? 'day' : 'days'
+  const firstName  = (name ?? email ?? '').split(/[\s@]/)[0] || 'there'
+  const dayWord    = daysLeft === 1 ? 'day' : 'days'
+  const isTrial    = planId === 'trial'
+  const subjectTxt = isTrial
+    ? `Your free trial ends in ${daysLeft} ${dayWord} — upgrade to keep access`
+    : `Your ${planLabel(planId)} plan expires in ${daysLeft} ${dayWord} — renew now`
   return {
     from:    FROM.business,
-    subject: `Your Lumina ${planLabel(planId)} plan renews in ${daysLeft} ${dayWord}`,
+    subject: subjectTxt,
     html: wrap(
-      `Your subscription renews on ${fmtDate(renewsAt)}.`,
+      isTrial
+        ? `Your trial ends on ${fmtDate(renewsAt)}. Upgrade to keep your projects and features.`
+        : `Your subscription expires on ${fmtDate(renewsAt)}. Renew now to avoid losing access.`,
       `
-      ${h1(`Your plan renews in ${daysLeft} ${dayWord}`)}
-      ${p(`Hi ${firstName}, just a heads-up — your <strong style="color:#ffffff;">${planLabel(planId)}</strong> subscription renews on <strong style="color:#ffffff;">${fmtDate(renewsAt)}</strong>.`)}
+      ${h1(isTrial ? `Your trial ends in ${daysLeft} ${dayWord}` : `Your plan expires in ${daysLeft} ${dayWord}`)}
+      ${p(`Hi ${firstName}, your <strong style="color:#ffffff;">${isTrial ? 'free trial' : planLabel(planId) + ' plan'}</strong> ${isTrial ? 'ends' : 'expires'} on <strong style="color:#ffffff;">${renewsAt ? fmtDate(renewsAt) : '—'}</strong>.`)}
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:24px;">
-        ${kv('Plan', planLabel(planId))}
-        ${kv('Renewal date', fmtDate(renewsAt))}
+        ${kv('Plan', isTrial ? 'Free Trial' : planLabel(planId))}
+        ${kv('Expires', renewsAt ? fmtDate(renewsAt) : '—')}
         ${kv('Account', email ?? '')}
       </table>
-      ${p(`No action needed — your subscription renews automatically. To cancel or change your plan, visit the dashboard before the renewal date.`)}
-      ${ghostBtn('Manage subscription', SUB_URL)}
+      ${p(`To keep full access — lux heatmaps, DALI planning, AI recommendations, and PDF exports — renew before the expiry date.`)}
+      ${goldBtn(isTrial ? 'Upgrade now →' : 'Renew plan →', SUB_URL)}
       ${divider()}
-      ${p(`Questions about your subscription? Contact <a href="mailto:business@lightillumina.com" style="color:#888888;">business@lightillumina.com</a>`, 'color:#555555;font-size:12px;margin:0;')}
+      ${p(`Questions? Contact <a href="mailto:business@lightillumina.com" style="color:#888888;">business@lightillumina.com</a>`, 'color:#555555;font-size:12px;margin:0;')}
       `
     ),
   }

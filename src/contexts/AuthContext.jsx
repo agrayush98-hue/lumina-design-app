@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
   async function _checkTrialEmails(uid, data) {
     const { emailsSent = {}, subscription, trialEndsAt, email, name } = data
 
-    // Skip entirely for paid / cancelled users
+    // Skip entirely for paid / cancelled users — handled by _checkSubscriptionEmails
     if (subscription?.status === 'active' || subscription?.status === 'cancelled') return
 
     const now      = new Date()
@@ -127,6 +127,41 @@ export function AuthProvider({ children }) {
     if (daysLeft <= 3 && daysLeft > 0 && !emailsSent.trialWarning) {
       markEmailSent(uid, 'trialWarning')
       triggerEmail('subscription_expiring', { email, name, planId: 'trial', renewsAt: end, daysLeft })
+    }
+  }
+
+  // ── Check & send subscription renewal reminder emails on login ─────
+  async function _checkSubscriptionEmails(uid, data) {
+    const { emailsSent = {}, subscription, email, name } = data
+
+    // Only for active or cancelled paid subscriptions
+    if (subscription?.status !== 'active' && subscription?.status !== 'cancelled') return
+
+    const renewsAt = subscription.renewsAt?.toDate?.() ?? subscription.renewsAt ?? null
+    if (!renewsAt) return
+
+    const now      = new Date()
+    const daysLeft = Math.ceil((renewsAt - now) / 86_400_000)
+    const planId   = subscription.plan
+
+    // Subscription billing period ended — access expired
+    if (daysLeft <= 0 && !emailsSent.subExpired) {
+      markEmailSent(uid, 'subExpired')
+      triggerEmail('subscription_expired', { email, name, planId })
+      return
+    }
+
+    // 2-day warning
+    if (daysLeft <= 2 && daysLeft > 0 && !emailsSent.subWarning2) {
+      markEmailSent(uid, 'subWarning2')
+      triggerEmail('subscription_expiring', { email, name, planId, renewsAt, daysLeft })
+      return
+    }
+
+    // 5-day warning
+    if (daysLeft <= 5 && daysLeft > 0 && !emailsSent.subWarning5) {
+      markEmailSent(uid, 'subWarning5')
+      triggerEmail('subscription_expiring', { email, name, planId, renewsAt, daysLeft })
     }
   }
 
@@ -200,8 +235,9 @@ export function AuthProvider({ children }) {
           } else {
             const data = snap.data()
             setUserDoc(data)
-            // Check trial lifecycle emails each time user authenticates
+            // Check lifecycle emails each time user authenticates
             _checkTrialEmails(firebaseUser.uid, data)
+            _checkSubscriptionEmails(firebaseUser.uid, data)
           }
         } catch (err) {
           console.error('[AuthContext] onAuthStateChanged — getDoc failed:', err.message)
