@@ -3,7 +3,6 @@ import { createPortal } from "react-dom"
 import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star, Wedge } from "react-konva"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
 import { useToast } from "./Toast"
-import { HEATMAP_STOPS, luxToColor as _luxToColor } from "../utils/heatmapColors"
 
 const CANVAS_W = 1400
 const CANVAS_H = 750
@@ -346,9 +345,32 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const pxPerMm   = (roomOffsetX != null && drawnWidthPx != null && roomWidth > 0) ? drawnWidthPx / roomWidth : SCALE
   const dimUnit   = getStoredUnit()
 
-  // ── Heatmap: colour scale (imported from heatmapColors.js) ───
-  // luxToColor wraps the shared fn, binding this room's targetLux
-  function luxToColor(lux) { return _luxToColor(lux, targetLux) }
+  // ── Heatmap: colour scale & grid computation ──────────────────
+  const HEATMAP_STOPS = [
+    [0.00, [0,   50, 200]],   // deep blue   — 0% of target (darker, richer)
+    [0.25, [0, 190, 255]],    // cyan        — 25% (more vibrant)
+    [0.50, [0, 230,  90]],    // green       — 50% (brighter green)
+    [0.75, [255, 220,  0]],   // yellow      — 75% (pure yellow)
+    [1.00, [255, 140,  0]],   // orange      — 100% (at target lux)
+    [1.50, [255,  30,  30]],  // red         — 150%+ (overlit, more saturated)
+  ]
+
+  function luxToColor(lux) {
+    if (targetLux <= 0) return "rgb(0,0,170)"
+    const ratio = Math.min(1.5, lux / targetLux)
+    for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
+      const [r0, c0] = HEATMAP_STOPS[i]
+      const [r1, c1] = HEATMAP_STOPS[i + 1]
+      if (ratio <= r1) {
+        const t  = (ratio - r0) / (r1 - r0)
+        const ri = Math.round(c0[0] + t * (c1[0] - c0[0]))
+        const gi = Math.round(c0[1] + t * (c1[1] - c0[1]))
+        const bi = Math.round(c0[2] + t * (c1[2] - c0[2]))
+        return `rgb(${ri},${gi},${bi})`
+      }
+    }
+    return "rgb(255,0,0)"
+  }
 
   // ── Physics helpers for heatmap ──────────────────────────────
   const MAINT_FACTOR_HM = 0.8  // standard maintenance factor
@@ -439,56 +461,45 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   const STEP_PX = Math.max(4, heatmapCellSize)  // user-controlled cell size (px)
 
-  // ── Smooth heatmap canvas (blur-blended, single KonvaImage) ──────────────
-  // Draws cells at STEP_PX with a Gaussian blur so adjacent pools blend
-  // into smooth gradients — same technique as RoomOverlay.jsx.
-  const heatmapCanvas = useMemo(() => {
-    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return null
+  const heatmapCells = useMemo(() => {
+    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return []
 
     const sources = buildSources(lights)
-    if (sources.length === 0) return null
+    if (sources.length === 0) return []
 
-    const mh2     = mountingHeight * mountingHeight
-    const blurPx  = Math.max(STEP_PX * 1.5, 8)   // blur radius scales with cell size
-    const pad     = Math.ceil(blurPx * 2)          // extra padding so blur doesn't clip at edges
-    const W       = Math.ceil(ROOM_PX_W) + pad * 2
-    const H       = Math.ceil(ROOM_PX_H) + pad * 2
+    const mh2 = mountingHeight * mountingHeight
+    const cells = []
 
-    const canvas  = document.createElement('canvas')
-    canvas.width  = W
-    canvas.height = H
-    const ctx     = canvas.getContext('2d')
-
-    ctx.filter = `blur(${blurPx}px)`
-
-    // Scan slightly outside room so blur fills right to the walls
-    for (let py = -pad; py < ROOM_PX_H + pad; py += STEP_PX) {
-      for (let px = -pad; px < ROOM_PX_W + pad; px += STEP_PX) {
-        // World coords of this cell centre (relative to room origin)
-        const worldX = ROOM_X + px + STEP_PX / 2
-        const worldY = ROOM_Y + py + STEP_PX / 2
+    for (let py = ROOM_Y; py < ROOM_Y + ROOM_PX_H; py += STEP_PX) {
+      for (let px = ROOM_X; px < ROOM_X + ROOM_PX_W; px += STEP_PX) {
+        const cx = px + STEP_PX / 2
+        const cy = py + STEP_PX / 2
         let totalLux = 0
 
         for (const src of sources) {
-          const dxM       = (worldX - src.x) / (SCALE * 1000)
-          const dyM       = (worldY - src.y) / (SCALE * 1000)
+          // Convert pixel offsets to metres — physically correct
+          const dxM       = (cx - src.x) / (SCALE * 1000)
+          const dyM       = (cy - src.y) / (SCALE * 1000)
           const horzDistM = Math.sqrt(dxM * dxM + dyM * dyM)
-          const incAngle  = Math.atan2(horzDistM, mountingHeight)
+          // incAngle = angle from vertical axis (nadir)
+          const incAngle = Math.atan2(horzDistM, mountingHeight)
+          // Hard cutoff outside beam cone
           if (incAngle > src.halfBeamR) continue
-          const distM    = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
+          // 3D distance — clamp min 0.1 m to avoid divide-by-zero
+          const distM = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
+          // cosTheta = cosine of incidence angle at work-plane
           const cosTheta = mountingHeight / distM
-          const relI     = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
-          totalLux      += (src.I0 * relI * cosTheta) / (distM * distM)
+          // Angle-dependent intensity: I(θ) = I₀ · cosⁿ(θ)
+          const relI = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
+          // Illuminance (lux): E = I(θ) · cos(θ) / d²
+          // cosTheta again for Lambert cosine law at the surface
+          totalLux += (src.I0 * relI * cosTheta) / (distM * distM)
         }
 
-        if (totalLux < 0.5) continue   // skip near-zero cells for performance
-        ctx.fillStyle = luxToColor(totalLux)
-        ctx.fillRect(pad + px, pad + py, STEP_PX, STEP_PX)
+        cells.push({ x: px, y: py, lux: totalLux, color: luxToColor(totalLux) })
       }
     }
-
-    ctx.filter = 'none'
-    return { canvas, pad }
+    return cells
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
 
@@ -761,46 +772,55 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap rendering components ─────────────────────────────
   function HeatmapLayer() {
-    if (!showHeatmap || !heatmapCanvas) return null
-    const { canvas, pad } = heatmapCanvas
+    if (!showHeatmap || heatmapCells.length === 0) return null
+    const w = Math.ceil(STEP_PX)
+    const h = Math.ceil(STEP_PX)
     return (
-      <KonvaImage
-        image={canvas}
-        x={ROOM_X - pad}
-        y={ROOM_Y - pad}
-        width={canvas.width}
-        height={canvas.height}
-        opacity={0.80}
+      <Group
         listening={false}
-        clipX={pad}
-        clipY={pad}
+        clipX={ROOM_X}
+        clipY={ROOM_Y}
         clipWidth={ROOM_PX_W}
         clipHeight={ROOM_PX_H}
-      />
+      >
+        {heatmapCells.map((cell, i) => (
+          <Rect
+            key={i}
+            x={cell.x}
+            y={cell.y}
+            width={w}
+            height={h}
+            fill={cell.color}
+            opacity={0.70}
+          />
+        ))}
+      </Group>
     )
   }
 
   function HeatmapLegend() {
     if (!showHeatmap) return null
-    const lx = ROOM_X + ROOM_PX_W + 15
-    const ly = ROOM_Y + 50
-    const W  = 18
-    const H  = 150
-
-    // Build gradient from canonical stops (top = hot 150%, bottom = cold 0%)
-    // Each stop ratio maps to fraction 1 - ratio/1.5 along the bar (inverted)
-    const gradStops = []
-    for (const [ratio, [r, g, b]] of [...HEATMAP_STOPS].reverse()) {
-      const frac = 1 - ratio / 1.5
-      gradStops.push(frac, `rgb(${r},${g},${b})`)
-    }
-
-    // Label rows: one per canonical stop, ordered top→bottom
-    const labelRows = [...HEATMAP_STOPS].reverse().map(([ratio]) => ({
-      frac:  1 - ratio / 1.5,
-      text: `${Math.round(ratio * targetLux)} lx`,
-    }))
-
+    const lx  = ROOM_X + ROOM_PX_W + 15
+    const ly  = ROOM_Y + 50
+    const W   = 18
+    const H   = 150
+    const MF  = 0.8
+    // Gradient bar: top=hot (red), bottom=cold (blue)
+    // Match HEATMAP_STOPS exactly (top = hot/overlit, bottom = dark/zero)
+    const gradStops = [
+      0,    "rgb(255,30,30)",   // red   — 150%+ (overlit)
+      0.25, "rgb(255,140,0)",   // orange — 100% (at target)
+      0.4,  "rgb(255,220,0)",   // yellow — 75%
+      0.55, "rgb(0,230,90)",    // green  — 50%
+      0.75, "rgb(0,190,255)",   // cyan   — 25%
+      1,    "rgb(0,50,200)",    // blue   — 0%
+    ]
+    const labels = [
+      { frac: 0,    text: `${Math.round(targetLux * 1.5)} lx` },
+      { frac: 1/3,  text: `${Math.round(targetLux)}     lx` },
+      { frac: 2/3,  text: `${Math.round(targetLux * 0.5)} lx` },
+      { frac: 1,    text: "0 lx" },
+    ]
     return (
       <Group listening={false}>
         <Rect
@@ -812,7 +832,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         />
         <Rect x={lx} y={ly} width={W} height={H} stroke="#cccccc" strokeWidth={0.5} fill="transparent" />
         <Text x={lx} y={ly - 16} text="LUX" fontSize={8} fontFamily="Inter, sans-serif" fill="#999999" letterSpacing={1} />
-        {labelRows.map(({ frac, text }) => (
+        {labels.map(({ frac, text }) => (
           <Text
             key={frac}
             x={lx + W + 4}
