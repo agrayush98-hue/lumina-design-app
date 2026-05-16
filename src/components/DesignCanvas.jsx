@@ -347,12 +347,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap: colour scale & grid computation ──────────────────
   const HEATMAP_STOPS = [
-    [0.00, [0,   50, 200]],   // deep blue   — 0% of target (darker, richer)
-    [0.25, [0, 190, 255]],    // cyan        — 25% (more vibrant)
-    [0.50, [0, 230,  90]],    // green       — 50% (brighter green)
-    [0.75, [255, 220,  0]],   // yellow      — 75% (pure yellow)
-    [1.00, [255, 140,  0]],   // orange      — 100% (at target lux)
-    [1.50, [255,  30,  30]],  // red         — 150%+ (overlit, more saturated)
+    [0.00, [  0,  20, 200]],  // deep blue   — 0%
+    [0.25, [  0, 200, 255]],  // bright cyan — 25%
+    [0.50, [  0, 240, 210]],  // turquoise   — 50%
+    [0.75, [255, 235,   0]],  // yellow      — 75%
+    [1.00, [255, 155,   0]],  // orange      — 100% (at target)
+    [1.50, [255,  75,  55]],  // soft red    — 150%+ (overlit)
   ]
 
   function luxToColor(lux) {
@@ -502,6 +502,27 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return cells
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
+
+  // ── Blur-blended canvas — smooth gradient from the Rect cell data ─────────
+  const heatmapCanvas = useMemo(() => {
+    if (!showHeatmap || heatmapCells.length === 0) return null
+    const BLUR = 5                    // light blur: smooths edges without muddying
+    const PAD  = BLUR * 4            // padding so blur doesn't clip at room walls
+    const W    = Math.ceil(ROOM_PX_W) + PAD * 2
+    const H    = Math.ceil(ROOM_PX_H) + PAD * 2
+    const canvas = document.createElement('canvas')
+    canvas.width  = W
+    canvas.height = H
+    const ctx = canvas.getContext('2d')
+    ctx.filter = `blur(${BLUR}px)`
+    for (const cell of heatmapCells) {
+      ctx.fillStyle = cell.color
+      ctx.fillRect(PAD + (cell.x - ROOM_X), PAD + (cell.y - ROOM_Y), Math.ceil(STEP_PX), Math.ceil(STEP_PX))
+    }
+    ctx.filter = 'none'
+    return { canvas, pad: PAD }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showHeatmap, heatmapCells, ROOM_PX_W, ROOM_PX_H, STEP_PX, ROOM_X, ROOM_Y])
 
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
@@ -772,29 +793,22 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Heatmap rendering components ─────────────────────────────
   function HeatmapLayer() {
-    if (!showHeatmap || heatmapCells.length === 0) return null
-    const w = Math.ceil(STEP_PX)
-    const h = Math.ceil(STEP_PX)
+    if (!showHeatmap || !heatmapCanvas) return null
+    const { canvas, pad } = heatmapCanvas
     return (
-      <Group
+      <KonvaImage
+        image={canvas}
+        x={ROOM_X - pad}
+        y={ROOM_Y - pad}
+        width={canvas.width}
+        height={canvas.height}
+        opacity={0.82}
         listening={false}
-        clipX={ROOM_X}
-        clipY={ROOM_Y}
+        clipX={pad}
+        clipY={pad}
         clipWidth={ROOM_PX_W}
         clipHeight={ROOM_PX_H}
-      >
-        {heatmapCells.map((cell, i) => (
-          <Rect
-            key={i}
-            x={cell.x}
-            y={cell.y}
-            width={w}
-            height={h}
-            fill={cell.color}
-            opacity={0.70}
-          />
-        ))}
-      </Group>
+      />
     )
   }
 
@@ -808,12 +822,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     // Gradient bar: top=hot (red), bottom=cold (blue)
     // Match HEATMAP_STOPS exactly (top = hot/overlit, bottom = dark/zero)
     const gradStops = [
-      0,    "rgb(255,30,30)",   // red   — 150%+ (overlit)
-      0.25, "rgb(255,140,0)",   // orange — 100% (at target)
-      0.4,  "rgb(255,220,0)",   // yellow — 75%
-      0.55, "rgb(0,230,90)",    // green  — 50%
-      0.75, "rgb(0,190,255)",   // cyan   — 25%
-      1,    "rgb(0,50,200)",    // blue   — 0%
+      0,    "rgb(255,75,55)",   // soft red   — 150%+
+      0.25, "rgb(255,155,0)",   // orange     — 100%
+      0.42, "rgb(255,235,0)",   // yellow     — 75%
+      0.58, "rgb(0,240,210)",   // turquoise  — 50%
+      0.75, "rgb(0,200,255)",   // cyan       — 25%
+      1,    "rgb(0,20,200)",    // deep blue  — 0%
     ]
     const labels = [
       { frac: 0,    text: `${Math.round(targetLux * 1.5)} lx` },
