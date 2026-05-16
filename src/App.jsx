@@ -985,7 +985,33 @@ export default function App() {
         ))
       }
     }
-    patchActiveRoom(() => ({ lights: generated }))
+
+    // ── Lux-aware trim: remove outermost fixtures if over-lit ─────────────────
+    const targetLuxVal = Number(room.targetLux) || 300
+    const calcLuxForSet = (set) => {
+      if (areaM2 === 0 || set.length === 0) return 0
+      const lumens = set.reduce((s, l) => s + (l.lumens ?? 0), 0)
+      return (lumens * uf * MAINT_FACTOR) / areaM2
+    }
+
+    // Keep at least 1 fixture; remove furthest-from-centre first
+    const centerX = ROOM_X + ROOM_PX_W / 2
+    const centerY = ROOM_Y + ROOM_PX_H / 2
+    let trimmed = [...generated]
+    while (trimmed.length > 1 && calcLuxForSet(trimmed) > targetLuxVal * 1.2) {
+      let maxDist = -1, maxIdx = -1
+      trimmed.forEach((f, i) => {
+        const d = Math.hypot(f.x - centerX, f.y - centerY)
+        if (d > maxDist) { maxDist = d; maxIdx = i }
+      })
+      trimmed.splice(maxIdx, 1)
+    }
+
+    const finalLux = Math.round(calcLuxForSet(trimmed))
+    const removedCount = generated.length - trimmed.length
+    const trimNote = removedCount > 0 ? ` (${removedCount} removed — over-lit)` : ""
+    patchActiveRoom(() => ({ lights: trimmed }))
+    showToast(`${trimmed.length} fixtures placed — ${finalLux} lux achieved${trimNote}`)
   }
 
   // ── Toast helper ──────────────────────────────────────────────────────────
