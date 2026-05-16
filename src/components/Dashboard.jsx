@@ -145,7 +145,7 @@ function TemplateCards({ onNewProject, navigate }) {
   )
 }
 
-function ProjectsTab({ user }) {
+function ProjectsTab({ user, setTab }) {
   const navigate     = useNavigate()
   const toast        = useToast()
   const confirm      = useConfirm()
@@ -568,7 +568,7 @@ function ProjectsTab({ user }) {
                     <li>10 Projects + floor plan upload</li>
                     <li>Priority Support</li>
                   </ul>
-                  <button className="btn-upgrade" onClick={() => navigate('/dashboard', { state: { openTab: 'subscription' } })}>
+                  <button className="btn-upgrade" onClick={() => setTab('subscription')}>
                     Upgrade to Pro →
                   </button>
                 </div>
@@ -1258,7 +1258,7 @@ export default function Dashboard({ user }) {
 
         {/* Content */}
         <main className="dash-content">
-          {tab === "projects" && <ProjectsTab user={user} />}
+          {tab === "projects" && <ProjectsTab user={user} setTab={setTab} />}
           {tab !== "projects" && (
             <div className="dash-tab-scroll">
               {tab === "profile"      && <ProfileTab      user={user} />}
