@@ -264,16 +264,22 @@ export default function App() {
 
   function isProActive() {
     const sub = userDoc?.subscription
-    // Paid: must have status=active AND a real plan
+    // Paid and active
     if (sub?.status === 'active' && (sub.plan === 'pro' || sub.plan === 'professional')) return true
-    // Trial: within 14-day window
+    // Trial within 14-day window OR cancelled but still within access window
     const { status } = getTrialStatus()
-    return status === 'trial'
+    return status === 'trial' || status === 'cancelled'
   }
 
   function isProfessional() {
     const sub = userDoc?.subscription
-    return sub?.status === 'active' && sub?.plan === 'professional'
+    if (sub?.status === 'active' && sub?.plan === 'professional') return true
+    // Cancelled professional who still has access
+    if (sub?.status === 'cancelled' && sub?.plan === 'professional') {
+      const { status } = getTrialStatus()
+      return status === 'cancelled'
+    }
+    return false
   }
 
   function isPaidPlan() {
@@ -285,7 +291,16 @@ export default function App() {
     const sub = userDoc?.subscription
     if (sub?.status === 'active' && sub?.plan === 'professional') return Infinity
     if (sub?.status === 'active' && sub?.plan === 'pro') return 5
-    return 3
+    if (sub?.status === 'trial') return 5   // trial matches Pro limits
+    // Cancelled but still within renewsAt window — keep plan's room limit
+    if (sub?.status === 'cancelled') {
+      const { status } = getTrialStatus()
+      if (status === 'cancelled') {
+        if (sub.plan === 'professional') return Infinity
+        if (sub.plan === 'pro') return 5
+      }
+    }
+    return 2                                 // free plan: 2 rooms per project
   }
 
   function requirePro(feature, action) {
@@ -1065,7 +1080,7 @@ export default function App() {
     if (!projectId) { showToast("Save the project first before sharing."); return }
     try {
       await fbShareProject(projectId)
-      const url = `${window.location.origin}/app?projectId=${projectId}`
+      const url = `${window.location.origin}/share/${projectId}`
       navigator.clipboard?.writeText(url)
       showToast("Share link copied to clipboard ✓")
     } catch (e) {

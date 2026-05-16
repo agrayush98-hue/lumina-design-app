@@ -178,7 +178,7 @@ export default function SharedView() {
             onAddMarker={() => {}}
             onMoveMarker={() => {}}
             onDeleteMarker={() => {}}
-            floorPlan={activeRoom.floorPlan ?? null}
+            floorPlan={activeFloor.floorPlan ?? null}
           />
         </div>
       </main>
