@@ -1,5 +1,7 @@
 // Vercel serverless function — creates a Razorpay order
-// Required env vars: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
+// Required env vars: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, FIREBASE_SERVICE_ACCOUNT
+
+import { getAdminAuth } from './_adminDb.js'
 
 const PLAN_AMOUNTS = {
   pro:          99900,  // ₹999 in paise
@@ -19,7 +21,7 @@ function corsHeaders(req) {
   return {
     'Access-Control-Allow-Origin':  allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   }
 }
 
@@ -30,10 +32,27 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { userId, plan } = req.body ?? {}
+  // ── Verify Firebase ID token — prevents userId spoofing ──────────────────────
+  const authHeader = req.headers.authorization ?? ''
+  const idToken    = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
-  if (!userId || !plan) {
-    return res.status(400).json({ error: 'Missing required fields: userId, plan' })
+  if (!idToken) {
+    return res.status(401).json({ error: 'Missing Authorization header' })
+  }
+
+  let decodedToken
+  try {
+    decodedToken = await getAdminAuth().verifyIdToken(idToken)
+  } catch (err) {
+    console.warn('[create-checkout] Invalid ID token:', err.message)
+    return res.status(401).json({ error: 'Invalid or expired Firebase token' })
+  }
+
+  const verifiedUserId = decodedToken.uid
+  const { plan } = req.body ?? {}
+
+  if (!plan) {
+    return res.status(400).json({ error: 'Missing required field: plan' })
   }
 
   const amount = PLAN_AMOUNTS[plan]
@@ -60,8 +79,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         amount,
         currency: 'INR',
-        receipt:  `rcpt_${userId.slice(0, 12)}_${Date.now()}`,
-        notes:    { userId, plan },
+        receipt:  `rcpt_${verifiedUserId.slice(0, 12)}_${Date.now()}`,
+        notes:    { userId: verifiedUserId, plan },
       }),
     })
 

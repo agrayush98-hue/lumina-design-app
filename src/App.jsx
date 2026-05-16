@@ -754,13 +754,27 @@ export default function App() {
 
   // ── Room settings & floor plan ────────────────────────────────────────────
 
-  function updateRoom(newRoom) {
+  async function updateRoom(newRoom) {
     const nW = Number(newRoom.roomWidth), nH = Number(newRoom.roomHeight)
     const oW = Number(room.roomWidth),    oH = Number(room.roomHeight)
     if (newRoom.roomProtocol === "DALI" && !daliEnabled) setDaliEnabled(true)
+
+    const sizeChanged = nW !== oW || nH !== oH
+    if (sizeChanged) {
+      const activeRoomData = floors.find(f => f.id === activeFloorId)?.rooms?.find(r => r.id === activeRoomId)
+      const hasLights = (activeRoomData?.lights?.length ?? 0) > 0
+      if (hasLights) {
+        const ok = await confirm(
+          `Changing room dimensions will clear all ${activeRoomData.lights.length} placed fixture${activeRoomData.lights.length !== 1 ? 's' : ''}. Continue?`,
+          { title: 'CLEAR FIXTURES?', confirmLabel: 'CLEAR & RESIZE', danger: true }
+        )
+        if (!ok) return // user cancelled — keep old dimensions
+      }
+    }
+
     patchActiveRoom(r => ({
       room:   newRoom,
-      lights: (nW !== oW || nH !== oH) ? [] : r.lights,
+      lights: sizeChanged ? [] : r.lights,
     }))
   }
 
@@ -1036,7 +1050,7 @@ export default function App() {
     if (!projectId) { showToast("Save the project first before sharing."); return }
     try {
       await fbShareProject(projectId)
-      const url = `${window.location.origin}?share=${projectId}`
+      const url = `${window.location.origin}/app?projectId=${projectId}`
       navigator.clipboard?.writeText(url)
       showToast("Share link copied to clipboard ✓")
     } catch (e) {
@@ -2211,23 +2225,25 @@ export default function App() {
 
           {/* Heatmaps info */}
           <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'heatmaps' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
-            <div style={{ fontSize: 14, color: "#888888", lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: "#888888", lineHeight: 1.6 }}>
               <div style={{ fontWeight: 600, color: "#cccccc", marginBottom: 8 }}>Lux Heatmap</div>
-              <p>The heatmap overlays lux distribution across the room based on fixture placement and beam angles.</p>
-              <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#3dba74" }} />
-                  <span>≥ target lux (GOOD)</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#d4a843" }} />
-                  <span>80–100% target</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: 2, background: "#e05555" }} />
-                  <span>{"< 80% target (UNDERLIT)"}</span>
-                </div>
+              <p style={{ marginBottom: 12 }}>Shows lux distribution across the floor. Colors represent % of your target lux level.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {[
+                  { color: "#1a237e", label: "0% — No light" },
+                  { color: "#1565c0", label: "25% — Very underlit" },
+                  { color: "#00897b", label: "50% — Below target" },
+                  { color: "#f9a825", label: "100% — At target ✓" },
+                  { color: "#e65100", label: "125% — Over target" },
+                  { color: "#b71c1c", label: "150%+ — Overlit" },
+                ].map(({ color, label }) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 12, height: 12, borderRadius: 2, background: color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12 }}>{label}</span>
+                  </div>
+                ))}
               </div>
+              <p style={{ marginTop: 10, fontSize: 11, color: "#555" }}>Yellow = on target. Blue = underlit. Red = overlit.</p>
             </div>
           </div>
 

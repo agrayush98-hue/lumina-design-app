@@ -1,20 +1,40 @@
 import { useState } from "react"
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
 import { auth } from "../firebase"
+import { useAuth } from "../contexts/AuthContext"
 
 export default function AuthPage() {
-  const [mode,     setMode]     = useState("login")   // "login" | "register"
+  const { signup, login, resetPassword } = useAuth()
+
+  const [mode,     setMode]     = useState("login")   // "login" | "register" | "reset"
   const [email,    setEmail]    = useState("")
   const [password, setPassword] = useState("")
   const [confirm,  setConfirm]  = useState("")
   const [error,    setError]    = useState(null)
+  const [info,     setInfo]     = useState(null)
   const [loading,  setLoading]  = useState(false)
 
   const isRegister = mode === "register"
+  const isReset    = mode === "reset"
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+    setInfo(null)
+
+    if (isReset) {
+      setLoading(true)
+      try {
+        await resetPassword(email)
+        setInfo("Password reset email sent. Check your inbox.")
+        setMode("login")
+      } catch (err) {
+        setError(friendlyError(err.code))
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
     if (isRegister && password !== confirm) {
       setError("Passwords do not match.")
@@ -28,9 +48,10 @@ export default function AuthPage() {
     setLoading(true)
     try {
       if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email, password)
+        // Uses AuthContext.signup() which calls _initUserDocs — sets up trial, Firestore doc, welcome email
+        await signup(email, password)
       } else {
-        await signInWithEmailAndPassword(auth, email, password)
+        await login(email, password)
       }
     } catch (err) {
       setError(friendlyError(err.code))
@@ -40,14 +61,22 @@ export default function AuthPage() {
   }
 
   const handleGoogleSignIn = async () => {
+    setError(null)
     const provider = new GoogleAuthProvider()
     try {
       await signInWithPopup(auth, provider)
+      // onAuthStateChanged in AuthContext will call _initUserDocs if doc doesn't exist
     } catch (error) {
       if (error.code !== 'auth/popup-closed-by-user') {
         setError(error.message)
       }
     }
+  }
+
+  function switchMode(m) {
+    setMode(m)
+    setError(null)
+    setInfo(null)
   }
 
   function friendlyError(code) {
@@ -103,33 +132,53 @@ export default function AuthPage() {
         overflow: "hidden",
         boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
       }}>
-        {/* Tab strip */}
-        <div style={{ display: "flex", borderBottom: "1px solid #1a2b3c" }}>
-          {["login", "register"].map(m => (
+        {/* Tab strip — hide on reset mode */}
+        {!isReset && (
+          <div style={{ display: "flex", borderBottom: "1px solid #1a2b3c" }}>
+            {["login", "register"].map(m => (
+              <button
+                key={m}
+                onClick={() => switchMode(m)}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  background: mode === m ? "#0a1018" : "transparent",
+                  border: "none",
+                  borderBottom: mode === m ? "2px solid #39c5cf" : "2px solid transparent",
+                  color: mode === m ? "#39c5cf" : "#2d4f68",
+                  fontFamily: "IBM Plex Mono",
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  cursor: "pointer",
+                  textTransform: "uppercase",
+                }}
+              >
+                {m === "login" ? "Sign In" : "Register"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Reset password header */}
+        {isReset && (
+          <div style={{ padding: "16px 24px 0", borderBottom: "1px solid #1a2b3c" }}>
             <button
-              key={m}
-              onClick={() => { setMode(m); setError(null) }}
-              style={{
-                flex: 1,
-                padding: "12px 0",
-                background: mode === m ? "#0a1018" : "transparent",
-                border: "none",
-                borderBottom: mode === m ? "2px solid #39c5cf" : "2px solid transparent",
-                color: mode === m ? "#39c5cf" : "#2d4f68",
-                fontFamily: "IBM Plex Mono",
-                fontSize: 10,
-                letterSpacing: "0.12em",
-                cursor: "pointer",
-                textTransform: "uppercase",
-              }}
-            >
-              {m === "login" ? "Sign In" : "Register"}
-            </button>
-          ))}
-        </div>
+              onClick={() => switchMode("login")}
+              style={{ background: "none", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 9, cursor: "pointer", letterSpacing: "0.1em", padding: 0, marginBottom: 8 }}
+            >← BACK TO SIGN IN</button>
+            <div style={{ fontSize: 11, color: "#39c5cf", letterSpacing: "0.1em", paddingBottom: 12 }}>RESET PASSWORD</div>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ padding: "24px 24px 20px" }}>
+
+          {isReset && (
+            <div style={{ marginBottom: 16, fontSize: 10, color: "#2d4f68", lineHeight: 1.6 }}>
+              Enter your email and we'll send you a password reset link.
+            </div>
+          )}
+
           <div style={{ marginBottom: 14 }}>
             <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
               EMAIL
@@ -144,19 +193,32 @@ export default function AuthPage() {
             />
           </div>
 
-          <div style={{ marginBottom: isRegister ? 14 : 20 }}>
-            <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
-              PASSWORD
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete={isRegister ? "new-password" : "current-password"}
-              style={inputStyle}
-            />
-          </div>
+          {!isReset && (
+            <div style={{ marginBottom: isRegister ? 14 : 8 }}>
+              <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
+                PASSWORD
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                style={inputStyle}
+              />
+            </div>
+          )}
+
+          {/* Forgot password link */}
+          {mode === "login" && (
+            <div style={{ textAlign: "right", marginBottom: 16 }}>
+              <button
+                type="button"
+                onClick={() => switchMode("reset")}
+                style={{ background: "none", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 9, cursor: "pointer", letterSpacing: "0.08em", padding: 0 }}
+              >Forgot password?</button>
+            </div>
+          )}
 
           {isRegister && (
             <div style={{ marginBottom: 20 }}>
@@ -185,6 +247,17 @@ export default function AuthPage() {
             </div>
           )}
 
+          {info && (
+            <div style={{
+              marginBottom: 16, padding: "8px 12px",
+              background: "#001a0a", border: "1px solid #166534",
+              borderRadius: 4, color: "#4ade80",
+              fontFamily: "IBM Plex Mono", fontSize: 10,
+            }}>
+              {info}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -202,40 +275,50 @@ export default function AuthPage() {
               transition: "background 0.15s",
             }}
           >
-            {loading ? "Please wait..." : isRegister ? "Create Account" : "Sign In"}
+            {loading
+              ? "Please wait..."
+              : isReset
+                ? "Send Reset Email"
+                : isRegister
+                  ? "Create Account"
+                  : "Sign In"}
           </button>
 
-          <div className="divider"><span>OR</span></div>
+          {!isReset && (
+            <>
+              <div className="divider"><span>OR</span></div>
 
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="google-signin-btn"
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "white",
-              color: "#444",
-              border: "1px solid #ddd",
-              borderRadius: 4,
-              fontSize: 16,
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-              <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-            </svg>
-            Sign in with Google
-          </button>
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="google-signin-btn"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  backgroundColor: "white",
+                  color: "#444",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 12,
+                  marginBottom: 16,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                  <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
+                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                </svg>
+                Sign in with Google
+              </button>
+            </>
+          )}
         </form>
       </div>
 

@@ -277,7 +277,7 @@ export async function getTrialDaysRemaining(userId) {
 
 // ── Project limit ──────────────────────────────────────────────────────────────
 const PLAN_LIMITS   = { free: 3, trial: 10, pro: 10, professional: Infinity }
-const AI_CALL_LIMITS = { pro: 50, professional: 200 }
+const AI_CALL_LIMITS = { free: 5, trial: 5, pro: 50, professional: 200 }
 
 // ── AI call tracking ──────────────────────────────────────────────────────────
 

@@ -12,14 +12,18 @@ export default function TrialBanner() {
 
   const isExpired   = trial.status === 'expired'
   const isCancelled = trial.status === 'cancelled'
-  const isWarning   = trial.status === 'trial' && trial.daysLeft <= 3
+  const isTrial     = trial.status === 'trial'
+  const isWarning   = isTrial && trial.daysLeft <= 3
 
   const bg     = isExpired ? '#0f0000' : (isWarning || isCancelled) ? '#0f0a00' : '#0a0a0a'
   const border = isExpired ? '#3a1010' : (isWarning || isCancelled) ? '#3a2800' : '#222222'
   const color  = isExpired ? '#ef4444' : (isWarning || isCancelled) ? '#d4a843' : '#888888'
 
   function goUpgrade() {
-    navigate('/dashboard', { state: { openTab: 'subscription' } })
+    // Navigate to /dashboard — if already there, the Dashboard root reads location.state
+    // on mount. If already mounted, the user must click Subscription tab manually.
+    // We navigate with replace:false so a fresh mount always reads the state.
+    navigate('/dashboard', { state: { openTab: 'subscription' }, replace: false })
   }
 
   return (
@@ -37,7 +41,9 @@ export default function TrialBanner() {
                 : '⚠  FREE TRIAL EXPIRED — upgrade to unlock DALI, exports, floor plan upload, and more')
             : isCancelled
               ? `PLAN CANCELLED — access continues for ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''}`
-              : `FREE TRIAL — ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''} remaining`}
+              : isWarning
+                ? `⚠  FREE TRIAL — ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''} remaining — upgrade before it ends`
+                : `FREE TRIAL — ${trial.daysLeft} day${trial.daysLeft !== 1 ? 's' : ''} remaining`}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -149,32 +149,31 @@ function ProjectsTab({ user, setTab }) {
   const navigate     = useNavigate()
   const toast        = useToast()
   const confirm      = useConfirm()
-  const { userDoc }  = useAuth()
+  const { userDoc, getTrialStatus } = useAuth()
   const [projects,   setProjects]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showWizard, setShowWizard] = useState(false)
   const [trialDays,  setTrialDays]  = useState(null)
-
   const sub        = userDoc?.subscription
   const isPro      = sub?.status === 'active' && sub?.plan === 'pro'
   const isProfessional = sub?.status === 'active' && sub?.plan === 'professional'
   const isPaid     = isPro || isProfessional
   const projectLimit = isProfessional ? Infinity : isPro ? 10 : 3
-  const aiLimit      = isProfessional ? 200 : isPro ? 50 : 0
+  const aiLimit      = isProfessional ? 200 : isPro ? 50 : 5  // free/trial: 5 calls/month
   const aiUsed       = userDoc?.aiUsage?.thisMonth ?? 0
 
   useEffect(() => {
     fetchProjects()
-    // Compute unclamped days so negative values indicate expired trial
-    getUserProfile(user.uid).then(profile => {
-      if (!profile?.createdAt) { setTrialDays(-1); return }
-      const created = profile.createdAt?.toDate?.() ?? new Date(profile.createdAt)
-      const remaining = Math.ceil(14 - (Date.now() - created.getTime()) / 86400000)
-      setTrialDays(remaining)
-    }).catch(() => setTrialDays(-1))
-  }, [])
+    // Derive trial days from AuthContext (same source as TrialBanner)
+    const status = getTrialStatus?.()
+    if (status?.status === 'trial') {
+      setTrialDays(status.daysLeft ?? 0)
+    } else {
+      setTrialDays(status?.status === 'expired' ? 0 : -1)
+    }
+  }, [userDoc])
 
   async function fetchProjects() {
     setLoading(true); setError(null)
@@ -276,8 +275,8 @@ function ProjectsTab({ user, setTab }) {
             </div>
             <div className="dash-stat-divider" />
             <div className="dash-stat">
-              <div className="dash-stat-value" style={{ color: isPaid ? (aiUsed >= aiLimit ? "#ef4444" : "#4ade80") : "#555555" }}>
-                {isPaid ? `${aiLimit - aiUsed}` : "—"}
+              <div className="dash-stat-value" style={{ color: aiUsed >= aiLimit ? "#ef4444" : "#4ade80" }}>
+                {Math.max(0, aiLimit - aiUsed)}
               </div>
               <div className="dash-stat-label">AI Calls Left</div>
             </div>
@@ -498,7 +497,7 @@ function ProjectsTab({ user, setTab }) {
 
                 const aiPct      = aiLimit > 0 ? Math.min(100, (aiUsed / aiLimit) * 100) : 0
                 const aiAtLimit  = aiLimit > 0 && aiUsed >= aiLimit
-                const aiColor    = !isPaid ? '#ef4444' : aiAtLimit ? '#ef4444' : aiPct >= 80 ? '#e07b2a' : '#d4a843'
+                const aiColor    = aiAtLimit ? '#ef4444' : aiPct >= 80 ? '#e07b2a' : '#d4a843'
 
                 return (
                   <div className="dash-widget dash-widget--usage">
@@ -529,25 +528,17 @@ function ProjectsTab({ user, setTab }) {
                       <div className="usage-row">
                         <div className="usage-row-header">
                           <span className="usage-label">AI CALLS (THIS MONTH)</span>
-                          {isPaid ? (
-                            <span className="usage-count" style={{ color: aiAtLimit ? '#ef4444' : '#cccccc' }}>
+                                <span className="usage-count" style={{ color: aiAtLimit ? '#ef4444' : '#cccccc' }}>
                               {aiUsed} / {aiLimit}
                               <span className="usage-pct" style={{ color: aiColor }}> · {Math.round(aiPct)}%</span>
                             </span>
-                          ) : (
-                            <span className="usage-count" style={{ color: '#ef4444' }}>0 / 0</span>
-                          )}
                         </div>
                         <div className="usage-bar-track">
-                          {isPaid ? (
-                            <div className="usage-bar-fill" style={{ width: `${aiPct}%`, background: aiColor }} />
-                          ) : (
-                            <div className="usage-bar-fill" style={{ width: '100%', background: 'rgba(239,68,68,0.25)' }} />
-                          )}
+                          <div className="usage-bar-fill" style={{ width: `${aiPct}%`, background: aiColor }} />
                         </div>
-                        {isPaid
-                          ? <div className="usage-hint">Resets {resetStr}</div>
-                          : <div className="usage-hint usage-hint--warn">Upgrade to PRO to use AI</div>
+                        {aiAtLimit
+                          ? <div className="usage-hint usage-hint--warn">Limit reached. Resets {resetStr}</div>
+                          : <div className="usage-hint">Resets {resetStr}</div>
                         }
                       </div>
 
@@ -934,10 +925,14 @@ function SubscriptionTab({ user }) {
     setPaying(plan.id)
     try {
       // Step 1: create Razorpay order via Vercel serverless function
+      const idToken = await auth.currentUser?.getIdToken()
       const res = await fetch("/api/create-checkout", {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ userId: user.uid, plan: plan.id }),
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body:    JSON.stringify({ plan: plan.id }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Checkout failed")
@@ -958,14 +953,17 @@ function SubscriptionTab({ user }) {
         handler: async function (response) {
           // Step 3: verify HMAC + server writes subscription to Firestore
           try {
+            const freshToken = await auth.currentUser?.getIdToken()
             const vRes = await fetch("/api/verify-payment", {
               method:  "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type":  "application/json",
+                "Authorization": `Bearer ${freshToken}`,
+              },
               body:    JSON.stringify({
                 razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature:  response.razorpay_signature,
-                userId:              user.uid,
                 planId:              plan.id,
               }),
             })

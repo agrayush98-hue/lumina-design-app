@@ -12,7 +12,7 @@
 //   FIREBASE_SERVICE_ACCOUNT  — service-account JSON as single-line string
 
 import crypto from 'crypto'
-import { getAdminDb } from './_adminDb.js'
+import { getAdminDb, getAdminAuth } from './_adminDb.js'
 import { trigger }    from './email-workflows.js'
 
 const ALLOWED_ORIGINS = [
@@ -28,7 +28,7 @@ function corsHeaders(req) {
   return {
     'Access-Control-Allow-Origin':  allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   }
 }
 
@@ -40,18 +40,35 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' })
 
+  // ── Step 0: Verify Firebase ID token — prevents userId spoofing ──────────────
+  const authHeader = req.headers.authorization ?? ''
+  const idToken    = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!idToken) {
+    return res.status(401).json({ error: 'Missing Authorization header' })
+  }
+
+  let decodedToken
+  try {
+    decodedToken = await getAdminAuth().verifyIdToken(idToken)
+  } catch (err) {
+    console.warn('[verify-payment] Invalid ID token:', err.message)
+    return res.status(401).json({ error: 'Invalid or expired Firebase token' })
+  }
+
+  const verifiedUserId = decodedToken.uid
+
   const {
     razorpay_order_id,
     razorpay_payment_id,
     razorpay_signature,
-    userId,
     planId,
   } = req.body ?? {}
 
-  console.log('[verify-payment] Request — userId:', userId, '| planId:', planId,
+  console.log('[verify-payment] Request — userId:', verifiedUserId, '| planId:', planId,
     '| order_id:', razorpay_order_id, '| payment_id:', razorpay_payment_id)
 
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId || !planId) {
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !planId) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
@@ -109,14 +126,14 @@ export default async function handler(req, res) {
       },
     }
 
-    console.log('[verify-payment] Writing to users/' + userId, JSON.stringify(payload.subscription))
+    console.log('[verify-payment] Writing to users/' + verifiedUserId, JSON.stringify(payload.subscription))
 
-    await db.doc(`users/${userId}`).set(payload, { merge: true })
+    await db.doc(`users/${verifiedUserId}`).set(payload, { merge: true })
 
-    console.log('[verify-payment] ✓ Firestore write complete for userId:', userId)
+    console.log('[verify-payment] ✓ Firestore write complete for userId:', verifiedUserId)
 
     // Fire payment_success email — fetch user email from Firestore, never block the response
-    db.doc(`users/${userId}`).get().then(snap => {
+    db.doc(`users/${verifiedUserId}`).get().then(snap => {
       const { email, name } = snap.data() ?? {}
       if (email) {
         trigger('payment_success', {

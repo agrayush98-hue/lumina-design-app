@@ -141,9 +141,10 @@ export function computeRoomLuxStats(fixtures, ceilingHeight_mm = 2700, options =
   // More reflective surfaces → higher effective illuminance from inter-reflections
   let interRefMult = 1.0
   if (reflectances) {
-    const c = (reflectances.ceilingReflectance ?? 70) / 100
-    const w = (reflectances.wallReflectance    ?? 50) / 100
-    const f = (reflectances.floorReflectance   ?? 20) / 100
+    // Values stored as fractions (0–1), e.g. ceilingReflectance: 0.7 = 70%
+    const c = reflectances.ceilingReflectance ?? 0.7
+    const w = reflectances.wallReflectance    ?? 0.5
+    const f = reflectances.floorReflectance   ?? 0.2
     const rhoAvg = c * 0.5 + w * 0.3 + f * 0.2   // area-weighted average
     interRefMult = 1 + 0.28 * rhoAvg               // empirical boost factor
   }

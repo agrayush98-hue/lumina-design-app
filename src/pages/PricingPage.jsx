@@ -136,12 +136,12 @@ export default function PricingPage() {
             ))}
           </ul>
           <button
-            onClick={() => termsAgreed && navigate('/app')}
+            onClick={() => termsAgreed && navigate('/dashboard', { state: { openTab: 'subscription' } })}
             disabled={!termsAgreed}
             style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: termsAgreed ? '#ffffff' : 'rgba(255,255,255,0.15)', color: termsAgreed ? '#000000' : 'rgba(255,255,255,0.35)', border: 'none', borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'background 0.15s, color 0.15s' }}
             onMouseEnter={e => { if (termsAgreed) e.currentTarget.style.background = 'rgba(255,255,255,0.88)' }}
             onMouseLeave={e => { if (termsAgreed) e.currentTarget.style.background = '#ffffff' }}
-          >Get Pro</button>
+          >Get Pro →</button>
         </div>
 
         {/* Professional */}
@@ -158,12 +158,12 @@ export default function PricingPage() {
             ))}
           </ul>
           <button
-            onClick={() => termsAgreed && navigate('/app')}
+            onClick={() => termsAgreed && navigate('/dashboard', { state: { openTab: 'subscription' } })}
             disabled={!termsAgreed}
             style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: 'transparent', color: termsAgreed ? T.text : 'rgba(255,255,255,0.25)', border: `1px solid ${termsAgreed ? T.border : 'rgba(255,255,255,0.06)'}`, borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'color 0.15s, border-color 0.15s' }}
             onMouseEnter={e => { if (termsAgreed) { e.currentTarget.style.background = T.btnGray; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' } }}
             onMouseLeave={e => { if (termsAgreed) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = T.border } }}
-          >Get Professional</button>
+          >Get Professional →</button>
         </div>
       </div>
 
