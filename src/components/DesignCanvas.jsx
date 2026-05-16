@@ -86,6 +86,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   showBeam,
   mountingHeight,
   showHeatmap,
+  heatmapCellSize = 8,
   showEmergency,
   emergencyLights,
   onAddEmergencyLight,
@@ -458,7 +459,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     return sources
   }
 
-  const STEP_PX = Math.max(4, 0.5 * SCALE * 1000)  // 0.5 m in pixels
+  const STEP_PX = Math.max(4, heatmapCellSize)  // user-controlled cell size (px)
 
   const heatmapCells = useMemo(() => {
     if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return []

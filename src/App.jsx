@@ -27,6 +27,7 @@ import { fromMM, getStoredUnit } from "./utils/units"
 import { getTemplate } from "./templates/projectTemplates"
 import { useToast as useToastNotify } from "./components/Toast"
 import { useConfirm }                 from "./components/ConfirmModal"
+import { useSettings }               from "./contexts/SettingsContext"
 
 const CANVAS_W        = 1400
 const CANVAS_H        = 750
@@ -257,6 +258,7 @@ export default function App() {
   const { getTrialStatus, userDoc } = useAuth()
   const notify  = useToastNotify()
   const confirm = useConfirm()
+  const { settings } = useSettings()
 
   const [user,        setUser]        = useState(undefined)  // undefined = loading
   const [authLoading, setAuthLoading] = useState(true)
@@ -1522,8 +1524,6 @@ export default function App() {
     doc.setFillColor(212, 175, 55)
     doc.rect(0, PH - 3, PW, 3, "F")
 
-    footer(1)
-
     // ── PAGE 2: Lux Summary ────────────────────────────────────────────────────
     doc.addPage()
     let curY = sectionHeader("02 · LUX SUMMARY", 18)
@@ -1563,8 +1563,6 @@ export default function App() {
         }
       },
     })
-    footer(2)
-
     // ── PAGE 3: Fixture Schedule ───────────────────────────────────────────────
     doc.addPage()
     curY = sectionHeader("03 · FIXTURE SCHEDULE", 18)
@@ -1595,7 +1593,6 @@ export default function App() {
     })
 
     makeTable(schHead, schBody, curY)
-    footer(3)
 
     // ── PAGE 4: Electrical Summary ─────────────────────────────────────────────
     doc.addPage()
@@ -1685,7 +1682,6 @@ export default function App() {
       }
     }
     makeTable(drvHead, drvBody, curY)
-    footer(4)
 
     // ── PAGES 5+: Per-room detail pages ───────────────────────────────────────
     const CANVAS_W_PDF = 1400, CANVAS_H_PDF = 750
@@ -1787,7 +1783,7 @@ export default function App() {
       }
       if (roomBody.length > 0) makeTable(roomHead, roomBody, curY)
 
-      footer(pageNum++)
+      pageNum++
     }
 
     // ── Final page(s): Canvas Snapshots ──────────────────────────────────────
@@ -1949,7 +1945,6 @@ export default function App() {
         }
 
         doc.setLineDashPattern([], 0)
-        footer(pageNum)
       }
 
       // Beam page
@@ -1971,7 +1966,6 @@ export default function App() {
         doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
         doc.addImage(beamUrl, "PNG", imgX, imgY, imgW, imgH)
         pageNum++
-        footer(pageNum)
       }
 
       // Heatmap page
@@ -1993,8 +1987,14 @@ export default function App() {
         doc.text(activeRoomObj?.name ?? "Room Layout", M + 8, 21)
         doc.addImage(heatUrl, "PNG", imgX, imgY, imgW, imgH)
         pageNum++
-        footer(pageNum)
       }
+    }
+
+    // Add "Page X of N" footer to every page now that total is known
+    const totalPages = doc.internal.getNumberOfPages()
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p)
+      footer(p, totalPages)
     }
 
     // Watermark every page for non-paid users
@@ -2291,28 +2291,8 @@ export default function App() {
         </Sidebar>
 
         {/* ── Center: Canvas Area 1fr ──────────────────────────────────────── */}
-        {/* navTab controls which main view shows: canvas / dali / compliance / library */}
+        {/* navTab controls which main view shows: canvas / library */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d" }}>
-
-          {/* ── DALI Control tab ── */}
-          {navTab === 'dali' && (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#888888", fontFamily: "'Inter', sans-serif" }}>
-              <div style={{ fontSize: 32 }}>⚡</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f1f1f" }}>DALI Control</div>
-              <div style={{ fontSize: 17, color: "#999999" }}>Enable DALI in the toolbar to configure bus addressing</div>
-              <button onClick={() => setNavTab('canvas')} style={{ marginTop: 8, padding: "7px 18px", background: "#d4a843", border: "none", borderRadius: 6, color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>← Back to Canvas</button>
-            </div>
-          )}
-
-          {/* ── Compliance tab ── */}
-          {navTab === 'compliance' && (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#888888", fontFamily: "'Inter', sans-serif" }}>
-              <div style={{ fontSize: 32 }}>📋</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f1f1f" }}>Compliance Check</div>
-              <div style={{ fontSize: 17, color: "#999999" }}>Lux compliance reports are available via Export BOQ</div>
-              <button onClick={() => { setNavTab('canvas'); setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }} style={{ marginTop: 8, padding: "7px 18px", background: "#d4a843", border: "none", borderRadius: 6, color: "#0a0a0a", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Open Export</button>
-            </div>
-          )}
 
           {/* ── Library tab ── */}
           {navTab === 'library' && (
@@ -2664,6 +2644,7 @@ export default function App() {
               showBeam={showBeam}
               mountingHeight={mh}
               showHeatmap={showHeatmap}
+              heatmapCellSize={settings.performance.heatMapCellSize ?? 8}
               showEmergency={showEmergency}
               emergencyLights={emergencyLights}
               onAddEmergencyLight={addEmergencyLight}
