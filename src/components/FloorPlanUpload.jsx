@@ -32,15 +32,10 @@ async function readPdfFile(file) {
   canvas.height = vp.height
   await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise
 
-  // Convert to blob URL (avoids large base64 strings in state)
-  const blobUrl = await new Promise((resolve, reject) => {
-    canvas.toBlob(blob => {
-      if (!blob) { reject(new Error("canvas.toBlob returned null")); return }
-      resolve(URL.createObjectURL(blob))
-    }, "image/png")
-  })
+  // Convert to data URL so it persists when the project is saved to Firestore
+  const dataUrl = canvas.toDataURL("image/png")
 
-  return { url: blobUrl, width: vp.width, height: vp.height, scale: null, filename: file.name }
+  return { url: dataUrl, width: vp.width, height: vp.height, scale: null, filename: file.name }
 }
 
 // ── Styles (new design system) ────────────────────────────────────────────────

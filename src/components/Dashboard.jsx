@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react"
 import { Shield, Lock, RefreshCw, BadgeCheck, CreditCard } from 'lucide-react'
 import { useNavigate, useLocation } from "react-router-dom"
-import { signOut, updateProfile, reauthenticateWithPopup, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider, deleteUser } from "firebase/auth"
-import { doc, deleteDoc } from "firebase/firestore"
-import { auth, db }       from "../firebase"
+import { signOut, updateProfile, reauthenticateWithPopup, reauthenticateWithCredential, EmailAuthProvider, GoogleAuthProvider } from "firebase/auth"
+import { auth } from "../firebase"
 import { useToast }        from "./Toast"
 import { useAuth }         from "../contexts/AuthContext"
 import {
@@ -736,9 +735,14 @@ function SettingsTab({ user }) {
   async function _deleteAccountNow() {
     setDeleting(true)
     try {
-      // Delete Firestore doc first, then Auth account
-      await deleteDoc(doc(db, "users", user.uid))
-      await deleteUser(user)
+      // Server-side cascade: deletes projects, subcollections, user doc, and Auth account
+      const idToken = await auth.currentUser.getIdToken()
+      const res     = await fetch('/api/delete-account', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Deletion failed')
       navigate("/")
     } catch (e) {
       toast.error(`Delete failed: ${e.message}`)

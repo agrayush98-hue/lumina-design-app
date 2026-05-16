@@ -980,6 +980,9 @@ export default function App() {
 
   // ── Firebase: Save / Load / Share ─────────────────────────────────────────
 
+  // Auto-save ref pattern: always points to latest handleSave closure
+  const handleSaveRef = useRef(null)
+
   async function handleSave() {
     setSaving(true)
     try {
@@ -1011,6 +1014,18 @@ export default function App() {
     setShowLoadModal(false)
     showToast("Project loaded ✓")
   }
+
+  // Keep ref in sync so auto-save always has latest closure
+  useEffect(() => { handleSaveRef.current = handleSave })
+
+  // Auto-save every 2 minutes for projects that have been saved at least once
+  useEffect(() => {
+    if (!projectId || !user) return
+    const timer = setInterval(() => {
+      if (!saving) handleSaveRef.current?.()
+    }, 120_000)
+    return () => clearInterval(timer)
+  }, [projectId, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-load project or set name from URL params (?projectId=xxx or ?new=Name)
   // Also checks sessionStorage for a pending template from NewProjectWizard
