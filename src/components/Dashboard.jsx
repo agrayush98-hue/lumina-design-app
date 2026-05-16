@@ -919,7 +919,7 @@ function SubscriptionTab({ user }) {
   useEffect(() => {
     getBillingHistory(user.uid)
       .then(b => setBilling(b))
-      .catch(() => {})
+      .catch(err => console.error('[SubscriptionTab] Failed to load billing history:', err.message))
       .finally(() => setLoading(false))
   }, [])
 
@@ -978,16 +978,20 @@ function SubscriptionTab({ user }) {
             const renewsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
             const amount   = plan.amountPaise / 100
 
-            // Record billing
-            await addBillingRecord(user.uid, {
-              plan:        plan.id,
-              amount,
-              paymentId:   response.razorpay_payment_id,
-              description: `${plan.name} Plan`,
-            })
+            // Record billing — non-fatal: payment is already verified server-side
+            try {
+              await addBillingRecord(user.uid, {
+                plan:        plan.id,
+                amount,
+                paymentId:   response.razorpay_payment_id,
+                description: `${plan.name} Plan`,
+              })
+              setBilling(await getBillingHistory(user.uid))
+            } catch (billingErr) {
+              console.error('[Dashboard] addBillingRecord failed (payment was successful):', billingErr.message)
+            }
 
-            // Step 6: refresh billing list (sub auto-updates via onSnapshot)
-            setBilling(await getBillingHistory(user.uid))
+            // Step 6: payment succeeded regardless of billing record
             setPaying(null)
             toast.success(`${plan.name} plan activated! You now have full access.`)
 

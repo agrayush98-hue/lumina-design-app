@@ -1054,6 +1054,12 @@ export default function App() {
       ;(async () => {
         try {
           const data = await loadProject(pid)
+          // Ownership check — Firestore rules enforce this server-side too,
+          // but double-check client-side to prevent loading another user's project
+          if (data.userId && user?.uid && data.userId !== user.uid) {
+            showToast("Access denied: this project belongs to another account.")
+            return
+          }
           handleLoadFromModal(pid, data)
         } catch (e) {
           console.error('Failed to load project:', e)
@@ -2183,6 +2189,23 @@ export default function App() {
   )
 
   if (!user) return <AuthPage />
+
+  // ── Mobile guard — canvas tool requires desktop ───────────────────────────
+  if (typeof window !== "undefined" && window.innerWidth < 768) return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "'Inter', sans-serif", padding: 32, textAlign: "center", gap: 16 }}>
+      <div style={{ fontSize: 40 }}>🖥️</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: "#d4a843", letterSpacing: "0.04em" }}>Desktop required</div>
+      <div style={{ fontSize: 14, color: "#888888", maxWidth: 320, lineHeight: 1.7 }}>
+        Lumina Design is a professional lighting layout tool that needs a large screen and mouse/trackpad to use properly.
+      </div>
+      <div style={{ fontSize: 13, color: "#555555", lineHeight: 1.6, maxWidth: 300 }}>
+        Open this link on a laptop or desktop computer for the full experience.
+      </div>
+      <a href="/dashboard" style={{ marginTop: 8, padding: "10px 24px", background: "#d4a843", color: "#000000", borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: "none", letterSpacing: "0.06em" }}>
+        Go to Dashboard
+      </a>
+    </div>
+  )
 
   // ── Sidebar view → leftTab mapping ───────────────────────────────────────
   const SIDEBAR_TO_LEFTTAB = {

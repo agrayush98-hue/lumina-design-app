@@ -68,7 +68,7 @@ export default function AuthPage() {
       // onAuthStateChanged in AuthContext will call _initUserDocs if doc doesn't exist
     } catch (error) {
       if (error.code !== 'auth/popup-closed-by-user') {
-        setError(error.message)
+        setError(friendlyError(error.code) ?? error.message)
       }
     }
   }

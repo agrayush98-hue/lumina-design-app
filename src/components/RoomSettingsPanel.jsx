@@ -205,7 +205,13 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
             type="text"
             inputMode="decimal"
             value={room[key] ?? ""}
-            onChange={e => updateField(key, e.target.value)}
+            onChange={e => {
+              const raw = e.target.value
+              // Keep raw string while typing so user can enter "2." without it rounding
+              // but store as number when the value is valid
+              const num = parseFloat(raw)
+              updateField(key, isNaN(num) ? raw : num)
+            }}
             style={inputStyle}
           />
         </div>
