@@ -307,7 +307,7 @@ export function emailTrialExpiringSoon({ name, trialEndsAt, daysLeft }) {
               <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;
                          font-size:11px;font-weight:700;color:#d4a843;letter-spacing:0.1em;">PRO PLAN</p>
               <p style="margin:0 0 10px 0;">
-                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:700;color:#ffffff;">₹1,179</span>
+                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:700;color:#ffffff;">₹999</span>
                 <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#555555;"> / month</span>
               </p>
               <p style="margin:0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#666666;line-height:1.6;">
@@ -378,7 +378,7 @@ export function emailTrialExpired({ name }) {
               <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;
                          font-size:10px;font-weight:700;color:#d4a843;letter-spacing:0.12em;">PRO</p>
               <p style="margin:0 0 8px 0;">
-                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;">₹1,179</span>
+                <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:700;color:#ffffff;">₹999</span>
                 <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#555555;">/mo</span>
               </p>
               <p style="margin:0 0 4px 0;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#666666;">10 projects</p>

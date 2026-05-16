@@ -46,7 +46,7 @@ const PLANS = [
   {
     id: "pro",
     name: "PRO",
-    price: "₹1,179",
+    price: "₹999",
     period: "/month",
     features: [
       { text: "10 projects",                      highlight: true },

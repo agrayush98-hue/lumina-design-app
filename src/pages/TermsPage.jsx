@@ -49,7 +49,7 @@ export default function TermsPage() {
         <P>We offer the following plans:</P>
         <Ul items={[
           'Free: ₹0/month — limited to 3 projects and 5 AI calls per month',
-          'Pro: ₹1,179/month — 10 projects, 50 AI calls, DALI planning, Excel export',
+          'Pro: ₹999/month — 10 projects, 50 AI calls, DALI planning, Excel export',
           'Professional: ₹1,499/month — unlimited projects, 200 AI calls, branded reports',
         ]} />
         <P><strong style={{ color: '#ffffff' }}>Free Trial:</strong> New accounts receive a 14-day trial with Pro-level access. No credit card is required for the trial. At the end of the trial period, the account automatically reverts to the Free plan unless a paid subscription is activated.</P>

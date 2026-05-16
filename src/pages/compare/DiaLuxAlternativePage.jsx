@@ -12,7 +12,7 @@ const COMPARISON = [
   { feature: 'BOQ / Excel export',     lumina: 'Yes (Pro/Professional)',    dialux: 'Limited' },
   { feature: 'Floor plan upload',      lumina: 'PNG, JPG, PDF',            dialux: 'DWG/DXF (AutoCAD required)' },
   { feature: 'AI fixture recommender', lumina: 'Yes',                      dialux: 'No' },
-  { feature: 'Pricing (INR)',          lumina: 'Free / ₹1,179 / ₹1,499 per month', dialux: 'Free (but Windows-only)' },
+  { feature: 'Pricing (INR)',          lumina: 'Free / ₹999 / ₹1,499 per month', dialux: 'Free (but Windows-only)' },
   { feature: 'Mobile / tablet use',    lumina: 'Yes (responsive web)',     dialux: 'No' },
   { feature: 'Cloud project storage',  lumina: 'Yes — all projects synced', dialux: 'Local files only' },
   { feature: 'Collaboration',          lumina: 'Share project via URL',    dialux: 'Email files manually' },
@@ -168,7 +168,7 @@ export default function DiaLuxAlternativePage() {
         <section style={{ marginBottom: 64 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 32 }}>Frequently asked questions</h2>
           {[
-            { q: 'Is Lumina Design really free?', a: 'Yes. The Free plan is free forever — 3 projects and 5 AI calls per month at no cost. No credit card required to sign up. Paid plans start at ₹1,179/month.' },
+            { q: 'Is Lumina Design really free?', a: 'Yes. The Free plan is free forever — 3 projects and 5 AI calls per month at no cost. No credit card required to sign up. Paid plans start at ₹999/month.' },
             { q: 'Can I import DIALux projects into Lumina?', a: 'Not currently. DIALux uses a proprietary file format (.evo). If you have existing DIALux projects, you can recreate the room layout in Lumina using your floor plan drawing as the background image.' },
             { q: 'Does Lumina replace DIALux entirely?', a: 'For most commercial projects — offices, retail, warehouses, schools, hospitals — yes. For projects requiring precise point-by-point photometric simulation (operating theatres, manufacturing, compliance documentation requiring IES-file accuracy), DIALux remains the better choice.' },
             { q: 'What standards does Lumina support?', a: 'EN 12464-1 (European lighting standard), NBC India 2016, and CIBSE guidelines. Lux targets are set by room type following these standards. Custom targets can be set per project.' },
