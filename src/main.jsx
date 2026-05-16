@@ -19,6 +19,7 @@ import LuxCalculatorPage      from './pages/tools/LuxCalculatorPage.jsx'
 import BlogIndexPage          from './pages/blog/BlogIndexPage.jsx'
 import BlogPostPage           from './pages/blog/BlogPostPage.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
+import { SettingsProvider } from './contexts/SettingsContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider }   from './components/Toast.jsx'
 import { ConfirmProvider } from './components/ConfirmModal.jsx'
@@ -48,6 +49,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ToastProvider>
       <ConfirmProvider>
       <AuthProvider>
+      <SettingsProvider>
         <Routes>
           <Route path="/"                 element={<LandingPage />} />
           <Route path="/pricing"          element={<PricingPage />} />
@@ -73,6 +75,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/app"              element={<App />} />
           <Route path="*"                 element={<App />} />
         </Routes>
+      </SettingsProvider>
       </AuthProvider>
       </ConfirmProvider>
       </ToastProvider>
