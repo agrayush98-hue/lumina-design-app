@@ -656,8 +656,10 @@ export default function App() {
     const now = Date.now()
     if (now - lastAddLightTime.current < 100) return
     lastAddLightTime.current = now
-    if (activeFixtureCategory === "LED_STRIP") {
-      const vis = CATEGORY_VISUAL.LED_STRIP
+    const PER_METRE_CATS = ["LED_STRIP", "COVE_LIGHT"]
+    if (PER_METRE_CATS.includes(activeFixtureCategory)) {
+      const cat = activeFixtureCategory
+      const vis = CATEGORY_VISUAL[cat] ?? CATEGORY_VISUAL.LED_STRIP
       const len = lightData.lengthM ?? 1
       const wPM = activeFixture.wattPerMtr   ?? (activeFixture.watt   / Math.max(1, activeFixture.length ?? 1))
       const lPM = activeFixture.lumensPerMtr ?? (activeFixture.lumens / Math.max(1, activeFixture.length ?? 1))
@@ -665,7 +667,7 @@ export default function App() {
         lights: [...r.lights, {
           ...lightData,
           fixtureId: activeFixture.id,
-          category:  "LED_STRIP",
+          category:  cat,
           fill:      vis.fill,
           stroke:    vis.stroke,
           watt:      Math.round(wPM * len * 10) / 10,
@@ -685,7 +687,7 @@ export default function App() {
     patchActiveRoom(r => ({
       lights: r.lights.map(l => {
         if (l.id !== id) return l
-        if (l.category === "LED_STRIP") {
+        if (l.category === "LED_STRIP" || l.category === "COVE_LIGHT") {
           if (l.shape === "line")     return { ...l, x1: (l.x1 ?? 0) + x, y1: (l.y1 ?? 0) + y, x2: (l.x2 ?? 0) + x, y2: (l.y2 ?? 0) + y }
           if (l.shape === "circle")   return { ...l, cx: (l.cx ?? 0) + x, cy: (l.cy ?? 0) + y }
           if (l.shape === "freehand") return { ...l, points: l.points.map((p, i) => p + (i % 2 === 0 ? x : y)) }

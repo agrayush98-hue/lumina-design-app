@@ -332,8 +332,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const [stripDraw,     setStripDraw]       = useState({ drawing: false, x1: 0, y1: 0, x2: 0, y2: 0 })
   const [circleDraw,    setCircleDraw]      = useState({ phase: "idle",  cx: 0, cy: 0, mx: 0, my: 0 })
   const [freehandDraw,  setFreehandDraw]    = useState({ drawing: false, points: [], lastX: 0, lastY: 0 })
+  // Length lock: when set, constrains line-mode draws to exactly this many metres
+  const [lockLengthM,   setLockLengthM]    = useState("")
 
-  const isStripMode = activeFixtureCategory === "LED_STRIP"
+  // Categories that are sold / specified per running metre
+  const PER_METRE_CATEGORIES = ["LED_STRIP", "COVE_LIGHT"]
+  const isStripMode = PER_METRE_CATEGORIES.includes(activeFixtureCategory)
 
   const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
   // When the room was drawn on the floor plan use the exact pixel box the user drew;
@@ -603,8 +607,21 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const pos = toWorld(raw)
 
     if (stripDrawMode === "line" && stripDraw.drawing) {
-      const [cx, cy] = clampToRoom(pos.x, pos.y)
-      setStripDraw(prev => ({ ...prev, x2: snap(cx, ROOM_X, ROOM_PX_W), y2: snap(cy, ROOM_Y, ROOM_PX_H) }))
+      let [cx, cy] = clampToRoom(pos.x, pos.y)
+      cx = snap(cx, ROOM_X, ROOM_PX_W)
+      cy = snap(cy, ROOM_Y, ROOM_PX_H)
+      // Length lock: constrain endpoint to exact metre distance, keep drag direction
+      const parsedLock = parseFloat(lockLengthM)
+      if (!isNaN(parsedLock) && parsedLock > 0) {
+        const dx = cx - stripDraw.x1, dy = cy - stripDraw.y1
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist > 0) {
+          const targetPx = parsedLock * SCALE * 1000
+          cx = stripDraw.x1 + (dx / dist) * targetPx
+          cy = stripDraw.y1 + (dy / dist) * targetPx
+        }
+      }
+      setStripDraw(prev => ({ ...prev, x2: cx, y2: cy }))
     } else if (stripDrawMode === "circle" && circleDraw.phase === "dragging") {
       const [cx, cy] = clampToRoom(pos.x, pos.y)
       setCircleDraw(prev => ({ ...prev, mx: cx, my: cy }))
@@ -1674,7 +1691,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           borderBottom: "1px solid #1a0e30",
           width: CANVAS_W, boxSizing: "border-box",
         }}>
-          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080", letterSpacing: "0.16em", marginRight: 4, textTransform: "uppercase" }}>LED Strip Mode</span>
+          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080", letterSpacing: "0.16em", marginRight: 4, textTransform: "uppercase" }}>
+            {activeFixtureCategory === "COVE_LIGHT" ? "Cove Light" : "LED Strip"} / Running Metre
+          </span>
           {MODES.map(m => (
             <button
               key={m.id}
@@ -1690,8 +1709,32 @@ const DesignCanvas = forwardRef(function DesignCanvas({
               }}
             >{m.label}</button>
           ))}
+          {/* Length lock — line mode only */}
+          {stripDrawMode === "line" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, borderLeft: "1px solid #2a1a3a", paddingLeft: 10 }}>
+              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080", textTransform: "uppercase", letterSpacing: "0.1em" }}>Lock Length</span>
+              <input
+                type="number"
+                min="0.1" max="50" step="0.25"
+                placeholder="free"
+                value={lockLengthM}
+                onChange={e => setLockLengthM(e.target.value)}
+                style={{
+                  width: 54, padding: "2px 5px",
+                  background: lockLengthM ? "#1a0e06" : "#0c0816",
+                  border: `1px solid ${lockLengthM ? "#e8a830" : "#2a1a3a"}`,
+                  borderRadius: 3, color: lockLengthM ? "#e8a830" : "#4a2060",
+                  fontFamily: "IBM Plex Mono", fontSize: 9, outline: "none",
+                }}
+              />
+              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080" }}>m</span>
+              {lockLengthM && (
+                <button onClick={() => setLockLengthM("")} style={{ background: "none", border: "none", color: "#6040a0", cursor: "pointer", fontSize: 9, padding: "0 2px" }}>✕</button>
+              )}
+            </div>
+          )}
           <span style={{ marginLeft: "auto", fontFamily: "IBM Plex Mono", fontSize: 8, color: "#4a2060" }}>
-            mousedown + drag to draw · dbl-click to delete
+            {lockLengthM ? `locked: ${parseFloat(lockLengthM).toFixed(2)}m — drag to set direction` : "mousedown + drag to draw · dbl-click to delete"}
           </span>
         </div>
       )}
@@ -1846,9 +1889,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
             {/* Placed fixtures */}
             {lights.map(light => {
-              if (light.category !== "LED_STRIP") return <LightSymbol    key={light.id} light={light} />
-              if (light.shape === "circle")        return <LedCircleStripSymbol  key={light.id} light={light} />
-              if (light.shape === "freehand")      return <LedFreehandStripSymbol key={light.id} light={light} />
+              if (!PER_METRE_CATEGORIES.includes(light.category)) return <LightSymbol key={light.id} light={light} />
+              if (light.shape === "circle")   return <LedCircleStripSymbol   key={light.id} light={light} />
+              if (light.shape === "freehand") return <LedFreehandStripSymbol key={light.id} light={light} />
               return <LedStripSymbol key={light.id} light={light} />
             })}
 
