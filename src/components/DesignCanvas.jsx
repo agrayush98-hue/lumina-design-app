@@ -3,6 +3,8 @@ import { createPortal } from "react-dom"
 import { Stage, Layer, Rect, Text, Circle, Group, Line, Arc, Image as KonvaImage, RegularPolygon, Star, Wedge } from "react-konva"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
 import { useToast } from "./Toast"
+import { getLuxAtPoint } from "../utils/luxCalculator"
+import { HEATMAP_STOPS } from "../utils/heatmapColors"
 
 const CANVAS_W = 1400
 const CANVAS_H = 750
@@ -345,90 +347,109 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const pxPerMm   = (roomOffsetX != null && drawnWidthPx != null && roomWidth > 0) ? drawnWidthPx / roomWidth : SCALE
   const dimUnit   = getStoredUnit()
 
-  // ── Smooth radial-gradient heatmap ────────────────────────────
-  // One radial gradient per fixture (+ strip samples), composited with
-  // 'lighter' blending so overlapping pools accumulate naturally.
-  // Canvas background stays fully transparent — floorplan grid shows through.
+  // ── Physics-based heatmap: real lux → color → smooth blur ────
+  // Step 1: sample actual lux on a coarse grid (getLuxAtPoint = full IES physics)
+  // Step 2: bilinear interpolate → every pixel gets a smooth lux value
+  // Step 3: map lux ratio → HEATMAP_STOPS color (blue=dark, green=ok, yellow=target, red=over)
+  // Step 4: draw to ImageData, then blur 10px on a second canvas for smooth radial look
   const heatmapImage = useMemo(() => {
     if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return null
 
-    const canvas = document.createElement('canvas')
-    canvas.width  = Math.ceil(ROOM_PX_W)
-    canvas.height = Math.ceil(ROOM_PX_H)
-    const ctx = canvas.getContext('2d')
+    const W = Math.ceil(ROOM_PX_W)
+    const H = Math.ceil(ROOM_PX_H)
+    const tLux = targetLux || 300
+    const ceilH_mm = mountingHeight * 1000
 
-    // Additive blending: overlapping glows stack up naturally
-    ctx.globalCompositeOperation = 'lighter'
+    // Local pxToMm using actual room geometry (not static canvasConstants defaults)
+    const localPxToMm = (px_x, px_y) => ({
+      x: (px_x - ROOM_X) / SCALE,
+      y: (px_y - ROOM_Y) / SCALE,
+    })
+    const roomGeomLocal = { pxToMm: localPxToMm }
 
-    // Draw one soft radial glow centred at (wx, wy) in world-canvas coords
-    function drawGlow(wx, wy, radiusPx, alpha0) {
-      if (radiusPx <= 1) return
-      const x = wx - ROOM_X
-      const y = wy - ROOM_Y
-      const r = radiusPx
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, r)
-      const a0 = Math.min(0.55, alpha0)          // core warm-white
-      const a1 = Math.min(0.18, alpha0 * 0.4)   // amber mid-ring
-      grad.addColorStop(0,    `rgba(255,230,150,${a0.toFixed(3)})`)
-      grad.addColorStop(0.35, `rgba(255,200, 80,${a1.toFixed(3)})`)
-      grad.addColorStop(0.65, `rgba(255,140, 30,0.04)`)
-      grad.addColorStop(1,    `rgba(255,100,  0,0)`)
-      ctx.fillStyle = grad
-      ctx.beginPath()
-      ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fill()
-    }
-
-    const SAMPLE_M = 0.25  // strip sample spacing in metres
-
-    for (const light of lights) {
-      const lm = light.lumens ?? 0
-      if (lm <= 0) continue
-
-      if (light.category !== 'LED_STRIP') {
-        // Point/panel fixture: beam cone projects to a circle on the floor
-        const halfBeamRad = ((light.beamAngle ?? 36) / 2) * (Math.PI / 180)
-        const floorRadPx  = Math.max(24, mountingHeight * Math.tan(halfBeamRad) * SCALE * 1000)
-        // Alpha scales with lumens relative to a baseline of 1000 lm
-        const alpha = 0.30 * Math.min(2, lm / 1000)
-        drawGlow(light.x ?? 0, light.y ?? 0, floorRadPx, alpha)
-
-      } else {
-        // LED strip: sample along its path
-        const totalLenM = light.lengthM ?? 0
-        if (totalLenM <= 0) continue
-        const n           = Math.max(2, Math.round(totalLenM / SAMPLE_M))
-        const stripRadPx  = Math.max(18, mountingHeight * Math.tan(Math.PI / 4) * SCALE * 1000)
-        const alphaEach   = 0.12 * Math.min(2, (lm / totalLenM) / 300)
-
-        if (light.shape === 'circle') {
-          const { cx = 0, cy = 0, radiusPx = 0 } = light
-          for (let i = 0; i < n; i++) {
-            const ang = (2 * Math.PI * i) / n
-            drawGlow(cx + radiusPx * Math.cos(ang), cy + radiusPx * Math.sin(ang), stripRadPx, alphaEach)
-          }
-        } else if (light.shape === 'freehand') {
-          const pts = light.points ?? []
-          for (let i = 0; i <= n; i++) {
-            const t   = i / n
-            const idx = Math.min(Math.floor(t * (pts.length / 2 - 1)) * 2, pts.length - 2)
-            drawGlow(pts[idx] ?? 0, pts[idx + 1] ?? 0, stripRadPx, alphaEach)
-          }
-        } else {
-          // line strip
-          const x1 = light.x1 ?? 0, y1 = light.y1 ?? 0
-          const x2 = light.x2 ?? 0, y2 = light.y2 ?? 0
-          for (let i = 0; i <= n; i++) {
-            const t = i / n
-            drawGlow(x1 + t * (x2 - x1), y1 + t * (y2 - y1), stripRadPx, alphaEach)
-          }
+    // ── Step 1: coarse lux grid ───────────────────────────────
+    const STEP = 10  // px between samples — fast enough, fine enough
+    const cols = Math.ceil(W / STEP) + 1
+    const rows = Math.ceil(H / STEP) + 1
+    const grid = new Float32Array(cols * rows)
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const px = ROOM_X + col * STEP
+        const py = ROOM_Y + row * STEP
+        let lux = 0
+        for (const light of lights) {
+          lux += getLuxAtPoint(light, px, py, ceilH_mm, roomGeomLocal)
         }
+        grid[row * cols + col] = lux
       }
     }
 
-    return canvas
+    // ── Step 2+3: bilinear interpolate + color map ─────────────
+    const imageData = new ImageData(W, H)
+    const d = imageData.data
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const gx = px / STEP
+        const gy = py / STEP
+        const gx0 = Math.floor(gx), gx1 = Math.min(gx0 + 1, cols - 1)
+        const gy0 = Math.floor(gy), gy1 = Math.min(gy0 + 1, rows - 1)
+        const tx = gx - gx0, ty = gy - gy0
+
+        const lux = (
+          grid[gy0 * cols + gx0] * (1 - tx) * (1 - ty) +
+          grid[gy0 * cols + gx1] *      tx  * (1 - ty) +
+          grid[gy1 * cols + gx0] * (1 - tx) *      ty  +
+          grid[gy1 * cols + gx1] *      tx  *      ty
+        )
+
+        if (lux < 1) continue  // leave fully transparent for dark zones
+
+        // Interpolate color from HEATMAP_STOPS
+        const ratio = Math.min(1.5, lux / tLux)
+        let r = HEATMAP_STOPS[0][1][0]
+        let g = HEATMAP_STOPS[0][1][1]
+        let b = HEATMAP_STOPS[0][1][2]
+        for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
+          const [r0, c0] = HEATMAP_STOPS[i]
+          const [r1, c1] = HEATMAP_STOPS[i + 1]
+          if (ratio <= r1) {
+            const t = (ratio - r0) / (r1 - r0)
+            r = Math.round(c0[0] + t * (c1[0] - c0[0]))
+            g = Math.round(c0[1] + t * (c1[1] - c0[1]))
+            b = Math.round(c0[2] + t * (c1[2] - c0[2]))
+            break
+          }
+          r = HEATMAP_STOPS[HEATMAP_STOPS.length - 1][1][0]
+          g = HEATMAP_STOPS[HEATMAP_STOPS.length - 1][1][1]
+          b = HEATMAP_STOPS[HEATMAP_STOPS.length - 1][1][2]
+        }
+
+        // Alpha: ramp up quickly from 0 → 210 so dark areas stay transparent
+        const alpha = ratio < 0.05 ? 0 : Math.min(210, Math.round((ratio / 1.5) * 210 + 80))
+
+        const idx = (py * W + px) * 4
+        d[idx]     = r
+        d[idx + 1] = g
+        d[idx + 2] = b
+        d[idx + 3] = alpha
+      }
+    }
+
+    // ── Step 4: put ImageData → blur on second canvas ──────────
+    const sharp = document.createElement('canvas')
+    sharp.width = W; sharp.height = H
+    sharp.getContext('2d').putImageData(imageData, 0, 0)
+
+    const blurred = document.createElement('canvas')
+    blurred.width = W; blurred.height = H
+    const bctx = blurred.getContext('2d')
+    bctx.filter = 'blur(10px)'
+    bctx.drawImage(sharp, 0, 0)
+    bctx.filter = 'none'
+
+    return blurred
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHeatmap, lights, mountingHeight, SCALE, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
+  }, [showHeatmap, lights, mountingHeight, SCALE, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H, targetLux])
 
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
