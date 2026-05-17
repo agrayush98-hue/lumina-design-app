@@ -108,6 +108,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   daliAddresses,
   onSelectLights,
   selectedLightIds,
+  activeFixture,
 }, ref) {
   const toast = useToast()
   const stageRef = useRef(null)
@@ -332,9 +333,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const [stripDraw,     setStripDraw]       = useState({ drawing: false, x1: 0, y1: 0, x2: 0, y2: 0 })
   const [circleDraw,    setCircleDraw]      = useState({ phase: "idle",  cx: 0, cy: 0, mx: 0, my: 0 })
   const [freehandDraw,  setFreehandDraw]    = useState({ drawing: false, points: [], lastX: 0, lastY: 0 })
-  // Length lock: when set, constrains line-mode draws to exactly this many metres
-  const [lockLengthM,   setLockLengthM]    = useState("")
-
   // Categories that are sold / specified per running metre
   const PER_METRE_CATEGORIES = ["LED_STRIP", "COVE_LIGHT"]
   const isStripMode = PER_METRE_CATEGORIES.includes(activeFixtureCategory)
@@ -607,21 +605,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const pos = toWorld(raw)
 
     if (stripDrawMode === "line" && stripDraw.drawing) {
-      let [cx, cy] = clampToRoom(pos.x, pos.y)
-      cx = snap(cx, ROOM_X, ROOM_PX_W)
-      cy = snap(cy, ROOM_Y, ROOM_PX_H)
-      // Length lock: constrain endpoint to exact metre distance, keep drag direction
-      const parsedLock = parseFloat(lockLengthM)
-      if (!isNaN(parsedLock) && parsedLock > 0) {
-        const dx = cx - stripDraw.x1, dy = cy - stripDraw.y1
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist > 0) {
-          const targetPx = parsedLock * SCALE * 1000
-          cx = stripDraw.x1 + (dx / dist) * targetPx
-          cy = stripDraw.y1 + (dy / dist) * targetPx
-        }
-      }
-      setStripDraw(prev => ({ ...prev, x2: cx, y2: cy }))
+      const [cx, cy] = clampToRoom(pos.x, pos.y)
+      setStripDraw(prev => ({ ...prev, x2: snap(cx, ROOM_X, ROOM_PX_W), y2: snap(cy, ROOM_Y, ROOM_PX_H) }))
     } else if (stripDrawMode === "circle" && circleDraw.phase === "dragging") {
       const [cx, cy] = clampToRoom(pos.x, pos.y)
       setCircleDraw(prev => ({ ...prev, mx: cx, my: cy }))
@@ -1689,53 +1674,28 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           display: "flex", alignItems: "center", gap: 8,
           padding: "8px 14px", background: "#0d0820",
           borderBottom: "2px solid #3a1a6a",
-          borderTop: "2px solid #3a1a6a",
           width: CANVAS_W, boxSizing: "border-box",
         }}>
-          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#9060d0", letterSpacing: "0.14em", marginRight: 6, textTransform: "uppercase", fontWeight: 700 }}>
-            {activeFixtureCategory === "COVE_LIGHT" ? "⬡ Cove Light" : "⬡ LED Strip"} — Running Metre Mode
+          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#9060d0", letterSpacing: "0.1em", marginRight: 8, textTransform: "uppercase", fontWeight: 700 }}>
+            {activeFixtureCategory === "COVE_LIGHT" ? "Cove Light" : "LED Strip"}
           </span>
           {MODES.map(m => (
             <button
               key={m.id}
               onClick={() => setStripDrawMode(m.id)}
               style={{
-                padding: "4px 12px",
-                background: stripDrawMode === m.id ? "#1a0e08" : "transparent",
-                border:     `1px solid ${stripDrawMode === m.id ? "#e8a830" : "#2a1a3a"}`,
-                borderRadius: 3,
-                color:  stripDrawMode === m.id ? "#e8a830" : "#6040a0",
-                fontFamily: "IBM Plex Mono", fontSize: 9, letterSpacing: "0.12em",
+                padding: "5px 14px",
+                background: stripDrawMode === m.id ? "#2a1060" : "transparent",
+                border:     `1px solid ${stripDrawMode === m.id ? "#9060d0" : "#3a2a5a"}`,
+                borderRadius: 4,
+                color:  stripDrawMode === m.id ? "#c090ff" : "#6040a0",
+                fontFamily: "IBM Plex Mono", fontSize: 10, letterSpacing: "0.1em",
                 cursor: "pointer", textTransform: "uppercase",
               }}
             >{m.label}</button>
           ))}
-          {/* Length lock — line mode only */}
-          {stripDrawMode === "line" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 10, borderLeft: "1px solid #3a1a6a", paddingLeft: 12 }}>
-              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#9060d0", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>Lock Length:</span>
-              <input
-                type="number"
-                min="0.1" max="50" step="0.25"
-                placeholder="e.g. 1.0"
-                value={lockLengthM}
-                onChange={e => setLockLengthM(e.target.value)}
-                style={{
-                  width: 70, padding: "4px 8px",
-                  background: lockLengthM ? "#1a0a00" : "#100820",
-                  border: `1.5px solid ${lockLengthM ? "#e8a830" : "#4a2a7a"}`,
-                  borderRadius: 4, color: lockLengthM ? "#e8a830" : "#6a40a0",
-                  fontFamily: "IBM Plex Mono", fontSize: 11, outline: "none",
-                }}
-              />
-              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#9060d0", fontWeight: 600 }}>m</span>
-              {lockLengthM && (
-                <button onClick={() => setLockLengthM("")} style={{ background: "#2a0a0a", border: "1px solid #6a1a1a", borderRadius: 3, color: "#ff6060", cursor: "pointer", fontSize: 10, padding: "2px 6px" }}>✕ clear</button>
-              )}
-            </div>
-          )}
-          <span style={{ marginLeft: "auto", fontFamily: "IBM Plex Mono", fontSize: 9, color: lockLengthM ? "#e8a830" : "#5a3080" }}>
-            {lockLengthM ? `🔒 LOCKED ${parseFloat(lockLengthM).toFixed(2)}m — drag to set direction` : "click + drag to draw · dbl-click to delete"}
+          <span style={{ marginLeft: "auto", fontFamily: "IBM Plex Mono", fontSize: 10, color: "#6040a0" }}>
+            drag to draw · length auto-calculated · W/m scales with drawn length
           </span>
         </div>
       )}
@@ -1916,7 +1876,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                 <Line points={[stripDraw.x1, stripDraw.y1, stripDraw.x2, stripDraw.y2]} stroke="#f0d0ff" strokeWidth={8} opacity={0.2} dash={[10, 6]} listening={false} />
                 <Line points={[stripDraw.x1, stripDraw.y1, stripDraw.x2, stripDraw.y2]} stroke="#4a9eff" strokeWidth={2} opacity={1} dash={[10, 6]} listening={false} />
                 <Circle x={stripDraw.x1} y={stripDraw.y1} radius={3} fill="#4a9eff" listening={false} />
-                <Text x={stripDraw.x2 + 10} y={stripDraw.y2 - 10} text={`${previewLineLen.toFixed(2)}m`} fontSize={9} fontFamily="IBM Plex Mono" fill="#4a9eff" listening={false} />
+                <Text x={stripDraw.x2 + 10} y={stripDraw.y2 - 18} text={`${previewLineLen.toFixed(2)} m`} fontSize={14} fontFamily="IBM Plex Mono" fill="#ffffff" fontStyle="bold" listening={false} />
+                <Text x={stripDraw.x2 + 10} y={stripDraw.y2 - 2} text={`${Math.round((activeFixture?.wattPerMtr ?? 0) * previewLineLen)}W · ${Math.round((activeFixture?.lumensPerMtr ?? 0) * previewLineLen)}lm`} fontSize={9} fontFamily="IBM Plex Mono" fill="#c090ff" listening={false} />
               </>
             )}
 

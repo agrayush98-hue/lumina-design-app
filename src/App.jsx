@@ -2679,6 +2679,7 @@ export default function App() {
               targetLux={Number(room.targetLux)}
               activeTool={activeTool}
               activeFixtureCategory={activeFixtureCategory}
+              activeFixture={activeFixture}
               dbMarkers={dbMarkers}
               ctrMarkers={ctrMarkers}
               jbMarkers={jbMarkers}
