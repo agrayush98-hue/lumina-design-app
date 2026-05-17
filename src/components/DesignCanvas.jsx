@@ -1686,13 +1686,14 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       {/* Strip drawing mode toolbar */}
       {isStripMode && activeTool === "fixture" && (
         <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "5px 10px", background: "#090c10",
-          borderBottom: "1px solid #1a0e30",
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "8px 14px", background: "#0d0820",
+          borderBottom: "2px solid #3a1a6a",
+          borderTop: "2px solid #3a1a6a",
           width: CANVAS_W, boxSizing: "border-box",
         }}>
-          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080", letterSpacing: "0.16em", marginRight: 4, textTransform: "uppercase" }}>
-            {activeFixtureCategory === "COVE_LIGHT" ? "Cove Light" : "LED Strip"} / Running Metre
+          <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#9060d0", letterSpacing: "0.14em", marginRight: 6, textTransform: "uppercase", fontWeight: 700 }}>
+            {activeFixtureCategory === "COVE_LIGHT" ? "⬡ Cove Light" : "⬡ LED Strip"} — Running Metre Mode
           </span>
           {MODES.map(m => (
             <button
@@ -1711,30 +1712,30 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           ))}
           {/* Length lock — line mode only */}
           {stripDrawMode === "line" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 8, borderLeft: "1px solid #2a1a3a", paddingLeft: 10 }}>
-              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080", textTransform: "uppercase", letterSpacing: "0.1em" }}>Lock Length</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 10, borderLeft: "1px solid #3a1a6a", paddingLeft: 12 }}>
+              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 10, color: "#9060d0", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>Lock Length:</span>
               <input
                 type="number"
                 min="0.1" max="50" step="0.25"
-                placeholder="free"
+                placeholder="e.g. 1.0"
                 value={lockLengthM}
                 onChange={e => setLockLengthM(e.target.value)}
                 style={{
-                  width: 54, padding: "2px 5px",
-                  background: lockLengthM ? "#1a0e06" : "#0c0816",
-                  border: `1px solid ${lockLengthM ? "#e8a830" : "#2a1a3a"}`,
-                  borderRadius: 3, color: lockLengthM ? "#e8a830" : "#4a2060",
-                  fontFamily: "IBM Plex Mono", fontSize: 9, outline: "none",
+                  width: 70, padding: "4px 8px",
+                  background: lockLengthM ? "#1a0a00" : "#100820",
+                  border: `1.5px solid ${lockLengthM ? "#e8a830" : "#4a2a7a"}`,
+                  borderRadius: 4, color: lockLengthM ? "#e8a830" : "#6a40a0",
+                  fontFamily: "IBM Plex Mono", fontSize: 11, outline: "none",
                 }}
               />
-              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 8, color: "#5a3080" }}>m</span>
+              <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#9060d0", fontWeight: 600 }}>m</span>
               {lockLengthM && (
-                <button onClick={() => setLockLengthM("")} style={{ background: "none", border: "none", color: "#6040a0", cursor: "pointer", fontSize: 9, padding: "0 2px" }}>✕</button>
+                <button onClick={() => setLockLengthM("")} style={{ background: "#2a0a0a", border: "1px solid #6a1a1a", borderRadius: 3, color: "#ff6060", cursor: "pointer", fontSize: 10, padding: "2px 6px" }}>✕ clear</button>
               )}
             </div>
           )}
-          <span style={{ marginLeft: "auto", fontFamily: "IBM Plex Mono", fontSize: 8, color: "#4a2060" }}>
-            {lockLengthM ? `locked: ${parseFloat(lockLengthM).toFixed(2)}m — drag to set direction` : "mousedown + drag to draw · dbl-click to delete"}
+          <span style={{ marginLeft: "auto", fontFamily: "IBM Plex Mono", fontSize: 9, color: lockLengthM ? "#e8a830" : "#5a3080" }}>
+            {lockLengthM ? `🔒 LOCKED ${parseFloat(lockLengthM).toFixed(2)}m — drag to set direction` : "click + drag to draw · dbl-click to delete"}
           </span>
         </div>
       )}
