@@ -333,9 +333,20 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const [stripDraw,     setStripDraw]       = useState({ drawing: false, x1: 0, y1: 0, x2: 0, y2: 0 })
   const [circleDraw,    setCircleDraw]      = useState({ phase: "idle",  cx: 0, cy: 0, mx: 0, my: 0 })
   const [freehandDraw,  setFreehandDraw]    = useState({ drawing: false, points: [], lastX: 0, lastY: 0 })
-  // Categories that are sold / specified per running metre
-  const PER_METRE_CATEGORIES = ["LED_STRIP", "COVE_LIGHT"]
-  const isStripMode = PER_METRE_CATEGORIES.includes(activeFixtureCategory)
+  // Normalize category string → canonical UPPER_SNAKE form
+  // Library panel uses mixed case (LED_Strip, Linear) — normalise everywhere
+  const normCat = (c) => (c ?? "").toUpperCase().replace(/[\s-]/g, "_")
+
+  // Returns true for any per-running-metre category regardless of case/spacing
+  const isPerMetreCat = (c) => {
+    const n = normCat(c)
+    return n === "LED_STRIP" || n === "LED_STRIP_LIGHT"
+        || n === "COVE_LIGHT" || n === "COVE"
+        || n === "LINEAR"
+  }
+
+  const canonCat   = normCat(activeFixtureCategory)
+  const isStripMode = isPerMetreCat(activeFixtureCategory)
 
   const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
   // When the room was drawn on the floor plan use the exact pixel box the user drew;
@@ -637,7 +648,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       const minY = Math.min(w1.y, w2.y), maxY = Math.max(w1.y, w2.y)
       const inBox = (lights ?? []).filter(l => {
         // Point fixtures
-        if (l.x != null && l.y != null && l.category !== "LED_STRIP")
+        if (l.x != null && l.y != null && !isPerMetreCat(l.category))
           return l.x >= minX && l.x <= maxX && l.y >= minY && l.y <= maxY
         // LED strip — line: either endpoint inside box
         if (l.shape === "line")
@@ -810,7 +821,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     if (!showBeam || !(mountingHeight > 0) || lights.length === 0) return null
 
     const beams = lights
-      .filter(light => light.category !== "LED_STRIP")
+      .filter(light => !isPerMetreCat(light.category))
       .map(light => {
         const beamAngle = light.beamAngle ?? 36
         const beamRad   = (beamAngle * Math.PI) / 180 / 2
@@ -892,7 +903,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   function MeasurementLines() {
     if (!hoveredLightId || DRAWING_TOOLS.includes(activeTool)) return null
     const light = lights.find(l => l.id === hoveredLightId)
-    if (!light || light.category === "LED_STRIP") return null
+    if (!light || isPerMetreCat(light.category)) return null
     const fx = light.x ?? 0
     const fy = light.y ?? 0
     const rL = ROOM_X, rR = ROOM_X + ROOM_PX_W
@@ -1677,7 +1688,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           width: CANVAS_W, boxSizing: "border-box",
         }}>
           <span style={{ fontFamily: "IBM Plex Mono", fontSize: 11, color: "#9060d0", letterSpacing: "0.1em", marginRight: 8, textTransform: "uppercase", fontWeight: 700 }}>
-            {activeFixtureCategory === "COVE_LIGHT" ? "Cove Light" : "LED Strip"}
+            {canonCat === "COVE_LIGHT" || canonCat === "COVE" ? "Cove Light" : canonCat === "LINEAR" ? "Linear" : "LED Strip"}
           </span>
           {MODES.map(m => (
             <button
@@ -1850,9 +1861,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
             {/* Placed fixtures */}
             {lights.map(light => {
-              if (!PER_METRE_CATEGORIES.includes(light.category)) return <LightSymbol key={light.id} light={light} />
-              if (light.shape === "circle")   return <LedCircleStripSymbol   key={light.id} light={light} />
-              if (light.shape === "freehand") return <LedFreehandStripSymbol key={light.id} light={light} />
+              if (!isPerMetreCat(light.category)) return <LightSymbol key={light.id} light={light} />
+              if (light.shape === "circle")        return <LedCircleStripSymbol   key={light.id} light={light} />
+              if (light.shape === "freehand")      return <LedFreehandStripSymbol key={light.id} light={light} />
               return <LedStripSymbol key={light.id} light={light} />
             })}
 
