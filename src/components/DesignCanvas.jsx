@@ -345,179 +345,90 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const pxPerMm   = (roomOffsetX != null && drawnWidthPx != null && roomWidth > 0) ? drawnWidthPx / roomWidth : SCALE
   const dimUnit   = getStoredUnit()
 
-  // ── Heatmap: colour scale & grid computation ──────────────────
-  const HEATMAP_STOPS = [
-    [0.00, [0,   50, 200]],   // deep blue   — 0% of target (darker, richer)
-    [0.25, [0, 190, 255]],    // cyan        — 25% (more vibrant)
-    [0.50, [0, 230,  90]],    // green       — 50% (brighter green)
-    [0.75, [255, 220,  0]],   // yellow      — 75% (pure yellow)
-    [1.00, [255, 140,  0]],   // orange      — 100% (at target lux)
-    [1.50, [255,  30,  30]],  // red         — 150%+ (overlit, more saturated)
-  ]
-
-  function luxToColor(lux) {
-    if (targetLux <= 0) return "rgb(0,0,170)"
-    const ratio = Math.min(1.5, lux / targetLux)
-    for (let i = 0; i < HEATMAP_STOPS.length - 1; i++) {
-      const [r0, c0] = HEATMAP_STOPS[i]
-      const [r1, c1] = HEATMAP_STOPS[i + 1]
-      if (ratio <= r1) {
-        const t  = (ratio - r0) / (r1 - r0)
-        const ri = Math.round(c0[0] + t * (c1[0] - c0[0]))
-        const gi = Math.round(c0[1] + t * (c1[1] - c0[1]))
-        const bi = Math.round(c0[2] + t * (c1[2] - c0[2]))
-        return `rgb(${ri},${gi},${bi})`
-      }
-    }
-    return "rgb(255,0,0)"
-  }
-
-  // ── Physics helpers for heatmap ──────────────────────────────
-  const MAINT_FACTOR_HM = 0.8  // standard maintenance factor
-
-  /** Cosine exponent n from full beam angle: I(θ) = I₀·cosⁿ(θ) */
-  function cosineExp(beamDeg) {
-    if (beamDeg >= 270) return 0     // omnidirectional
-    if (beamDeg >= 180) return 0.5
-    const halfRad = (beamDeg / 2) * (Math.PI / 180)
-    const cosH = Math.cos(halfRad)
-    return cosH > 0 && cosH < 1 ? Math.log(0.5) / Math.log(cosH) : 1
-  }
-
-  /** Peak candela from lumens and beam angle */
-  function peakCandela(lumens, halfBeamRad) {
-    if (lumens <= 0) return 0
-    const solidAngle = halfBeamRad >= Math.PI
-      ? 4 * Math.PI
-      : 2 * Math.PI * (1 - Math.cos(halfBeamRad))
-    return (lumens * MAINT_FACTOR_HM) / Math.max(solidAngle, 0.001)
-  }
-
-  // Collect all point-like sources (fixtures + sampled strip segments)
-  // Each source stores precomputed { x, y, I0, n, halfBeamR } for fast lux calculation
-  function buildSources(lightList) {
-    const SAMPLE_M   = 0.2
-    const SAMPLE_PX  = SAMPLE_M * SCALE * 1000
-    const sources = []
-
-    function pushSource(x, y, lumens, halfBeamR) {
-      if (lumens <= 0) return
-      const beamDeg = halfBeamR * 2 * (180 / Math.PI)
-      sources.push({
-        x, y,
-        I0: peakCandela(lumens, halfBeamR),
-        n:  cosineExp(beamDeg),
-        halfBeamR,
-      })
-    }
-
-    for (const light of lightList) {
-      if (light.category !== "LED_STRIP") {
-        if ((light.lumens ?? 0) > 0) {
-          const halfBeamR = ((light.beamAngle ?? 36) / 2) * (Math.PI / 180)
-          pushSource(light.x ?? 0, light.y ?? 0, light.lumens, halfBeamR)
-        }
-        continue
-      }
-
-      // LED strip — sample into point sources every SAMPLE_M metres
-      const totalLumens = light.lumens ?? 0
-      const totalLenM   = light.lengthM ?? 0
-      if (totalLumens <= 0 || totalLenM <= 0) continue
-      const lumPerSample = (totalLumens / totalLenM) * SAMPLE_M
-      const stripHalfR   = Math.PI / 2  // 180° for strips (Lambertian, hemisphere)
-
-      if (light.shape === "circle") {
-        const { cx = 0, cy = 0, radiusPx = 0 } = light
-        const circM = 2 * Math.PI * (radiusPx / (SCALE * 1000))
-        const n     = Math.max(4, Math.round(circM / SAMPLE_M))
-        for (let i = 0; i < n; i++) {
-          const ang = (2 * Math.PI * i) / n
-          pushSource(cx + radiusPx * Math.cos(ang), cy + radiusPx * Math.sin(ang), lumPerSample, stripHalfR)
-        }
-      } else if (light.shape === "freehand") {
-        const pts  = light.points ?? []
-        const lenM = light.lengthM ?? 0
-        const n    = Math.max(2, Math.round(lenM / SAMPLE_M))
-        for (let i = 0; i <= n; i++) {
-          const t   = i / n
-          const idx = Math.min(Math.floor(t * (pts.length / 2 - 1)) * 2, pts.length - 2)
-          pushSource(pts[idx] ?? 0, pts[idx + 1] ?? 0, lumPerSample, stripHalfR)
-        }
-      } else {
-        // line (default)
-        const x1 = light.x1 ?? 0, y1 = light.y1 ?? 0
-        const x2 = light.x2 ?? 0, y2 = light.y2 ?? 0
-        const lenPx = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        const n     = Math.max(2, Math.round((lenPx / (SCALE * 1000)) / SAMPLE_M))
-        for (let i = 0; i <= n; i++) {
-          const t = i / n
-          pushSource(x1 + t * (x2 - x1), y1 + t * (y2 - y1), lumPerSample, stripHalfR)
-        }
-      }
-    }
-    return sources
-  }
-
-  const STEP_PX = Math.max(4, heatmapCellSize)  // user-controlled cell size (px)
-
-  const heatmapCells = useMemo(() => {
-    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return []
-
-    const sources = buildSources(lights)
-    if (sources.length === 0) return []
-
-    const mh2 = mountingHeight * mountingHeight
-    const cells = []
-
-    for (let py = ROOM_Y; py < ROOM_Y + ROOM_PX_H; py += STEP_PX) {
-      for (let px = ROOM_X; px < ROOM_X + ROOM_PX_W; px += STEP_PX) {
-        const cx = px + STEP_PX / 2
-        const cy = py + STEP_PX / 2
-        let totalLux = 0
-
-        for (const src of sources) {
-          // Convert pixel offsets to metres — physically correct
-          const dxM       = (cx - src.x) / (SCALE * 1000)
-          const dyM       = (cy - src.y) / (SCALE * 1000)
-          const horzDistM = Math.sqrt(dxM * dxM + dyM * dyM)
-          // incAngle = angle from vertical axis (nadir)
-          const incAngle = Math.atan2(horzDistM, mountingHeight)
-          // Hard cutoff outside beam cone
-          if (incAngle > src.halfBeamR) continue
-          // 3D distance — clamp min 0.1 m to avoid divide-by-zero
-          const distM = Math.max(0.1, Math.sqrt(horzDistM * horzDistM + mh2))
-          // cosTheta = cosine of incidence angle at work-plane
-          const cosTheta = mountingHeight / distM
-          // Angle-dependent intensity: I(θ) = I₀ · cosⁿ(θ)
-          const relI = src.n === 0 ? 1.0 : Math.pow(cosTheta, src.n)
-          // Illuminance (lux): E = I(θ) · cos(θ) / d²
-          // cosTheta again for Lambert cosine law at the surface
-          totalLux += (src.I0 * relI * cosTheta) / (distM * distM)
-        }
-
-        cells.push({ x: px, y: py, lux: totalLux, color: luxToColor(totalLux) })
-      }
-    }
-    return cells
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHeatmap, lights, roomWidth, roomHeight, mountingHeight, targetLux, SCALE, STEP_PX, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
-
-  // ── Convert cell array → single offscreen canvas (1 KonvaImage vs 3000+ Rects) ──
+  // ── Smooth radial-gradient heatmap ────────────────────────────
+  // One radial gradient per fixture (+ strip samples), composited with
+  // 'lighter' blending so overlapping pools accumulate naturally.
+  // Canvas background stays fully transparent — floorplan grid shows through.
   const heatmapImage = useMemo(() => {
-    if (!showHeatmap || heatmapCells.length === 0) return null
+    if (!showHeatmap || !(mountingHeight > 0) || lights.length === 0) return null
+
     const canvas = document.createElement('canvas')
     canvas.width  = Math.ceil(ROOM_PX_W)
     canvas.height = Math.ceil(ROOM_PX_H)
     const ctx = canvas.getContext('2d')
-    const w   = Math.ceil(STEP_PX)
-    for (const cell of heatmapCells) {
-      ctx.fillStyle = cell.color
-      ctx.fillRect(cell.x - ROOM_X, cell.y - ROOM_Y, w, w)
+
+    // Additive blending: overlapping glows stack up naturally
+    ctx.globalCompositeOperation = 'lighter'
+
+    // Draw one soft radial glow centred at (wx, wy) in world-canvas coords
+    function drawGlow(wx, wy, radiusPx, alpha0) {
+      if (radiusPx <= 1) return
+      const x = wx - ROOM_X
+      const y = wy - ROOM_Y
+      const r = radiusPx
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r)
+      const a0 = Math.min(0.55, alpha0)          // core warm-white
+      const a1 = Math.min(0.18, alpha0 * 0.4)   // amber mid-ring
+      grad.addColorStop(0,    `rgba(255,230,150,${a0.toFixed(3)})`)
+      grad.addColorStop(0.35, `rgba(255,200, 80,${a1.toFixed(3)})`)
+      grad.addColorStop(0.65, `rgba(255,140, 30,0.04)`)
+      grad.addColorStop(1,    `rgba(255,100,  0,0)`)
+      ctx.fillStyle = grad
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fill()
     }
+
+    const SAMPLE_M = 0.25  // strip sample spacing in metres
+
+    for (const light of lights) {
+      const lm = light.lumens ?? 0
+      if (lm <= 0) continue
+
+      if (light.category !== 'LED_STRIP') {
+        // Point/panel fixture: beam cone projects to a circle on the floor
+        const halfBeamRad = ((light.beamAngle ?? 36) / 2) * (Math.PI / 180)
+        const floorRadPx  = Math.max(24, mountingHeight * Math.tan(halfBeamRad) * SCALE * 1000)
+        // Alpha scales with lumens relative to a baseline of 1000 lm
+        const alpha = 0.30 * Math.min(2, lm / 1000)
+        drawGlow(light.x ?? 0, light.y ?? 0, floorRadPx, alpha)
+
+      } else {
+        // LED strip: sample along its path
+        const totalLenM = light.lengthM ?? 0
+        if (totalLenM <= 0) continue
+        const n           = Math.max(2, Math.round(totalLenM / SAMPLE_M))
+        const stripRadPx  = Math.max(18, mountingHeight * Math.tan(Math.PI / 4) * SCALE * 1000)
+        const alphaEach   = 0.12 * Math.min(2, (lm / totalLenM) / 300)
+
+        if (light.shape === 'circle') {
+          const { cx = 0, cy = 0, radiusPx = 0 } = light
+          for (let i = 0; i < n; i++) {
+            const ang = (2 * Math.PI * i) / n
+            drawGlow(cx + radiusPx * Math.cos(ang), cy + radiusPx * Math.sin(ang), stripRadPx, alphaEach)
+          }
+        } else if (light.shape === 'freehand') {
+          const pts = light.points ?? []
+          for (let i = 0; i <= n; i++) {
+            const t   = i / n
+            const idx = Math.min(Math.floor(t * (pts.length / 2 - 1)) * 2, pts.length - 2)
+            drawGlow(pts[idx] ?? 0, pts[idx + 1] ?? 0, stripRadPx, alphaEach)
+          }
+        } else {
+          // line strip
+          const x1 = light.x1 ?? 0, y1 = light.y1 ?? 0
+          const x2 = light.x2 ?? 0, y2 = light.y2 ?? 0
+          for (let i = 0; i <= n; i++) {
+            const t = i / n
+            drawGlow(x1 + t * (x2 - x1), y1 + t * (y2 - y1), stripRadPx, alphaEach)
+          }
+        }
+      }
+    }
+
     return canvas
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHeatmap, heatmapCells, ROOM_PX_W, ROOM_PX_H, STEP_PX, ROOM_X, ROOM_Y])
+  }, [showHeatmap, lights, mountingHeight, SCALE, ROOM_X, ROOM_Y, ROOM_PX_W, ROOM_PX_H])
 
   function snap(val, origin, roomPx) {
     if (!snapToGrid) return val
