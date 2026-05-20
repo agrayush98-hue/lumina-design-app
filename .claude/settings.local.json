@@ -45,7 +45,13 @@
       "Bash(bash claude-seo/install.sh)",
       "Read(//c/Users/coola/.claude/skills/seo/assets/**)",
       "Read(//c/Users/coola/.claude/skills/seo-plan/assets/**)",
-      "Read(//c/Users/coola/.claude/skills/**)"
+      "Read(//c/Users/coola/.claude/skills/**)",
+      "Bash(git revert *)",
+      "Bash(git checkout *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":5173\\\\|:5174\\\\|:3000\")",
+      "Bash(findstr \":5173\")",
+      "Bash(node -e \"const d = require\\('./src/utils/lightingDesignEngine.js'\\); console.log\\('ok'\\)\")"
     ]
   }
 }
