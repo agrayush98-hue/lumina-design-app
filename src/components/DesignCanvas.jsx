@@ -395,7 +395,65 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         const py = ROOM_Y + row * STEP
         let lux = 0
         for (const light of lights) {
-          lux += getLuxAtPoint(light, px, py, ceilH_mm, roomGeomLocal)
+          if (isPerMetreCat(light.category)) {
+            // Strip/linear fixture — sample virtual point sources along its length
+            if (light.shape === 'circle' && light.cx != null) {
+              // Circle strip: sample ~24 points around the circumference
+              const N = 24
+              const virtL = { ...light, x: 0, y: 0, lumens: (light.lumens ?? 0) / N }
+              const r = light.radius ?? 0
+              for (let i = 0; i < N; i++) {
+                const angle = (2 * Math.PI * i) / N
+                virtL.x = light.cx + r * Math.cos(angle)
+                virtL.y = light.cy + r * Math.sin(angle)
+                lux += getLuxAtPoint(virtL, px, py, ceilH_mm, roomGeomLocal)
+              }
+            } else if (light.shape === 'freehand' && Array.isArray(light.points) && light.points.length >= 4) {
+              // Freehand strip: sample one point every ~50px along the polyline
+              const pts = light.points
+              const segLengths = []
+              let totalLen = 0
+              for (let i = 0; i < pts.length - 2; i += 2) {
+                const dx = pts[i + 2] - pts[i], dy = pts[i + 3] - pts[i + 1]
+                const l = Math.sqrt(dx * dx + dy * dy)
+                segLengths.push(l)
+                totalLen += l
+              }
+              const N = Math.max(3, Math.round(totalLen / 40))
+              const virtL = { ...light, x: 0, y: 0, lumens: (light.lumens ?? 0) / N }
+              for (let k = 0; k < N; k++) {
+                const target = (k / (N - 1)) * totalLen
+                let acc = 0, sx = pts[0], sy = pts[1]
+                for (let i = 0; i < segLengths.length; i++) {
+                  if (acc + segLengths[i] >= target) {
+                    const t2 = (target - acc) / segLengths[i]
+                    sx = pts[i * 2] + t2 * (pts[i * 2 + 2] - pts[i * 2])
+                    sy = pts[i * 2 + 1] + t2 * (pts[i * 2 + 3] - pts[i * 2 + 1])
+                    break
+                  }
+                  acc += segLengths[i]
+                }
+                virtL.x = sx
+                virtL.y = sy
+                lux += getLuxAtPoint(virtL, px, py, ceilH_mm, roomGeomLocal)
+              }
+            } else if (light.x1 != null && light.y1 != null && light.x2 != null && light.y2 != null) {
+              // Line strip: sample N virtual point sources evenly spaced
+              const dx = light.x2 - light.x1, dy = light.y2 - light.y1
+              const lenPx = Math.sqrt(dx * dx + dy * dy)
+              const N = Math.max(3, Math.round(lenPx / 20))
+              const virtL = { ...light, x: 0, y: 0, lumens: (light.lumens ?? 0) / N }
+              for (let i = 0; i < N; i++) {
+                const t = i / (N - 1)
+                virtL.x = light.x1 + t * dx
+                virtL.y = light.y1 + t * dy
+                lux += getLuxAtPoint(virtL, px, py, ceilH_mm, roomGeomLocal)
+              }
+            }
+            // if none of the above match (malformed strip), skip silently
+          } else {
+            lux += getLuxAtPoint(light, px, py, ceilH_mm, roomGeomLocal)
+          }
         }
         grid[row * cols + col] = lux
       }
