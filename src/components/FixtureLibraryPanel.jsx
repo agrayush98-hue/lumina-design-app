@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import standardFixtures from '../data/complete-fixture-library.json';
 import brandedFixtures from '../data/branded-fixture-library.json';
+import iesFixtures from '../data/ies-fixture-library.json';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,16 @@ const FIXTURE_VISUALS = {
   'Emergency': {
     default:  { shape: 'cross-dot',  fill: '#c8f0c8', stroke: '#2e7d32', glow: 'rgba(46,125,50,0.14)',   r: 7  },
   },
+
+  // Wall Washer — flood wedge shape (asymmetric distribution)
+  'Wall_Washer': {
+    default:  { shape: 'flood',     fill: '#b8e8ff', stroke: '#1e88e5', glow: 'rgba(30,136,229,0.14)',  r: 9  },
+  },
+
+  // Track Light — diamond head (directional mounted on track)
+  'Track_Light': {
+    default:  { shape: 'diamond',   fill: '#c8d8f8', stroke: '#2196f3', glow: 'rgba(33,150,243,0.14)',  r: 7  },
+  },
 }
 
 function getFixtureVisuals(category, fixtureName) {
@@ -135,8 +146,10 @@ const categoryLabel = (cat) => ({
   'Street_Light': 'Street Light',
   'Garden_Light': 'Garden Light',
   'Wall_Light':   'Wall Light',
+  'Wall_Washer':  'Wall Washer',
   'Architectural':'Architectural',
   'Track_System': 'Track System',
+  'Track_Light':  'Track Light',
   'Indoor/Outdoor':'In/Outdoor',
   'Pendant':      'Pendant',
   'Emergency':    'Emergency',
@@ -202,24 +215,28 @@ function VariantRow({ fixture, variant, onVariantClick }) {
         {variant.length && ` · ${variant.length}`}
       </div>
 
-      {/* CCT Badge */}
-      {variant.cct && (
-        <div style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 10, color: '#888888',
-          background: '#1e1e1e', padding: '2px 6px',
-          borderRadius: 3, marginBottom: 8,
-          display: 'inline-block'
-        }}>
-          {variant.cct}
+      {/* CCT Badge — variant-level or fixture-level for IES */}
+      {(variant.cct || (fixture.source === 'ies' && fixture.cct?.length)) && (
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+          {(variant.cct ? [variant.cct] : fixture.cct).map(k => (
+            <span key={k} style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 9, color: '#888888',
+              background: '#1e1e1e', padding: '2px 6px',
+              borderRadius: 3, display: 'inline-block'
+            }}>
+              {k}
+            </span>
+          ))}
         </div>
       )}
 
       {/* Beam Angle Pills */}
       {beamOptions.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 }}>
           {beamOptions.map(beam => {
             const active = selectedBeam === beam;
+            const isSingleIES = fixture.source === 'ies' && beamOptions.length === 1;
             return (
               <button
                 key={beam}
@@ -227,17 +244,28 @@ function VariantRow({ fixture, variant, onVariantClick }) {
                 style={{
                   fontFamily: "'Inter', sans-serif",
                   fontSize: 9, fontWeight: 600,
-                  color: active ? '#ffffff' : '#b8860b',
-                  background: active ? '#d4a843' : 'transparent',
-                  border: '1px solid #d4a843',
+                  color: active ? (isSingleIES ? '#22d3ee' : '#ffffff') : '#b8860b',
+                  background: active ? (isSingleIES ? 'rgba(34,211,238,0.15)' : '#d4a843') : 'transparent',
+                  border: `1px solid ${isSingleIES ? '#22d3ee' : '#d4a843'}`,
                   borderRadius: 3, padding: '3px 6px',
-                  cursor: 'pointer', transition: 'all 0.15s ease'
+                  cursor: isSingleIES ? 'default' : 'pointer',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 {beam}°
               </button>
             );
           })}
+          {/* "measured" label for IES single-beam fixtures */}
+          {fixture.source === 'ies' && beamOptions.length === 1 && (
+            <span style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 8, color: '#22d3ee', opacity: 0.7,
+              letterSpacing: '0.05em'
+            }}>
+              measured
+            </span>
+          )}
         </div>
       )}
 
@@ -302,19 +330,42 @@ function FixtureCard({ fixture, isExpanded, onToggle, onVariantClick }) {
             {fixture.name}
           </div>
 
-          {/* Brand + subcategory + CRI row */}
+          {/* Brand / Manufacturer + subcategory + CRI row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            {fixture.brand && (
+            {/* IES source badge */}
+            {fixture.source === 'ies' && (
               <span style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 10, fontWeight: 600, color: '#d4a843',
-                background: 'rgba(212,168,67,0.1)', padding: '1px 6px',
-                borderRadius: 3, letterSpacing: '0.03em'
+                fontSize: 9, fontWeight: 700, color: '#22d3ee',
+                background: 'rgba(34,211,238,0.1)', padding: '1px 5px',
+                borderRadius: 3, letterSpacing: '0.06em', border: '1px solid rgba(34,211,238,0.25)'
               }}>
-                {fixture.brand.toUpperCase()}
+                IES
               </span>
             )}
-            {fixture.subcategory && (
+            {/* Manufacturer (IES) or brand (branded) */}
+            {(fixture.manufacturer || fixture.brand) && (
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10, fontWeight: 600,
+                color: fixture.source === 'ies' ? '#22d3ee' : '#d4a843',
+                background: fixture.source === 'ies' ? 'rgba(34,211,238,0.08)' : 'rgba(212,168,67,0.1)',
+                padding: '1px 6px', borderRadius: 3, letterSpacing: '0.03em'
+              }}>
+                {(fixture.manufacturer || fixture.brand).toUpperCase()}
+              </span>
+            )}
+            {/* Catalog number for IES fixtures */}
+            {fixture.catalogNumber && (
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 9, color: '#666666', letterSpacing: '0.02em'
+              }}>
+                {fixture.catalogNumber}
+              </span>
+            )}
+            {/* Subcategory (only if not IES — IES subcategory is always "IES Photometric") */}
+            {fixture.subcategory && fixture.source !== 'ies' && (
               <span style={{
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 10, color: '#888888',
@@ -410,7 +461,9 @@ export function FixtureLibraryPanel({
   const [searchQuery,    setSearchQuery]    = useState('');
   const [expandedSet,    setExpandedSet]    = useState(new Set());
 
-  const fixtureData = libraryTab === 'STANDARD' ? standardFixtures : brandedFixtures;
+  const fixtureData = libraryTab === 'STANDARD' ? standardFixtures
+                    : libraryTab === 'IES'      ? iesFixtures
+                    : brandedFixtures;
 
   const categories = useMemo(() => {
     return ['ALL', ...new Set(fixtureData.fixtures.map(f => f.category))];
@@ -446,7 +499,11 @@ export function FixtureLibraryPanel({
       category,
       subcategory: fixture.subcategory,
       name: fixture.name,
-      brand: fixture.brand ?? null,
+      brand: fixture.brand ?? fixture.manufacturer ?? null,
+      manufacturer: fixture.manufacturer ?? null,
+      catalogNumber: fixture.catalogNumber ?? null,
+      source: fixture.source ?? null,
+      iesFile: fixture.iesFile ?? null,
       watt: variant.watt || variant.watt_per_meter || 10,
       lumens: variant.lumens || variant.lumens_per_meter || 1000,
       beamAngle,
@@ -483,9 +540,9 @@ export function FixtureLibraryPanel({
           Fixture Library
         </div>
 
-        {/* STANDARD / BRANDED tabs */}
+        {/* STANDARD / BRANDED / IES tabs */}
         <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-          {['STANDARD', 'BRANDED'].map(tab => (
+          {['STANDARD', 'BRANDED', 'IES'].map(tab => (
             <button
               key={tab}
               onClick={() => { setLibraryTab(tab); setActiveCategory('ALL'); setSelectedBrand('ALL'); setSearchQuery(''); setExpandedSet(new Set()); }}

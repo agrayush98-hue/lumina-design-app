@@ -1,0 +1,550 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "totalFixtures": 18,
+    "lastUpdated": "2026-05-20",
+    "description": "IES photometric fixtures — LM-63 parsed data"
+  },
+  "fixtures": [
+    {
+      "id": "ies-lumina-synth-dl-15w-40",
+      "category": "Downlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Downlight Recessed 15W 4000K Medium 40°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-15W-40",
+      "iesFile": "synth-downlight-medium-40deg.ies",
+      "source": "ies",
+      "description": "LED Downlight Recessed 15W 4000K Medium 40°",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 15,
+          "lumens": 1350,
+          "efficacy": 90,
+          "beamOptions": [
+            59
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-dl-12w-25",
+      "category": "Downlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Downlight Recessed 12W 3000K Narrow 25°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-12W-25",
+      "iesFile": "synth-downlight-narrow-25deg.ies",
+      "source": "ies",
+      "description": "LED Downlight Recessed 12W 3000K Narrow 25°",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 12,
+          "lumens": 1000,
+          "efficacy": 83,
+          "beamOptions": [
+            39
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-dl-20w-60",
+      "category": "Downlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Downlight Recessed 20W 3000K Wide 60°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-20W-60",
+      "iesFile": "synth-downlight-wide-60deg.ies",
+      "source": "ies",
+      "description": "LED Downlight Recessed 20W 3000K Wide 60°",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 20,
+          "lumens": 1800,
+          "efficacy": 90,
+          "beamOptions": [
+            81
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-hb-100w-60",
+      "category": "High_Bay",
+      "subcategory": "IES Photometric",
+      "name": "LED High Bay 100W 5000K 60° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "HB-100W-60",
+      "iesFile": "synth-highbay-100w-narrow.ies",
+      "source": "ies",
+      "description": "LED High Bay 100W 5000K 60° Beam",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "5000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 100,
+          "lumens": 12000,
+          "efficacy": 120,
+          "beamOptions": [
+            50
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-hb-200w-90",
+      "category": "High_Bay",
+      "subcategory": "IES Photometric",
+      "name": "LED High Bay 200W 5000K 90° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "HB-200W-90",
+      "iesFile": "synth-highbay-200w-wide.ies",
+      "source": "ies",
+      "description": "LED High Bay 200W 5000K 90° Beam",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "5000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 200,
+          "lumens": 24000,
+          "efficacy": 120,
+          "beamOptions": [
+            77
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-strip-9wpm",
+      "category": "Linear",
+      "subcategory": "IES Photometric",
+      "name": "LED Strip Cove 9W/m 3000K 120° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "STRIP-9WPM",
+      "iesFile": "synth-ledstrip-9w-per-meter.ies",
+      "source": "ies",
+      "description": "LED Strip Cove 9W/m 3000K 120° Beam",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 9,
+          "lumens": 900,
+          "efficacy": 100,
+          "beamOptions": [
+            102
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-lin-24w-600",
+      "category": "Linear",
+      "subcategory": "IES Photometric",
+      "name": "LED Linear Batten 24W 3000K 600mm",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "LIN-24W-600",
+      "iesFile": "synth-linear-batten-24w.ies",
+      "source": "ies",
+      "description": "LED Linear Batten 24W 3000K 600mm",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2400,
+          "efficacy": 100,
+          "beamOptions": [
+            156
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-lin-36w-1200",
+      "category": "Linear",
+      "subcategory": "IES Photometric",
+      "name": "LED Linear Batten 36W 4000K 1200mm",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "LIN-36W-1200",
+      "iesFile": "synth-linear-batten-36w.ies",
+      "source": "ies",
+      "description": "LED Linear Batten 36W 4000K 1200mm",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3600,
+          "efficacy": 100,
+          "beamOptions": [
+            156
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-panel-36w-600",
+      "category": "Panel",
+      "subcategory": "IES Photometric",
+      "name": "LED Panel 600x600 36W 4000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PANEL-36W-600",
+      "iesFile": "synth-panel-600x600-36w.ies",
+      "source": "ies",
+      "description": "LED Panel 600x600 36W 4000K",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3800,
+          "efficacy": 106,
+          "beamOptions": [
+            156
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-pend-24w-direct",
+      "category": "Pendant",
+      "subcategory": "IES Photometric",
+      "name": "LED Pendant Direct 24W 3000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PEND-24W-DIRECT",
+      "iesFile": "synth-pendant-direct-24w.ies",
+      "source": "ies",
+      "description": "LED Pendant Direct 24W 3000K",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2200,
+          "efficacy": 92,
+          "beamOptions": [
+            90
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-pend-40w-indirect",
+      "category": "Pendant",
+      "subcategory": "IES Photometric",
+      "name": "LED Pendant Direct-Indirect 40W 3000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PEND-40W-INDIRECT",
+      "iesFile": "synth-pendant-indirect-40w.ies",
+      "source": "ies",
+      "description": "LED Pendant Direct-Indirect 40W 3000K",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 40,
+          "lumens": 4000,
+          "efficacy": 100,
+          "beamOptions": [
+            105
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-spot-12w-15",
+      "category": "Spotlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Spotlight 12W 3000K Narrow Spot 15°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "SPOT-12W-15",
+      "iesFile": "synth-spotlight-12w-15deg.ies",
+      "source": "ies",
+      "description": "LED Spotlight 12W 3000K Narrow Spot 15°",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 12,
+          "lumens": 900,
+          "efficacy": 75,
+          "beamOptions": [
+            25
+          ],
+          "beamClass": "narrow"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-spot-18w-25",
+      "category": "Spotlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Spotlight 18W 3000K Spot 25°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "SPOT-18W-25",
+      "iesFile": "synth-spotlight-18w-25deg.ies",
+      "source": "ies",
+      "description": "LED Spotlight 18W 3000K Spot 25°",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 18,
+          "lumens": 1500,
+          "efficacy": 83,
+          "beamOptions": [
+            39
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-track-30w-36",
+      "category": "Track_Light",
+      "subcategory": "IES Photometric",
+      "name": "LED Track Light 30W 4000K Flood 36°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "TRACK-30W-36",
+      "iesFile": "synth-tracklight-30w-36deg.ies",
+      "source": "ies",
+      "description": "LED Track Light 30W 4000K Flood 36°",
+      "mounting": "Track",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 2800,
+          "efficacy": 93,
+          "beamOptions": [
+            66
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-trof-50w-2x4",
+      "category": "Panel",
+      "subcategory": "IES Photometric",
+      "name": "LED Troffer 2x4 50W 5000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "TROF-50W-2X4",
+      "iesFile": "synth-troffer-2x4-50w.ies",
+      "source": "ies",
+      "description": "LED Troffer 2x4 50W 5000K",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "5000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 50,
+          "lumens": 5500,
+          "efficacy": 110,
+          "beamOptions": [
+            156
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-lumina-synth-ww-24w-asym",
+      "category": "Wall_Washer",
+      "subcategory": "IES Photometric",
+      "name": "LED Wall Washer Recessed 24W 3000K Asymmetric",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "WW-24W-ASYM",
+      "iesFile": "synth-wallwasher-24w.ies",
+      "source": "ies",
+      "description": "LED Wall Washer Recessed 24W 3000K Asymmetric",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2000,
+          "efficacy": 83,
+          "beamOptions": [
+            107
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-philips-lighting-dn570b-led20830-pse",
+      "category": "Downlight",
+      "subcategory": "IES Photometric",
+      "name": "LED Downlight Recessed 20W 3000K",
+      "manufacturer": "Philips Lighting",
+      "catalogNumber": "DN570B LED20/830 PSE",
+      "iesFile": "test-downlight-20w.ies",
+      "source": "ies",
+      "description": "LED Downlight Recessed 20W 3000K",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 20,
+          "lumens": 1350,
+          "efficacy": 68,
+          "beamOptions": [
+            93
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    },
+    {
+      "id": "ies-osram-ledvance-linear-36w840",
+      "category": "Panel",
+      "subcategory": "IES Photometric",
+      "name": "LED Linear Batten Fixture 36W 4000K",
+      "manufacturer": "OSRAM",
+      "catalogNumber": "LEDVANCE Linear 36W/840",
+      "iesFile": "test-linear-panel.ies",
+      "source": "ies",
+      "description": "LED Linear Batten Fixture 36W 4000K",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3200,
+          "efficacy": 89,
+          "beamOptions": [
+            128
+          ],
+          "beamClass": "wide"
+        }
+      ]
+    }
+  ]
+}

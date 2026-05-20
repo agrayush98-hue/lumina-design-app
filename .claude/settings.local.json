@@ -51,7 +51,14 @@
       "Bash(netstat -ano)",
       "Bash(findstr \":5173\\\\|:5174\\\\|:3000\")",
       "Bash(findstr \":5173\")",
-      "Bash(node -e \"const d = require\\('./src/utils/lightingDesignEngine.js'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"const d = require\\('./src/utils/lightingDesignEngine.js'\\); console.log\\('ok'\\)\")",
+      "Bash(npm info *)",
+      "Bash(npm search *)",
+      "Bash(mkdir -p \"C:\\\\Projects\\\\lumina-design-app\\\\data\\\\ies-files\")",
+      "Bash(node scripts/parse-ies-fixtures.js)",
+      "Bash(node scripts/parse-ies-fixtures.cjs)",
+      "Bash(node -e \"const d=require\\('./data/parsed-fixtures.json'\\); console.log\\(JSON.stringify\\(d[0], null, 2\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)"
     ]
   }
 }
