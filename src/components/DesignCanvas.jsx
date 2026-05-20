@@ -345,8 +345,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         || n === "LINEAR"
   }
 
-  const canonCat   = normCat(activeFixtureCategory)
+  const canonCat    = normCat(activeFixtureCategory)
   const isStripMode = isPerMetreCat(activeFixtureCategory)
+  // DEBUG — remove after confirming strip mode works
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[DesignCanvas] activeFixtureCategory:', activeFixtureCategory, '| canonCat:', canonCat, '| isStripMode:', isStripMode)
+  }
 
   const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
   // When the room was drawn on the floor plan use the exact pixel box the user drew;
