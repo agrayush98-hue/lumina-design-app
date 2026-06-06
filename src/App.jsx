@@ -2963,7 +2963,7 @@ export default function App() {
                 {/* Voltage Drop */}
                 <StatCol label="VOLTAGE DROP">
                   <span style={{ fontSize: 17, color: vDropColor, fontWeight: 600 }}>
-                    {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "â€”"}
+                    {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
                   </span>
                   <span style={{ fontSize: 17, color: "#999999" }}>
                     {maxVDrop != null
@@ -3058,13 +3058,14 @@ export default function App() {
 
           return (
             <div style={{
-              width: 240,
+              width: 280,
               background: "#111111",
-              borderLeft: "1px solid #1e1e1e",
+              borderLeft: "1px solid #222222",
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
               flexShrink: 0,
+              height: "100%",
               fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             }}>
 
@@ -3189,7 +3190,7 @@ export default function App() {
                           <div>
                             <div style={{ fontSize: 11, color: "#555555", marginBottom: 3, letterSpacing: "0.06em" }}>CCT</div>
                             <div style={{ fontSize: 14, color: "#888888", fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3 }}>
-                              {light.cct ? `${light.cct}K` : "â€”"}
+                              {light.cct ? `${light.cct}K` : "—"}
                             </div>
                           </div>
                         </div>
