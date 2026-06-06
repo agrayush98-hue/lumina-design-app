@@ -1,0 +1,3109 @@
+{
+  "metadata": {
+    "source": "signify.com/en-in",
+    "manufacturer": "Philips",
+    "totalFixtures": 98,
+    "lastUpdated": "2026-05-21",
+    "errors": 0
+  },
+  "fixtures": [
+    {
+      "id": "philips-greenspace-flex-001",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 6 W, 930 warm white, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401532771",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401532771_EU/product",
+      "description": "Philips Greenspace Flex, 6 W, 930 warm white, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P6%20M43-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 6,
+          "lumens": 1500,
+          "efficacy": 100,
+          "cct": "3000K",
+          "catalogNumber": "911401532771",
+          "orderCode": "911401532771"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-002",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 6 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401535471",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401535471_EU/product",
+      "description": "Philips Greenspace Flex, 6 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P6%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 6,
+          "lumens": 600,
+          "efficacy": 100,
+          "cct": "3000K",
+          "catalogNumber": "911401535471",
+          "orderCode": "911401535471"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-003",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 11 W, 927 warm white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401536071",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401536071_EU/product",
+      "description": "Philips Greenspace Flex, 11 W, 927 warm white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P11%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "2700K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 660,
+          "efficacy": 110,
+          "cct": "2700K",
+          "catalogNumber": "911401536071",
+          "orderCode": "911401536071"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-004",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 11 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401536371",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401536371_EU/product",
+      "description": "Philips Greenspace Flex, 11 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P11%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 957,
+          "efficacy": 87,
+          "cct": "3000K",
+          "catalogNumber": "911401536371",
+          "orderCode": "911401536371"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-005",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 11 W, 940 neutral white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401536571",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401536571_EU/product",
+      "description": "Philips Greenspace Flex, 11 W, 940 neutral white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P11%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 1012,
+          "efficacy": 92,
+          "cct": "4000K",
+          "catalogNumber": "911401536571",
+          "orderCode": "911401536571"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-006",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 11 W, 940 neutral white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401536671",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401536671_EU/product",
+      "description": "Philips Greenspace Flex, 11 W, 940 neutral white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P11%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 1012,
+          "efficacy": 92,
+          "cct": "4000K",
+          "catalogNumber": "911401536671",
+          "orderCode": "911401536671"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-007",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 15 W, 927 warm white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401536971",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401536971_EU/product",
+      "description": "Philips Greenspace Flex, 15 W, 927 warm white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P15%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "2700K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 15,
+          "lumens": 1100,
+          "efficacy": 100,
+          "cct": "2700K",
+          "catalogNumber": "911401536971",
+          "orderCode": "911401536971"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-flex-008",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips Greenspace Flex, 15 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401537271",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenspace-flex/911401537271_EU/product",
+      "description": "Philips Greenspace Flex, 15 W, 930 warm white, DALI, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/RS378B%20P15%20M55-SPP",
+      "mounting": "Recessed",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 15,
+          "lumens": 1350,
+          "efficacy": 90,
+          "cct": "3000K",
+          "catalogNumber": "911401537271",
+          "orderCode": "911401537271"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-009",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED6S-3000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814689",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814689_EU/product",
+      "description": "Philips SM295C LED6S-3000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 6,
+          "lumens": 700,
+          "efficacy": 115,
+          "cct": "3000K",
+          "catalogNumber": "919515814689",
+          "orderCode": "919515814689"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-010",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED6S-4000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814690",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814690_EU/product",
+      "description": "Philips SM295C LED6S-4000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 6,
+          "lumens": 700,
+          "efficacy": 115,
+          "cct": "4000K",
+          "catalogNumber": "919515814690",
+          "orderCode": "919515814690"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-011",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED6S-6500 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814691",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814691_EU/product",
+      "description": "Philips SM295C LED6S-6500 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 6,
+          "lumens": 700,
+          "efficacy": 115,
+          "cct": "6500K",
+          "catalogNumber": "919515814691",
+          "orderCode": "919515814691"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-012",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED10S-3000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814692",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814692_EU/product",
+      "description": "Philips SM295C LED10S-3000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 9,
+          "lumens": 1000,
+          "efficacy": 110,
+          "cct": "3000K",
+          "catalogNumber": "919515814692",
+          "orderCode": "919515814692"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-013",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED10S-4000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814693",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814693_EU/product",
+      "description": "Philips SM295C LED10S-4000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 9,
+          "lumens": 1000,
+          "efficacy": 110,
+          "cct": "4000K",
+          "catalogNumber": "919515814693",
+          "orderCode": "919515814693"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-014",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM295C LED10S-6500 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814694",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814694_EU/product",
+      "description": "Philips SM295C LED10S-6500 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 9,
+          "lumens": 1000,
+          "efficacy": 110,
+          "cct": "6500K",
+          "catalogNumber": "919515814694",
+          "orderCode": "919515814694"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-015",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM296C LED12S-3000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814695",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814695_EU/product",
+      "description": "Philips SM296C LED12S-3000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 1200,
+          "efficacy": 110,
+          "cct": "3000K",
+          "catalogNumber": "919515814695",
+          "orderCode": "919515814695"
+        }
+      ]
+    },
+    {
+      "id": "philips-sleek-surface-pro-016",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips SM296C LED12S-4000 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814696",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-sleek-surface-pro/919515814696_EU/product",
+      "description": "Philips SM296C LED12S-4000 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Sleek%20SurfacePro_SM295-6-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 1200,
+          "efficacy": 110,
+          "cct": "4000K",
+          "catalogNumber": "919515814696",
+          "orderCode": "919515814696"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-dn391-392-393-394-017",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips DN 392B LED 10S-6500 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810463",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenperform-dn391-392-393-394-395-downlight/919515810463_EU/product",
+      "description": "Philips DN 392B LED 10S-6500 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform_downlight-DN391_395-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 11,
+          "lumens": 1000,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515810463",
+          "orderCode": "919515810463"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-dn391-392-393-394-018",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips DN 393B LED 12S-6500 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810464",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenperform-dn391-392-393-394-395-downlight/919515810464_EU/product",
+      "description": "Philips DN 393B LED 12S-6500 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform_downlight-DN391_395-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 12,
+          "lumens": 1200,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515810464",
+          "orderCode": "919515810464"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-dn391-392-393-394-019",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips DN 394B LED 16S-6500 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810465",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenperform-dn391-392-393-394-395-downlight/919515810465_EU/product",
+      "description": "Philips DN 394B LED 16S-6500 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform_downlight-DN391_395-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 16,
+          "lumens": 1600,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515810465",
+          "orderCode": "919515810465"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-dn391-392-393-394-020",
+      "category": "Downlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips DN 395B LED 20S-6500 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810466",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/downlights/philips-greenperform-dn391-392-393-394-395-downlight/919515810466_EU/product",
+      "description": "Philips DN 395B LED 20S-6500 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform_downlight-DN391_395-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515810466",
+          "orderCode": "919515810466"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-021",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED25S-4000 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814707",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814707_EU/product",
+      "description": "Philips RC380B LED25S-4000 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 21,
+          "lumens": 2500,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515814707",
+          "orderCode": "919515814707"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-022",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED25S-5700 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814708",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814708_EU/product",
+      "description": "Philips RC380B LED25S-5700 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 21,
+          "lumens": 2500,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "5700K",
+          "catalogNumber": "919515814708",
+          "orderCode": "919515814708"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-023",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED25S-6500 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814709",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814709_EU/product",
+      "description": "Philips RC380B LED25S-6500 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 21,
+          "lumens": 2500,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515814709",
+          "orderCode": "919515814709"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-024",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED30S-4000 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814710",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814710_EU/product",
+      "description": "Philips RC380B LED30S-4000 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 25,
+          "lumens": 3000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515814710",
+          "orderCode": "919515814710"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-025",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED30S-5700 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814711",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814711_EU/product",
+      "description": "Philips RC380B LED30S-5700 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 25,
+          "lumens": 3000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "5700K",
+          "catalogNumber": "919515814711",
+          "orderCode": "919515814711"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-026",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED30S-6500 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814712",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814712_EU/product",
+      "description": "Philips RC380B LED30S-6500 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 25,
+          "lumens": 3000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515814712",
+          "orderCode": "919515814712"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-027",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED36S-4000 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814713",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814713_EU/product",
+      "description": "Philips RC380B LED36S-4000 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 3600,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515814713",
+          "orderCode": "919515814713"
+        }
+      ]
+    },
+    {
+      "id": "philips-full-glow-g6-028",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC380B LED36S-5700 G6 L60W60 PSU OD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814714",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-full-glow-g6/919515814714_EU/product",
+      "description": "Philips RC380B LED36S-5700 G6 L60W60 PSU OD",
+      "image": "https://www.assets.signify.com/is/image/Signify/Fullglow%20G6_RC380_WH_1-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 3600,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "5700K",
+          "catalogNumber": "919515814714",
+          "orderCode": "919515814714"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-029",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED25S/865 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812987",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812987_EU/product",
+      "description": "Philips RC740B LED25S/865 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 2800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812987",
+          "orderCode": "919515812987"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-030",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED25S/840 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812989",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812989_EU/product",
+      "description": "Philips RC740B LED25S/840 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 2800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812989",
+          "orderCode": "919515812989"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-031",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED30S/865 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812990",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812990_EU/product",
+      "description": "Philips RC740B LED30S/865 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 37,
+          "lumens": 3300,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812990",
+          "orderCode": "919515812990"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-032",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED30S/840 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812992",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812992_EU/product",
+      "description": "Philips RC740B LED30S/840 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 37,
+          "lumens": 3300,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812992",
+          "orderCode": "919515812992"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-033",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED36S/865 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812993",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812993_EU/product",
+      "description": "Philips RC740B LED36S/865 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 44,
+          "lumens": 3800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812993",
+          "orderCode": "919515812993"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-034",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED36S/840 W60L60 WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812995",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515812995_EU/product",
+      "description": "Philips RC740B LED36S/840 W60L60 WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 44,
+          "lumens": 3800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812995",
+          "orderCode": "919515812995"
+        }
+      ]
+    },
+    {
+      "id": "philips-dayspace-035",
+      "category": "Panel",
+      "subcategory": "Philips Signify",
+      "name": "Philips RC740B LED36S/840 W60L60 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515813246",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/recessed/philips-dayspace/919515813246_EU/product",
+      "description": "Philips RC740B LED36S/840 W60L60 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/dayspace_%20troffer_rc740-spp",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 44,
+          "lumens": 3800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515813246",
+          "orderCode": "919515813246"
+        }
+      ]
+    },
+    {
+      "id": "philips-smartbright-bn100-batten-036",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN100C LED40S-6500 PSU L120 GR",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515811980",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-smartbright-bn100-batten/919515811980_EU/product",
+      "description": "Philips BN100C LED40S-6500 PSU L120 GR",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenbay_Highbay-BY400V-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 40,
+          "lumens": 4000,
+          "efficacy": 105,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515811980",
+          "orderCode": "919515811980"
+        }
+      ]
+    },
+    {
+      "id": "philips-smartbright-bn100-batten-037",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN100C LED40S-4000 PSU L120 GR",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515811981",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-smartbright-bn100-batten/919515811981_EU/product",
+      "description": "Philips BN100C LED40S-4000 PSU L120 GR",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenbay_Highbay-BY400V-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220-240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 41,
+          "lumens": 4000,
+          "efficacy": 105,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515811981",
+          "orderCode": "919515811981"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-038",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED20S-6500 L60 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812660",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812660_EU/product",
+      "description": "Philips BN308C LED20S-6500 L60 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 16,
+          "lumens": 2000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812660",
+          "orderCode": "919515812660"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-039",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED20S-4000 L60 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812661",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812661_EU/product",
+      "description": "Philips BN308C LED20S-4000 L60 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 16,
+          "lumens": 2000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812661",
+          "orderCode": "919515812661"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-040",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED20S-6500  L120 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812662",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812662_EU/product",
+      "description": "Philips BN308C LED20S-6500  L120 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 16,
+          "lumens": 2000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812662",
+          "orderCode": "919515812662"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-041",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED20S-4000  L120 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812663",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812663_EU/product",
+      "description": "Philips BN308C LED20S-4000  L120 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 16,
+          "lumens": 2000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812663",
+          "orderCode": "919515812663"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-042",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED40S-4000  L120 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812665",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812665_EU/product",
+      "description": "Philips BN308C LED40S-4000  L120 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 34,
+          "lumens": 4000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812665",
+          "orderCode": "919515812665"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-043",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED60S-6500 L120 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812666",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812666_EU/product",
+      "description": "Philips BN308C LED60S-6500 L120 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 47,
+          "lumens": 6000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812666",
+          "orderCode": "919515812666"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-044",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED60S-4000  L120 PSU WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812667",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812667_EU/product",
+      "description": "Philips BN308C LED60S-4000  L120 PSU WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 47,
+          "lumens": 6000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812667",
+          "orderCode": "919515812667"
+        }
+      ]
+    },
+    {
+      "id": "philips-endura-next-batten-045",
+      "category": "Linear",
+      "subcategory": "Philips Signify",
+      "name": "Philips BN308C LED40S-6500  L120 PSD WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812670",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/battens/philips-endura-next-batten/919515812670_EU/product",
+      "description": "Philips BN308C LED40S-6500  L120 PSD WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/Endura%20Next_%20IP20%20Specification%20Batten_BN308C-1-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 34,
+          "lumens": 4000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812670",
+          "orderCode": "919515812670"
+        }
+      ]
+    },
+    {
+      "id": "philips-slimbalance-046",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SlimBalance, 117.65 lm/W, 840 neutral white",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401519341",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-slimbalance/911401519341_EU/product",
+      "description": "Philips SlimBalance, 117.65 lm/W, 840 neutral white",
+      "image": "https://www.assets.signify.com/is/image/Signify/SlimBalance-RC550B_RC551B_SM550C_SM551C_SP550P_SP551P-L120-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220/240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 34,
+          "lumens": 4000,
+          "efficacy": 118,
+          "beamOptions": [
+            60
+          ],
+          "cct": "4000K",
+          "catalogNumber": "911401519341",
+          "orderCode": "911401519341"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-047",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570P LED26S 4000 PSU W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814775",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814775_EU/product",
+      "description": "Philips SP570P LED26S 4000 PSU W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2600,
+          "efficacy": 120,
+          "cct": "4000K",
+          "catalogNumber": "919515814775",
+          "orderCode": "919515814775"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-048",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570P LED26S 6500 PSU W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814776",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814776_EU/product",
+      "description": "Philips SP570P LED26S 6500 PSU W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2600,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814776",
+          "orderCode": "919515814776"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-049",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570P LED26S 4000 PSD W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814777",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814777_EU/product",
+      "description": "Philips SP570P LED26S 4000 PSD W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2600,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814777",
+          "orderCode": "919515814777"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-050",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570P LED26S 6500 PSD W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814778",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814778_EU/product",
+      "description": "Philips SP570P LED26S 6500 PSD W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2600,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814778",
+          "orderCode": "919515814778"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-051",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570X LED22S 4000 PSU W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814779",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814779_EU/product",
+      "description": "Philips SP570X LED22S 4000 PSU W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2200,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814779",
+          "orderCode": "919515814779"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-052",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570X LED22S 6500 PSU W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814780",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814780_EU/product",
+      "description": "Philips SP570X LED22S 6500 PSU W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2200,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814780",
+          "orderCode": "919515814780"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-053",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570X LED22S 4000 PSD W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814781",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814781_EU/product",
+      "description": "Philips SP570X LED22S 4000 PSD W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2200,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814781",
+          "orderCode": "919515814781"
+        }
+      ]
+    },
+    {
+      "id": "philips-flat-line-054",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips SP570X LED22S 6500 PSD W12L120 OD SI",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515814782",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-flat-line/919515814782_EU/product",
+      "description": "Philips SP570X LED22S 6500 PSD W12L120 OD SI",
+      "image": "https://www.assets.signify.com/is/image/Signify/Flat%20line_SP570_SI_1-SPP",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2200,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515814782",
+          "orderCode": "919515814782"
+        }
+      ]
+    },
+    {
+      "id": "philips-modifly-suspended-055",
+      "category": "Pendant",
+      "subcategory": "Philips Signify",
+      "name": "Philips ModiFly suspended, 120 lm/W, 840 neutral white",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401589332",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/suspended/linear-pendant/philips-modifly-suspended/911401589332_EU/product",
+      "description": "Philips ModiFly suspended, 120 lm/W, 840 neutral white",
+      "image": "https://www.assets.signify.com/is/image/Signify/Modifly%20SP800P%20L1500",
+      "mounting": "Suspended",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 18,
+          "lumens": 2100,
+          "efficacy": 120,
+          "cct": "4000K",
+          "catalogNumber": "911401589332",
+          "orderCode": "911401589332"
+        }
+      ]
+    },
+    {
+      "id": "philips-vistaglow-056",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips WT140W LED7S CW PSU S1 PC",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812243",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-vistaglow/919515812243_EU/product",
+      "description": "Philips WT140W LED7S CW PSU S1 PC",
+      "image": "https://www.assets.signify.com/is/image/Signify/VistaGlow_Bulkhead-WT140W-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 7,
+          "lumens": 700,
+          "efficacy": 107,
+          "beamOptions": [
+            120
+          ],
+          "cct": "6500K",
+          "catalogNumber": "919515812243",
+          "orderCode": "919515812243"
+        }
+      ]
+    },
+    {
+      "id": "philips-vistaglow-057",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips WT140W LED7S NW PSU S1 PC",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515812244",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-vistaglow/919515812244_EU/product",
+      "description": "Philips WT140W LED7S NW PSU S1 PC",
+      "image": "https://www.assets.signify.com/is/image/Signify/VistaGlow_Bulkhead-WT140W-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "140-270 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 7,
+          "lumens": 700,
+          "efficacy": 107,
+          "beamOptions": [
+            120
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515812244",
+          "orderCode": "919515812244"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-pro-058",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY202P LED43S CW PSU PC",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815242",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-pro/919515815242_EU/product",
+      "description": "Philips BY202P LED43S CW PSU PC",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLed%20Pro_BY202P-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 35,
+          "lumens": 4300,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515815242",
+          "orderCode": "919515815242"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-pro-059",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY202P LED43S CW PSU PC SPD",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815368",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-pro/919515815368_EU/product",
+      "description": "Philips BY202P LED43S CW PSU PC SPD",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLed%20Pro_BY202P-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 35,
+          "lumens": 4300,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515815368",
+          "orderCode": "919515815368"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-pro-060",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY202P LED 43S CW PSU PC LILO",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815369",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-pro/919515815369_EU/product",
+      "description": "Philips BY202P LED 43S CW PSU PC LILO",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLed%20Pro_BY202P-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 35,
+          "lumens": 4300,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515815369",
+          "orderCode": "919515815369"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-pro-061",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY202P LED 43S CW PSU PC SPD LILO",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815370",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-pro/919515815370_EU/product",
+      "description": "Philips BY202P LED 43S CW PSU PC SPD LILO",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLed%20Pro_BY202P-SPP",
+      "mounting": "Suspension",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 35,
+          "lumens": 4300,
+          "efficacy": 120,
+          "cct": "6500K",
+          "catalogNumber": "919515815370",
+          "orderCode": "919515815370"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-elite-062",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY308P LED40S CW PSU PC",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515817298",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-elite/919515817298_EU/product",
+      "description": "Philips BY308P LED40S CW PSU PC",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLED-Elite-BY308-RTP",
+      "mounting": "Suspension",
+      "cri": 70,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "120 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 25,
+          "lumens": 4000,
+          "efficacy": 150,
+          "cct": "5700K",
+          "catalogNumber": "919515817298",
+          "orderCode": "919515817298"
+        }
+      ]
+    },
+    {
+      "id": "philips-duraled-elite-063",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY308P LED40S NW PSU PC",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515817299",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/low-bay/philips-duraled-elite/919515817299_EU/product",
+      "description": "Philips BY308P LED40S NW PSU PC",
+      "image": "https://www.assets.signify.com/is/image/Signify/DuraLED-Elite-BY308-RTP",
+      "mounting": "Suspension",
+      "cri": 70,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "120 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 25,
+          "lumens": 4000,
+          "efficacy": 150,
+          "cct": "5700K",
+          "catalogNumber": "919515817299",
+          "orderCode": "919515817299"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-prime-gen2-064",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY615P LED100S 5700 NB PSU GR",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815449",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/high-bay/philips-greenperform-prime-gen2/919515815449_EU/product",
+      "description": "Philips BY615P LED100S 5700 NB PSU GR",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform%20Prime%20Gen2_BY61X-SPP",
+      "mounting": "Suspension",
+      "cri": 70,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 64,
+          "lumens": 10000,
+          "efficacy": 160,
+          "beamOptions": [
+            60
+          ],
+          "cct": "5700K",
+          "catalogNumber": "919515815449",
+          "orderCode": "919515815449"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenperform-prime-gen2-065",
+      "category": "High_Bay",
+      "subcategory": "Philips Signify",
+      "name": "Philips BY615P LED100S 5700 WB PSU GR",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515815450",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/high-bay-and-low-bay/high-bay/philips-greenperform-prime-gen2/919515815450_EU/product",
+      "description": "Philips BY615P LED100S 5700 WB PSU GR",
+      "image": "https://www.assets.signify.com/is/image/Signify/Greenperform%20Prime%20Gen2_BY61X-SPP",
+      "mounting": "Suspension",
+      "cri": 70,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "120 to 277 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 64,
+          "lumens": 10000,
+          "efficacy": 160,
+          "beamOptions": [
+            90
+          ],
+          "cct": "5700K",
+          "catalogNumber": "919515815450",
+          "orderCode": "919515815450"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-066",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/830 PSU-E NB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810943",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810943_EU/product",
+      "description": "Philips RS271B LED20/830 PSU-E NB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            12
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810943",
+          "orderCode": "919515810943"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-067",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/830 PSU-E MB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810944",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810944_EU/product",
+      "description": "Philips RS271B LED20/830 PSU-E MB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            24
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810944",
+          "orderCode": "919515810944"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-068",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/830 PSU-E WB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810945",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810945_EU/product",
+      "description": "Philips RS271B LED20/830 PSU-E WB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            36
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810945",
+          "orderCode": "919515810945"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-069",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/840 PSU-E NB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810946",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810946_EU/product",
+      "description": "Philips RS271B LED20/840 PSU-E NB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            12
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515810946",
+          "orderCode": "919515810946"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-070",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/840 PSU-E NB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810947",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810947_EU/product",
+      "description": "Philips RS271B LED20/840 PSU-E NB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            12
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515810947",
+          "orderCode": "919515810947"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-071",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/840 PSU-E WB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810948",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810948_EU/product",
+      "description": "Philips RS271B LED20/840 PSU-E WB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            36
+          ],
+          "cct": "4000K",
+          "catalogNumber": "919515810948",
+          "orderCode": "919515810948"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-072",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED20/850 PSU-E WB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810951",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810951_EU/product",
+      "description": "Philips RS271B LED20/850 PSU-E WB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_recessed%20Mounted%202000lm-RS271B-DPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "5000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            36
+          ],
+          "cct": "5000K",
+          "catalogNumber": "919515810951",
+          "orderCode": "919515810951"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-rc271b-073",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips RS271B LED40/830 PSU-E MB WH",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810953",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-rc271b/919515810953_EU/product",
+      "description": "Philips RS271B LED40/830 PSU-E MB WH",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent_Recessed%20Mounted-RS271B-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 42,
+          "lumens": 4000,
+          "efficacy": 100,
+          "beamOptions": [
+            24
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810953",
+          "orderCode": "919515810953"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-st271t-074",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ST271T LED20/830 PSU-E NB 1C BK",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810925",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-st271t/919515810925_EU/product",
+      "description": "Philips ST271T LED20/830 PSU-E NB 1C BK",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent-Trackmounted%20Black-ST271T-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            12
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810925",
+          "orderCode": "919515810925"
+        }
+      ]
+    },
+    {
+      "id": "philips-ecoaccent-st271t-075",
+      "category": "Spotlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ST271T LED20/830 PSU-E MB 1C BK",
+      "manufacturer": "Philips",
+      "catalogNumber": "919515810926",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/accent-downlights/philips-ecoaccent-st271t/919515810926_EU/product",
+      "description": "Philips ST271T LED20/830 PSU-E MB 1C BK",
+      "image": "https://www.assets.signify.com/is/image/Signify/EcoAccent-Trackmounted%20Black-ST271T-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 22,
+          "lumens": 2000,
+          "efficacy": 100,
+          "beamOptions": [
+            24
+          ],
+          "cct": "3000K",
+          "catalogNumber": "919515810926",
+          "orderCode": "919515810926"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-076",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips LED, 19 W, Power supply unit (On/Off), High-gloss mirror, Reflector, 90°",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401509431",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401509431_EU/product",
+      "description": "Philips LED, 19 W, Power supply unit (On/Off), High-gloss mirror, Reflector, 90°",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2000,
+          "efficacy": 105,
+          "beamOptions": [
+            90
+          ],
+          "cct": "3000K",
+          "catalogNumber": "911401509431",
+          "orderCode": "911401509431"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-077",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 10 W, 1000 lm, 6500 K, High-gloss mirror, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401847399",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401847399_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 10 W, 1000 lm, 6500 K, High-gloss mirror, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 10,
+          "lumens": 1000,
+          "efficacy": 100,
+          "beamOptions": [
+            90
+          ],
+          "cct": "6500K",
+          "catalogNumber": "911401847399",
+          "orderCode": "911401847399"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-078",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 19 W, 2000 lm, 4000 K, High-gloss mirror, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401847599",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401847599_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 19 W, 2000 lm, 4000 K, High-gloss mirror, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2000,
+          "efficacy": 105,
+          "beamOptions": [
+            90
+          ],
+          "cct": "4000K",
+          "catalogNumber": "911401847599",
+          "orderCode": "911401847599"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-079",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 19 W, 2000 lm, 6500 K, High-gloss mirror, IP20 | Finger-protected",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401847699",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401847699_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 19 W, 2000 lm, 6500 K, High-gloss mirror, IP20 | Finger-protected",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 19,
+          "lumens": 2000,
+          "efficacy": 105,
+          "beamOptions": [
+            90
+          ],
+          "cct": "6500K",
+          "catalogNumber": "911401847699",
+          "orderCode": "911401847699"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-080",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 66 W, 6600 lm, 4000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401847799",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401847799_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 66 W, 6600 lm, 4000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 66,
+          "lumens": 6600,
+          "efficacy": 100,
+          "beamOptions": [
+            60
+          ],
+          "cct": "4000K",
+          "catalogNumber": "911401847799",
+          "orderCode": "911401847799"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-081",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 4000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401847999",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401847999_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 4000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3800,
+          "efficacy": 105,
+          "beamOptions": [
+            60
+          ],
+          "cct": "4000K",
+          "catalogNumber": "911401847999",
+          "orderCode": "911401847999"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-082",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 6500 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401848299",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401848299_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 6500 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "6500K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3800,
+          "efficacy": 105,
+          "beamOptions": [
+            60
+          ],
+          "cct": "6500K",
+          "catalogNumber": "911401848299",
+          "orderCode": "911401848299"
+        }
+      ]
+    },
+    {
+      "id": "philips-greenspace-surface-mounted-083",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 3000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401848399",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-greenspace-surface-mounted/911401848399_EU/product",
+      "description": "Philips GreenSpace Surface-mounted, 36 W, 3800 lm, 3000 K, High-gloss mirror, IP65 | Dust penetration-protected, jet-proof",
+      "image": "https://www.assets.signify.com/is/image/Signify/GreenSpace_SM-IP20_3800lm-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP65",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3800,
+          "efficacy": 105,
+          "beamOptions": [
+            60
+          ],
+          "cct": "3000K",
+          "catalogNumber": "911401848399",
+          "orderCode": "911401848399"
+        }
+      ]
+    },
+    {
+      "id": "philips-maxos-fusion-office-084",
+      "category": "Surface",
+      "subcategory": "Philips Signify",
+      "name": "Philips Maxos fusion Office, Trunking mounted, 39 W, 1520x186  mm, 5600 lm, 4000 K, DALI, Interact Ready, UGR16, TP(b)",
+      "manufacturer": "Philips",
+      "catalogNumber": "910505103995",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/indoor-luminaires/surface-mounted/philips-maxos-fusion-office/910505103995_EU/product",
+      "description": "Trunking mounted, 1520x186 mm, Steel, White, Dali dimming Interact System ready, 5600 lm, 39 W, 144 lm/W, 4000 K, (0.38, 0.38) SDCM <3, UGR16, L65≤3000 cd/m², Wide beam, Micro-hexagonal optic, Polystyrene, IP20 | Finger-protected, IK03 | 0.3 J, Safety class I, Connection unit 7-pole, TP(b) diffuser flammability class",
+      "image": "https://www.assets.signify.com/is/image/Signify/Maxos-fusion-office-W19L152-RTP",
+      "mounting": "Recessed",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP20",
+      "variants": [
+        {
+          "watt": 39,
+          "lumens": 5600,
+          "efficacy": 144,
+          "beamOptions": [
+            100
+          ],
+          "cct": "4000K",
+          "catalogNumber": "910505103995",
+          "orderCode": "910505103995"
+        }
+      ]
+    },
+    {
+      "id": "philips-uniflood-m-g2-085",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UniFlood M G2, 3130 lm, 60 W, RGBW, Dynamic DMX/RDM, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401747033",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-uniflood-m-g2/911401747033_EU/product",
+      "description": "Philips UniFlood M G2, 3130 lm, 60 W, RGBW, Dynamic DMX/RDM, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/BVP353%20L30%20STD-SPP",
+      "mounting": "Surface",
+      "cri": 80,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "220 to 240 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 60,
+          "lumens": 3130,
+          "efficacy": 52,
+          "catalogNumber": "911401747033",
+          "orderCode": "911401747033"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-086",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 1500 lm, 43 W, 927 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767702",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767702_EU/product",
+      "description": "Philips UNILinear Flex, 1500 lm, 43 W, 927 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%200612%20S-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "2700K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 43,
+          "lumens": 1500,
+          "efficacy": 40,
+          "cct": "2700K",
+          "catalogNumber": "911401767702",
+          "orderCode": "911401767702"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-087",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 2000 lm, 43 W, 930 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767712",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767712_EU/product",
+      "description": "Philips UNILinear Flex, 2000 lm, 43 W, 930 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%200612%20S-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 43,
+          "lumens": 2000,
+          "efficacy": 40,
+          "cct": "3000K",
+          "catalogNumber": "911401767712",
+          "orderCode": "911401767712"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-088",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 3250 lm, 46 W, 927 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767722",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767722_EU/product",
+      "description": "Philips UNILinear Flex, 3250 lm, 46 W, 927 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201515%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "2700K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 46,
+          "lumens": 3250,
+          "efficacy": 65,
+          "cct": "2700K",
+          "catalogNumber": "911401767722",
+          "orderCode": "911401767722"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-089",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 3250 lm, 46 W, 930 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767732",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767732_EU/product",
+      "description": "Philips UNILinear Flex, 3250 lm, 46 W, 930 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201515%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 46,
+          "lumens": 3250,
+          "efficacy": 65,
+          "cct": "3000K",
+          "catalogNumber": "911401767732",
+          "orderCode": "911401767732"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-090",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 5500 lm, 56 W, 927 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767742",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767742_EU/product",
+      "description": "Philips UNILinear Flex, 5500 lm, 56 W, 927 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201010%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "2700K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 56,
+          "lumens": 5500,
+          "efficacy": 82,
+          "cct": "2700K",
+          "catalogNumber": "911401767742",
+          "orderCode": "911401767742"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-091",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 5750 lm, 56 W, 930 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767752",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767752_EU/product",
+      "description": "Philips UNILinear Flex, 5750 lm, 56 W, 930 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201010%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "3000K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 56,
+          "lumens": 5750,
+          "efficacy": 82,
+          "cct": "3000K",
+          "catalogNumber": "911401767752",
+          "orderCode": "911401767752"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-092",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 6000 lm, 56 W, 940 neutral white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767762",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767762_EU/product",
+      "description": "Philips UNILinear Flex, 6000 lm, 56 W, 940 neutral white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201010%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "4000K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 56,
+          "lumens": 6000,
+          "efficacy": 82,
+          "cct": "4000K",
+          "catalogNumber": "911401767762",
+          "orderCode": "911401767762"
+        }
+      ]
+    },
+    {
+      "id": "philips-unilinear-flex-093",
+      "category": "Wall_Washer",
+      "subcategory": "Philips Signify",
+      "name": "Philips UNILinear Flex, 2750 lm, 35 W, 935 warm white, Safety class III",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401767772",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/architectural-floodlighting/floodlighting/philips-unilinear-flex/911401767772_EU/product",
+      "description": "Philips UNILinear Flex, 2750 lm, 35 W, 935 warm white, Safety class III",
+      "image": "https://www.assets.signify.com/is/image/Signify/BGC401%201515%20T-B",
+      "mounting": "Surface",
+      "cri": 90,
+      "cct": [
+        "3500K"
+      ],
+      "voltage": "24 DC V",
+      "dimming": "Non-Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 35,
+          "lumens": 2750,
+          "efficacy": 73,
+          "cct": "3500K",
+          "catalogNumber": "911401767772",
+          "orderCode": "911401767772"
+        }
+      ]
+    },
+    {
+      "id": "philips-arenavision-led-gen3-5-c-094",
+      "category": "Floodlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401613407",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/sports-and-area-floodlighting/high-end-sports-floodlighting/philips-arenavision-led-gen35-c/911401613407_EU/product",
+      "description": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/ArenaVision_LED_gen3_5_BVP428_BV_PP",
+      "mounting": "Surface",
+      "cri": 85,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220-400 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 1340,
+          "lumens": 148000,
+          "efficacy": 110,
+          "cct": "5700K",
+          "catalogNumber": "911401613407",
+          "orderCode": "911401613407"
+        }
+      ]
+    },
+    {
+      "id": "philips-arenavision-led-gen3-5-c-095",
+      "category": "Floodlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401613507",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/sports-and-area-floodlighting/high-end-sports-floodlighting/philips-arenavision-led-gen35-c/911401613507_EU/product",
+      "description": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/ArenaVision_LED_gen3_5_BVP428_BV_PP",
+      "mounting": "Surface",
+      "cri": 85,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220-400 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 1340,
+          "lumens": 148000,
+          "efficacy": 110,
+          "cct": "5700K",
+          "catalogNumber": "911401613507",
+          "orderCode": "911401613507"
+        }
+      ]
+    },
+    {
+      "id": "philips-arenavision-led-gen3-5-c-096",
+      "category": "Floodlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401613607",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/sports-and-area-floodlighting/high-end-sports-floodlighting/philips-arenavision-led-gen35-c/911401613607_EU/product",
+      "description": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/ArenaVision_LED_gen3_5_BVP428_BV_PP",
+      "mounting": "Surface",
+      "cri": 85,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220-400 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 1340,
+          "lumens": 148000,
+          "efficacy": 110,
+          "cct": "5700K",
+          "catalogNumber": "911401613607",
+          "orderCode": "911401613607"
+        }
+      ]
+    },
+    {
+      "id": "philips-arenavision-led-gen3-5-c-097",
+      "category": "Floodlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401613707",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/sports-and-area-floodlighting/high-end-sports-floodlighting/philips-arenavision-led-gen35-c/911401613707_EU/product",
+      "description": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/ArenaVision_LED_gen3_5_BVP428_BV_PP",
+      "mounting": "Surface",
+      "cri": 85,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220-400 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 1340,
+          "lumens": 148000,
+          "efficacy": 110,
+          "cct": "5700K",
+          "catalogNumber": "911401613707",
+          "orderCode": "911401613707"
+        }
+      ]
+    },
+    {
+      "id": "philips-arenavision-led-gen3-5-c-098",
+      "category": "Floodlight",
+      "subcategory": "Philips Signify",
+      "name": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "manufacturer": "Philips",
+      "catalogNumber": "911401613807",
+      "source": "scraped",
+      "sourceUrl": "https://www.signify.com/en-in/prof/outdoor-luminaires/sports-and-area-floodlighting/high-end-sports-floodlighting/philips-arenavision-led-gen35-c/911401613807_EU/product",
+      "description": "Philips ArenaVision LED gen3.5 C, 148000 lm, 1340 W, 957 cool white, Dynamix DMX, Safety class I",
+      "image": "https://www.assets.signify.com/is/image/Signify/ArenaVision_LED_gen3_5_BVP428_BV_PP",
+      "mounting": "Surface",
+      "cri": 85,
+      "cct": [
+        "5700K"
+      ],
+      "voltage": "220-400 V",
+      "dimming": "Dimmable",
+      "ipRating": "IP66",
+      "variants": [
+        {
+          "watt": 1340,
+          "lumens": 148000,
+          "efficacy": 110,
+          "cct": "5700K",
+          "catalogNumber": "911401613807",
+          "orderCode": "911401613807"
+        }
+      ]
+    }
+  ]
+}

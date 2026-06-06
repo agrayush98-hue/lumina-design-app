@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Design - Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#2a2a2a",
+                        "secondary": "#53d8e2",
+                        "surface-container-highest": "#353534",
+                        "secondary-fixed": "#76f5ff",
+                        "on-tertiary-fixed": "#001a42",
+                        "on-surface": "#e5e2e1",
+                        "on-primary": "#402d00",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#214584",
+                        "on-secondary-fixed": "#002022",
+                        "inverse-primary": "#795900",
+                        "warning": "#f59e0b",
+                        "surface-container": "#201f1f",
+                        "text-secondary": "#888888",
+                        "surface-variant": "#353534",
+                        "primary-fixed": "#ffdf9f",
+                        "on-surface-variant": "#d2c5b1",
+                        "secondary-fixed-dim": "#53d8e2",
+                        "primary-fixed-dim": "#eec058",
+                        "gold-soft": "#f0c97a",
+                        "success": "#4ade80",
+                        "gold-dim": "rgba(212, 168, 67, 0.12)",
+                        "tertiary-fixed": "#d8e2ff",
+                        "outline-variant": "#4e4636",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary-container": "#00393d",
+                        "on-primary-container": "#553e00",
+                        "text-muted": "#555555",
+                        "surface-bright": "#3a3939",
+                        "on-primary-fixed": "#261a00",
+                        "outline": "#9a8f7d",
+                        "on-secondary-fixed-variant": "#004f54",
+                        "border": "#222222",
+                        "danger": "#ef4444",
+                        "on-primary-fixed-variant": "#5b4300",
+                        "panel": "#1a1a1a",
+                        "secondary-container": "#00acb6",
+                        "primary-container": "#d4a843",
+                        "border-subtle": "#2a2a2a",
+                        "surface": "#111111",
+                        "on-error": "#690005",
+                        "tertiary-container": "#8eaef4",
+                        "inverse-surface": "#e5e2e1",
+                        "background": "#131313",
+                        "tertiary": "#b3caff",
+                        "room-fill": "#0f1a0f",
+                        "on-tertiary-container": "#1b407f",
+                        "inverse-on-surface": "#313030",
+                        "error": "#ffb4ab",
+                        "on-secondary": "#00363a",
+                        "on-tertiary": "#002e6a",
+                        "surface-dim": "#131313",
+                        "on-background": "#e5e2e1",
+                        "primary": "#f2c35b",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#eec058",
+                        "surface-container-low": "#1c1b1b",
+                        "text-primary": "#cccccc",
+                        "tertiary-fixed-dim": "#aec6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0rem",
+                        "lg": "0rem",
+                        "xl": "0rem",
+                        "full": "0rem"
+                    },
+                    "spacing": {
+                        "sidebar-left": "240px",
+                        "margin-compact": "8px",
+                        "sidebar-right": "280px",
+                        "margin-standard": "16px",
+                        "header-height": "48px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "mono-small": ["IBM Plex Mono"],
+                        "body-standard": ["Inter"],
+                        "body-medium": ["Inter"],
+                        "headline-modal": ["Inter"],
+                        "mono-value": ["IBM Plex Mono"],
+                        "headline-section": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-small": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "body-standard": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-medium": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-modal": ["17px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "mono-value": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-section": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .dot-grid {
+            background-size: 20px 20px;
+            background-image: radial-gradient(circle, #222222 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-background dot-grid text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-standard">
+<!-- TopNavBar Shell -->
+<nav class="bg-surface dark:bg-surface border-b border-border dark:border-border fixed top-0 w-full h-header-height flex items-center justify-between px-margin-standard z-50">
+<div class="flex items-center gap-6">
+<div class="font-headline-modal text-headline-modal font-bold text-primary dark:text-primary tracking-tight uppercase">
+                Lumina Design
+            </div>
+<div class="hidden md:flex gap-4">
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">File</a>
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Edit</a>
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">View</a>
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Tools</a>
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Render</a>
+<a class="text-on-surface-variant font-body-standard text-body-standard hover:text-primary transition-colors cursor-pointer active:opacity-80" href="#">Help</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-on-primary font-body-medium text-body-medium px-4 py-1.5 hover:bg-surface-tint transition-colors cursor-pointer active:opacity-80 rounded-none">
+                Export
+            </button>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer active:opacity-80 transition-colors">settings</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer active:opacity-80 transition-colors">account_circle</span>
+</div>
+</nav>
+<!-- SideNavBar Shell -->
+<aside class="bg-surface dark:bg-surface border-r border-border dark:border-border fixed left-0 top-header-height w-sidebar-left h-[calc(100vh-header-height)] flex flex-col py-margin-compact hidden md:flex z-40">
+<div class="px-margin-standard mb-6 mt-2">
+<div class="font-headline-section text-headline-section text-on-surface">Project Explorer</div>
+<div class="font-mono-small text-mono-small text-text-muted mt-1 uppercase">V1.0.4-Alpha</div>
+</div>
+<div class="flex-1 flex flex-col gap-1 px-2">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">account_tree</span> Hierarchy
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">lightbulb</span> Fixtures
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">layers</span> Layers
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">settings_brightness</span> Scenes
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">analytics</span> Analytics
+            </a>
+</div>
+<div class="flex flex-col gap-1 px-2 mt-auto pt-4 border-t border-border">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span> Settings
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant font-label-caps text-label-caps hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out cursor-pointer uppercase" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span> Support
+            </a>
+</div>
+</aside>
+<!-- Main Canvas Area -->
+<main class="flex-1 mt-header-height md:ml-sidebar-left relative">
+<!-- Onboarding Overlay -->
+<div class="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+<div class="w-full max-w-[460px] bg-surface border border-border p-8 flex flex-col relative shadow-2xl">
+<!-- Header -->
+<div class="mb-8 text-center">
+<div class="font-label-caps text-label-caps text-primary-container mb-3 uppercase tracking-widest">
+                        ✦ Lumina Design
+                    </div>
+<h1 class="font-headline-modal text-headline-modal text-on-surface mb-2">
+                        Welcome. Build your first lighting plan.
+                    </h1>
+<p class="font-body-standard text-body-standard text-text-muted">
+                        Three steps. No setup. Everything calculated automatically.
+                    </p>
+</div>
+<!-- Steps -->
+<div class="flex flex-col gap-3 mb-8">
+<!-- Step 1 -->
+<div class="bg-[#0a0a0a] border border-panel p-4 flex items-start gap-4 group hover:border-border transition-colors">
+<div class="w-8 h-8 rounded-full border border-primary-container flex items-center justify-center text-primary-container font-mono-value text-mono-value shrink-0 mt-0.5">
+                            1
+                        </div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary-container text-[18px]">draw</span>
+<h3 class="font-body-medium text-body-medium text-on-surface">Draw a room</h3>
+</div>
+<p class="font-body-standard text-body-standard text-text-secondary">
+                                Click and drag on the canvas to draw your room to scale.
+                            </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="bg-[#0a0a0a] border border-panel p-4 flex items-start gap-4 group hover:border-border transition-colors">
+<div class="w-8 h-8 rounded-full border border-primary-container flex items-center justify-center text-primary-container font-mono-value text-mono-value shrink-0 mt-0.5">
+                            2
+                        </div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary-container text-[18px]">lightbulb</span>
+<h3 class="font-body-medium text-body-medium text-on-surface">Place fixtures</h3>
+</div>
+<p class="font-body-standard text-body-standard text-text-secondary">
+                                Select a fixture from the library, click inside the room.
+                            </p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="bg-[#0a0a0a] border border-panel p-4 flex items-start gap-4 group hover:border-border transition-colors">
+<div class="w-8 h-8 rounded-full border border-primary-container flex items-center justify-center text-primary-container font-mono-value text-mono-value shrink-0 mt-0.5">
+                            3
+                        </div>
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary-container text-[18px]">picture_as_pdf</span>
+<h3 class="font-body-medium text-body-medium text-on-surface">Export PDF</h3>
+</div>
+<p class="font-body-standard text-body-standard text-text-secondary">
+                                Click Export to generate a full project document.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex flex-col gap-4">
+<button class="w-full bg-primary-container text-on-primary-container font-body-medium text-body-medium py-3 hover:bg-surface-tint transition-colors flex items-center justify-center gap-2 font-bold uppercase tracking-wider">
+                        START DESIGNING
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<button class="w-full text-center font-body-standard text-body-standard text-text-muted hover:text-on-surface transition-colors">
+                        Skip intro
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

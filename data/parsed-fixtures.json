@@ -1,919 +1,402 @@
-[
-  {
-    "id": "lumina-synth-dl-15w-40",
-    "source": "ies",
-    "iesFile": "synth-downlight-medium-40deg.ies",
-    "category": "Downlight",
-    "name": "LED Downlight Recessed 15W 4000K Medium 40°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "DL-15W-40",
-    "description": "LED Downlight Recessed 15W 4000K Medium 40°",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 15,
-        "lumens": 1350,
-        "efficacy": 90,
-        "beamOptions": [
-          59
-        ],
-        "beamClass": "medium",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
+{
+  "count": 18,
+  "generatedAt": "2026-05-25T05:29:20.894Z",
+  "fixtures": [
+    {
+      "id": "ies-dl-15w-40",
+      "source": "ies",
+      "iesFile": "synth-downlight-medium-40deg.ies",
+      "category": "Downlight",
+      "name": "LED Downlight Recessed 15W 4000K Medium 40°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-15W-40",
+      "description": "Photometric data from IES file: synth-downlight-medium-40deg.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 15,
+          "lumens": 1350,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-dl-12w-25",
+      "source": "ies",
+      "iesFile": "synth-downlight-narrow-25deg.ies",
+      "category": "Downlight",
+      "name": "LED Downlight Recessed 12W 3000K Narrow 25°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-12W-25",
+      "description": "Photometric data from IES file: synth-downlight-narrow-25deg.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 12,
+          "lumens": 1000,
+          "efficacy": 83,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-dl-20w-60",
+      "source": "ies",
+      "iesFile": "synth-downlight-wide-60deg.ies",
+      "category": "Downlight",
+      "name": "LED Downlight Recessed 20W 3000K Wide 60°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "DL-20W-60",
+      "description": "Photometric data from IES file: synth-downlight-wide-60deg.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 20,
+          "lumens": 1800,
+          "efficacy": 90,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-hb-100w-60",
+      "source": "ies",
+      "iesFile": "synth-highbay-100w-narrow.ies",
+      "category": "Other",
+      "name": "LED High Bay 100W 5000K 60° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "HB-100W-60",
+      "description": "Photometric data from IES file: synth-highbay-100w-narrow.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 100,
+          "lumens": 12000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-hb-200w-90",
+      "source": "ies",
+      "iesFile": "synth-highbay-200w-wide.ies",
+      "category": "Other",
+      "name": "LED High Bay 200W 5000K 90° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "HB-200W-90",
+      "description": "Photometric data from IES file: synth-highbay-200w-wide.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 200,
+          "lumens": 24000,
+          "efficacy": 120,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-strip-9wpm",
+      "source": "ies",
+      "iesFile": "synth-ledstrip-9w-per-meter.ies",
+      "category": "Linear",
+      "name": "LED Strip Cove 9W/m 3000K 120° Beam",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "STRIP-9WPM",
+      "description": "Photometric data from IES file: synth-ledstrip-9w-per-meter.ies",
+      "lampType": "LED Strip 2835",
+      "variants": [
+        {
+          "watt": 9,
+          "lumens": 900,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lin-24w-600",
+      "source": "ies",
+      "iesFile": "synth-linear-batten-24w.ies",
+      "category": "Linear",
+      "name": "LED Linear Batten 24W 3000K 600mm",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "LIN-24W-600",
+      "description": "Photometric data from IES file: synth-linear-batten-24w.ies",
+      "lampType": "LED Strip",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2400,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-lin-36w-1200",
+      "source": "ies",
+      "iesFile": "synth-linear-batten-36w.ies",
+      "category": "Linear",
+      "name": "LED Linear Batten 36W 4000K 1200mm",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "LIN-36W-1200",
+      "description": "Photometric data from IES file: synth-linear-batten-36w.ies",
+      "lampType": "LED Strip",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3600,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-panel-36w-600",
+      "source": "ies",
+      "iesFile": "synth-panel-600x600-36w.ies",
+      "category": "Panel",
+      "name": "LED Panel 600x600 36W 4000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PANEL-36W-600",
+      "description": "Photometric data from IES file: synth-panel-600x600-36w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3800,
+          "efficacy": 106,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-pend-24w-direct",
+      "source": "ies",
+      "iesFile": "synth-pendant-direct-24w.ies",
+      "category": "Pendant",
+      "name": "LED Pendant Direct 24W 3000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PEND-24W-DIRECT",
+      "description": "Photometric data from IES file: synth-pendant-direct-24w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2200,
+          "efficacy": 92,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-pend-40w-indirect",
+      "source": "ies",
+      "iesFile": "synth-pendant-indirect-40w.ies",
+      "category": "Pendant",
+      "name": "LED Pendant Direct-Indirect 40W 3000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "PEND-40W-INDIRECT",
+      "description": "Photometric data from IES file: synth-pendant-indirect-40w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 40,
+          "lumens": 4000,
+          "efficacy": 100,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-spot-12w-15",
+      "source": "ies",
+      "iesFile": "synth-spotlight-12w-15deg.ies",
+      "category": "Spotlight",
+      "name": "LED Spotlight 12W 3000K Narrow Spot 15°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "SPOT-12W-15",
+      "description": "Photometric data from IES file: synth-spotlight-12w-15deg.ies",
+      "lampType": "LED MR16",
+      "variants": [
+        {
+          "watt": 12,
+          "lumens": 900,
+          "efficacy": 75,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-spot-18w-25",
+      "source": "ies",
+      "iesFile": "synth-spotlight-18w-25deg.ies",
+      "category": "Spotlight",
+      "name": "LED Spotlight 18W 3000K Spot 25°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "SPOT-18W-25",
+      "description": "Photometric data from IES file: synth-spotlight-18w-25deg.ies",
+      "lampType": "LED MR16",
+      "variants": [
+        {
+          "watt": 18,
+          "lumens": 1500,
+          "efficacy": 83,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-track-30w-36",
+      "source": "ies",
+      "iesFile": "synth-tracklight-30w-36deg.ies",
+      "category": "Floodlight",
+      "name": "LED Track Light 30W 4000K Flood 36°",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "TRACK-30W-36",
+      "description": "Photometric data from IES file: synth-tracklight-30w-36deg.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 30,
+          "lumens": 2800,
+          "efficacy": 93,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-trof-50w-2x4",
+      "source": "ies",
+      "iesFile": "synth-troffer-2x4-50w.ies",
+      "category": "Panel",
+      "name": "LED Troffer 2x4 50W 5000K",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "TROF-50W-2X4",
+      "description": "Photometric data from IES file: synth-troffer-2x4-50w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 50,
+          "lumens": 5500,
+          "efficacy": 110,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-ww-24w-asym",
+      "source": "ies",
+      "iesFile": "synth-wallwasher-24w.ies",
+      "category": "Downlight",
+      "name": "LED Wall Washer Recessed 24W 3000K Asymmetric",
+      "manufacturer": "Lumina Synth",
+      "catalogNumber": "WW-24W-ASYM",
+      "description": "Photometric data from IES file: synth-wallwasher-24w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 24,
+          "lumens": 2000,
+          "efficacy": 83,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-dn570b-led20/830-pse",
+      "source": "ies",
+      "iesFile": "test-downlight-20w.ies",
+      "category": "Downlight",
+      "name": "LED Downlight Recessed 20W 3000K",
+      "manufacturer": "Philips Lighting",
+      "catalogNumber": "DN570B LED20/830 PSE",
+      "description": "Photometric data from IES file: test-downlight-20w.ies",
+      "lampType": "LED Module",
+      "variants": [
+        {
+          "watt": 20,
+          "lumens": 1350,
+          "efficacy": 68,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
+      ]
+    },
+    {
+      "id": "ies-ledvance-linear-36w/840",
+      "source": "ies",
+      "iesFile": "test-linear-panel.ies",
+      "category": "Linear",
+      "name": "LED Linear Batten Fixture 36W 4000K",
+      "manufacturer": "OSRAM",
+      "catalogNumber": "LEDVANCE Linear 36W/840",
+      "description": "Photometric data from IES file: test-linear-panel.ies",
+      "lampType": "LED",
+      "variants": [
+        {
+          "watt": 36,
+          "lumens": 3200,
+          "efficacy": 89,
+          "beamOptions": [
+            120
+          ],
+          "beamClass": "medium"
+        }
       ]
     }
-  },
-  {
-    "id": "lumina-synth-dl-12w-25",
-    "source": "ies",
-    "iesFile": "synth-downlight-narrow-25deg.ies",
-    "category": "Downlight",
-    "name": "LED Downlight Recessed 12W 3000K Narrow 25°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "DL-12W-25",
-    "description": "LED Downlight Recessed 12W 3000K Narrow 25°",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 12,
-        "lumens": 1000,
-        "efficacy": 83,
-        "beamOptions": [
-          39
-        ],
-        "beamClass": "medium",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-dl-20w-60",
-    "source": "ies",
-    "iesFile": "synth-downlight-wide-60deg.ies",
-    "category": "Downlight",
-    "name": "LED Downlight Recessed 20W 3000K Wide 60°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "DL-20W-60",
-    "description": "LED Downlight Recessed 20W 3000K Wide 60°",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 20,
-        "lumens": 1800,
-        "efficacy": 90,
-        "beamOptions": [
-          81
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-hb-100w-60",
-    "source": "ies",
-    "iesFile": "synth-highbay-100w-narrow.ies",
-    "category": "High_Bay",
-    "name": "LED High Bay 100W 5000K 60° Beam",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "HB-100W-60",
-    "description": "LED High Bay 100W 5000K 60° Beam",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 100,
-        "lumens": 12000,
-        "efficacy": 120,
-        "beamOptions": [
-          50
-        ],
-        "beamClass": "medium",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-hb-200w-90",
-    "source": "ies",
-    "iesFile": "synth-highbay-200w-wide.ies",
-    "category": "High_Bay",
-    "name": "LED High Bay 200W 5000K 90° Beam",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "HB-200W-90",
-    "description": "LED High Bay 200W 5000K 90° Beam",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 200,
-        "lumens": 24000,
-        "efficacy": 120,
-        "beamOptions": [
-          77
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-strip-9wpm",
-    "source": "ies",
-    "iesFile": "synth-ledstrip-9w-per-meter.ies",
-    "category": "Linear",
-    "name": "LED Strip Cove 9W/m 3000K 120° Beam",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "STRIP-9WPM",
-    "description": "LED Strip Cove 9W/m 3000K 120° Beam",
-    "lampType": "LED Strip 2835",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 9,
-        "lumens": 900,
-        "efficacy": 100,
-        "beamOptions": [
-          102
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-lin-24w-600",
-    "source": "ies",
-    "iesFile": "synth-linear-batten-24w.ies",
-    "category": "Linear",
-    "name": "LED Linear Batten 24W 3000K 600mm",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "LIN-24W-600",
-    "description": "LED Linear Batten 24W 3000K 600mm",
-    "lampType": "LED Strip",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 24,
-        "lumens": 2400,
-        "efficacy": 100,
-        "beamOptions": [
-          156
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-lin-36w-1200",
-    "source": "ies",
-    "iesFile": "synth-linear-batten-36w.ies",
-    "category": "Linear",
-    "name": "LED Linear Batten 36W 4000K 1200mm",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "LIN-36W-1200",
-    "description": "LED Linear Batten 36W 4000K 1200mm",
-    "lampType": "LED Strip",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 36,
-        "lumens": 3600,
-        "efficacy": 100,
-        "beamOptions": [
-          156
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-panel-36w-600",
-    "source": "ies",
-    "iesFile": "synth-panel-600x600-36w.ies",
-    "category": "Panel",
-    "name": "LED Panel 600x600 36W 4000K",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "PANEL-36W-600",
-    "description": "LED Panel 600x600 36W 4000K",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 36,
-        "lumens": 3800,
-        "efficacy": 106,
-        "beamOptions": [
-          156
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 3,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-pend-24w-direct",
-    "source": "ies",
-    "iesFile": "synth-pendant-direct-24w.ies",
-    "category": "Pendant",
-    "name": "LED Pendant Direct 24W 3000K",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "PEND-24W-DIRECT",
-    "description": "LED Pendant Direct 24W 3000K",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Pendant",
-    "variants": [
-      {
-        "watt": 24,
-        "lumens": 2200,
-        "efficacy": 92,
-        "beamOptions": [
-          90
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 37,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90,
-        95,
-        100,
-        105,
-        110,
-        115,
-        120,
-        125,
-        130,
-        135,
-        140,
-        145,
-        150,
-        155,
-        160,
-        165,
-        170,
-        175,
-        180
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-pend-40w-indirect",
-    "source": "ies",
-    "iesFile": "synth-pendant-indirect-40w.ies",
-    "category": "Pendant",
-    "name": "LED Pendant Direct-Indirect 40W 3000K",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "PEND-40W-INDIRECT",
-    "description": "LED Pendant Direct-Indirect 40W 3000K",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Pendant",
-    "variants": [
-      {
-        "watt": 40,
-        "lumens": 4000,
-        "efficacy": 100,
-        "beamOptions": [
-          105
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 37,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90,
-        95,
-        100,
-        105,
-        110,
-        115,
-        120,
-        125,
-        130,
-        135,
-        140,
-        145,
-        150,
-        155,
-        160,
-        165,
-        170,
-        175,
-        180
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-spot-12w-15",
-    "source": "ies",
-    "iesFile": "synth-spotlight-12w-15deg.ies",
-    "category": "Spotlight",
-    "name": "LED Spotlight 12W 3000K Narrow Spot 15°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "SPOT-12W-15",
-    "description": "LED Spotlight 12W 3000K Narrow Spot 15°",
-    "lampType": "LED MR16",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 12,
-        "lumens": 900,
-        "efficacy": 75,
-        "beamOptions": [
-          25
-        ],
-        "beamClass": "narrow",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-spot-18w-25",
-    "source": "ies",
-    "iesFile": "synth-spotlight-18w-25deg.ies",
-    "category": "Spotlight",
-    "name": "LED Spotlight 18W 3000K Spot 25°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "SPOT-18W-25",
-    "description": "LED Spotlight 18W 3000K Spot 25°",
-    "lampType": "LED MR16",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 18,
-        "lumens": 1500,
-        "efficacy": 83,
-        "beamOptions": [
-          39
-        ],
-        "beamClass": "medium",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-track-30w-36",
-    "source": "ies",
-    "iesFile": "synth-tracklight-30w-36deg.ies",
-    "category": "Track_Light",
-    "name": "LED Track Light 30W 4000K Flood 36°",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "TRACK-30W-36",
-    "description": "LED Track Light 30W 4000K Flood 36°",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 30,
-        "lumens": 2800,
-        "efficacy": 93,
-        "beamOptions": [
-          66
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-trof-50w-2x4",
-    "source": "ies",
-    "iesFile": "synth-troffer-2x4-50w.ies",
-    "category": "Panel",
-    "name": "LED Troffer 2x4 50W 5000K",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "TROF-50W-2X4",
-    "description": "LED Troffer 2x4 50W 5000K",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 50,
-        "lumens": 5500,
-        "efficacy": 110,
-        "beamOptions": [
-          156
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 3,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "lumina-synth-ww-24w-asym",
-    "source": "ies",
-    "iesFile": "synth-wallwasher-24w.ies",
-    "category": "Wall_Washer",
-    "name": "LED Wall Washer Recessed 24W 3000K Asymmetric",
-    "manufacturer": "Lumina Synth",
-    "catalogNumber": "WW-24W-ASYM",
-    "description": "LED Wall Washer Recessed 24W 3000K Asymmetric",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 24,
-        "lumens": 2000,
-        "efficacy": 83,
-        "beamOptions": [
-          107
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 19,
-      "numHorizAngles": 9,
-      "vertAngles": [
-        0,
-        5,
-        10,
-        15,
-        20,
-        25,
-        30,
-        35,
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70,
-        75,
-        80,
-        85,
-        90
-      ]
-    }
-  },
-  {
-    "id": "philips-lighting-dn570b-led20830-pse",
-    "source": "ies",
-    "iesFile": "test-downlight-20w.ies",
-    "category": "Downlight",
-    "name": "LED Downlight Recessed 20W 3000K",
-    "manufacturer": "Philips Lighting",
-    "catalogNumber": "DN570B LED20/830 PSE",
-    "description": "LED Downlight Recessed 20W 3000K",
-    "lampType": "LED Module",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 20,
-        "lumens": 1350,
-        "efficacy": 68,
-        "beamOptions": [
-          93
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 10,
-      "numHorizAngles": 1,
-      "vertAngles": [
-        0,
-        10,
-        20,
-        30,
-        40,
-        50,
-        60,
-        70,
-        80,
-        90
-      ]
-    }
-  },
-  {
-    "id": "osram-ledvance-linear-36w840",
-    "source": "ies",
-    "iesFile": "test-linear-panel.ies",
-    "category": "Panel",
-    "name": "LED Linear Batten Fixture 36W 4000K",
-    "manufacturer": "OSRAM",
-    "catalogNumber": "LEDVANCE Linear 36W/840",
-    "description": "LED Linear Batten Fixture 36W 4000K",
-    "lampType": "LED",
-    "tilt": "NONE",
-    "mounting": "Recessed",
-    "variants": [
-      {
-        "watt": 36,
-        "lumens": 3200,
-        "efficacy": 89,
-        "beamOptions": [
-          128
-        ],
-        "beamClass": "wide",
-        "numLamps": 1
-      }
-    ],
-    "_raw": {
-      "numVertAngles": 9,
-      "numHorizAngles": 5,
-      "vertAngles": [
-        0,
-        15,
-        30,
-        45,
-        60,
-        75,
-        90,
-        105,
-        120
-      ]
-    }
-  }
-]
+  ]
+}

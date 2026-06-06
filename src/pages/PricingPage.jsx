@@ -25,16 +25,35 @@ const NAV_LINKS = [
   { label: 'CONTACT',      path: '/contact' },
 ]
 
-const FREE_FEATURES    = ['3 projects', '2 rooms per project', '5 AI calls / month', 'PDF export', 'Standard fixture library']
-const PRO_FEATURES     = ['10 projects', '5 rooms per project', '50 AI calls / month', 'PDF + Excel export', 'Floor plan image upload', 'DALI 2.0 planning', 'Heatmap + beam analysis', 'All standard fixtures', 'Email support']
-const PRO_FEATURES_ALL = ['Unlimited projects & rooms', '200 AI calls / month', 'PDF + Excel export', 'Floor plan image upload', 'DALI 2.0 planning', 'Branded fixtures (Philips / Havells / Wipro)', 'Priority email support']
+const FREE_FEATURES = [
+  { text: 'Beam angles',            check: true  },
+  { text: 'Heatmap visualization',  check: true  },
+  { text: 'Manual room drawing',    check: true  },
+  { text: 'Basic fixtures',         check: true  },
+  { text: '3 projects max',         check: true  },
+  { text: '14-day Pro trial',       check: true  },
+  { text: 'Floor plan upload',      check: false },
+  { text: 'DALI addressing',        check: false },
+  { text: 'PDF / Excel export',     check: false },
+]
+
+const PRO_FEATURES = [
+  { text: 'Everything in Free',           check: true, star: false },
+  { text: 'Floor plan upload (PDF/image)',check: true, star: true  },
+  { text: 'DALI 2.0 addressing',          check: true, star: true  },
+  { text: 'PDF + Excel export',           check: true, star: true  },
+  { text: 'Unlimited projects',           check: true, star: false },
+  { text: 'Unlimited rooms',              check: true, star: false },
+  { text: 'Full fixture library',         check: true, star: false },
+  { text: 'AI recommendations',           check: true, star: false },
+]
 
 const FAQS = [
-  { q: 'Can I cancel at any time?', a: 'Yes. Cancel from your dashboard. Your plan stays active until the billing period ends — no proration, no hidden fees.' },
-  { q: 'What payment methods are accepted?', a: 'UPI, debit cards, credit cards, and net banking via Razorpay. Payments processed in INR.' },
-  { q: 'Is there a free trial?', a: 'The Free tier is yours permanently — no credit card required. Upgrade any time from the dashboard.' },
-  { q: 'Do my projects carry over when I upgrade?', a: 'Yes. All projects carry over. PDF export unlocks immediately on all paid plans.' },
-  { q: 'What counts as an AI call?', a: 'Each room description submitted to the AI Recommender counts as one call.' },
+  { q: 'Can I cancel at any time?',           a: 'Yes. Cancel from your dashboard. Your plan stays active until the billing period ends — no proration, no hidden fees.' },
+  { q: 'What payment methods are accepted?',  a: 'UPI, debit cards, credit cards, and net banking via Razorpay. Payments processed in INR.' },
+  { q: 'Is there a free trial?',              a: 'Yes — all new accounts get 14 days of Pro free, no credit card required. After the trial you stay on Free unless you upgrade.' },
+  { q: 'Do my projects carry over?',          a: 'Yes. All projects carry over when you upgrade or downgrade. PDF export and floor plan upload unlock immediately on Pro.' },
+  { q: 'What is floor plan upload?',          a: 'Upload a PDF or image of an existing floor plan and draw rooms directly over it — no re-drawing from scratch.' },
 ]
 
 function Nav({ navigate }) {
@@ -68,8 +87,17 @@ function Nav({ navigate }) {
   )
 }
 
-function Check() {
-  return <span style={{ color: T.text, fontSize: 13, flexShrink: 0, marginTop: 1 }}>✓</span>
+function FeatureRow({ text, check, star }) {
+  return (
+    <li style={{ display: 'flex', gap: 10, marginBottom: 12, fontSize: 14, alignItems: 'flex-start' }}>
+      <span style={{ flexShrink: 0, marginTop: 1, fontSize: 13, color: check ? T.text : 'rgba(255,255,255,0.20)' }}>
+        {check ? '✓' : '✗'}
+      </span>
+      <span style={{ color: check ? T.muted : 'rgba(255,255,255,0.25)' }}>
+        {text}{star && <span style={{ color: '#ffffff', marginLeft: 5, fontSize: 11 }}>⭐</span>}
+      </span>
+    </li>
+  )
 }
 
 export default function PricingPage() {
@@ -77,8 +105,8 @@ export default function PricingPage() {
   const [termsAgreed, setTermsAgreed] = useState(false)
 
   useSEO({
-    title:       'Pricing — Lumina Design | Free, Pro & Professional Plans',
-    description: 'Start free forever. Upgrade to Pro (₹999/mo) or Professional (₹1,499/mo) for more projects, AI calls, DALI planning, and branded exports. 14-day free trial.',
+    title:       'Pricing — Lumina Design | Free & Pro Plans',
+    description: 'Start free with beam angles, heatmaps and 3 projects. Upgrade to Pro at ₹500/month for floor plan upload, DALI addressing, PDF/Excel export and unlimited projects.',
     canonical:   'https://app.lightillumina.com/pricing',
   })
 
@@ -97,7 +125,7 @@ export default function PricingPage() {
       </header>
 
       {/* Cards */}
-      <div style={{ display: 'flex', gap: 0, maxWidth: 1040, margin: '0 auto 80px', padding: '0 32px', flexWrap: 'wrap', border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 0, maxWidth: 720, margin: '0 auto 80px', padding: '0 32px', flexWrap: 'wrap', border: `1px solid ${T.border}`, borderRadius: 6, overflow: 'hidden' }}>
 
         {/* Free */}
         <div style={{ flex: '1 1 280px', padding: '40px 32px', borderRight: `1px solid ${T.border}`, background: T.cardBg, display: 'flex', flexDirection: 'column' }}>
@@ -106,34 +134,26 @@ export default function PricingPage() {
           <div style={{ fontSize: 13, color: T.muted, marginBottom: 32 }}>forever</div>
           <hr style={{ border: 'none', borderTop: `1px solid ${T.border}`, marginBottom: 28 }} />
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', flex: 1 }}>
-            {FREE_FEATURES.map(f => (
-              <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 12, fontSize: 14, color: T.muted, alignItems: 'flex-start' }}>
-                <Check />{f}
-              </li>
-            ))}
+            {FREE_FEATURES.map(f => <FeatureRow key={f.text} {...f} />)}
           </ul>
           <button onClick={() => navigate('/app')}
             style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: 'transparent', color: T.muted, border: `1px solid ${T.border}`, borderRadius: 4, cursor: 'pointer', fontFamily: FONT, textTransform: 'uppercase' }}
             onMouseEnter={e => { e.currentTarget.style.background = T.btnGray; e.currentTarget.style.color = T.text }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T.muted }}
-          >Get Started Free</button>
+          >Try 14 Days Free</button>
         </div>
 
-        {/* Pro — highlighted */}
-        <div style={{ flex: '1 1 280px', padding: '40px 32px', borderRight: `1px solid ${T.border}`, background: T.cardHigh, display: 'flex', flexDirection: 'column', position: 'relative', borderTop: '2px solid #ffffff' }}>
+        {/* Pro */}
+        <div style={{ flex: '1 1 280px', padding: '40px 32px', background: T.cardHigh, display: 'flex', flexDirection: 'column', position: 'relative', borderTop: '2px solid #ffffff' }}>
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', background: '#ffffff', color: '#000000', fontSize: 10, fontWeight: 700, padding: '3px 16px', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: '0 0 4px 4px', whiteSpace: 'nowrap' }}>
             Most Popular
           </div>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', color: T.muted, textTransform: 'uppercase', marginBottom: 20 }}>Pro</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>₹999</div>
+          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>₹500</div>
           <div style={{ fontSize: 13, color: T.muted, marginBottom: 32 }}>/month · billed monthly</div>
           <hr style={{ border: 'none', borderTop: `1px solid ${T.border}`, marginBottom: 28 }} />
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', flex: 1 }}>
-            {PRO_FEATURES.map(f => (
-              <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 12, fontSize: 14, color: T.muted, alignItems: 'flex-start' }}>
-                <Check />{f}
-              </li>
-            ))}
+            {PRO_FEATURES.map(f => <FeatureRow key={f.text} {...f} />)}
           </ul>
           <button
             onClick={() => termsAgreed && navigate('/dashboard', { state: { openTab: 'subscription' } })}
@@ -141,29 +161,7 @@ export default function PricingPage() {
             style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: termsAgreed ? '#ffffff' : 'rgba(255,255,255,0.15)', color: termsAgreed ? '#000000' : 'rgba(255,255,255,0.35)', border: 'none', borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'background 0.15s, color 0.15s' }}
             onMouseEnter={e => { if (termsAgreed) e.currentTarget.style.background = 'rgba(255,255,255,0.88)' }}
             onMouseLeave={e => { if (termsAgreed) e.currentTarget.style.background = '#ffffff' }}
-          >Get Pro →</button>
-        </div>
-
-        {/* Professional */}
-        <div style={{ flex: '1 1 280px', padding: '40px 32px', background: T.cardBg, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', color: T.muted, textTransform: 'uppercase', marginBottom: 20 }}>Professional</div>
-          <div style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>₹1,499</div>
-          <div style={{ fontSize: 13, color: T.muted, marginBottom: 32 }}>/month · billed monthly</div>
-          <hr style={{ border: 'none', borderTop: `1px solid ${T.border}`, marginBottom: 28 }} />
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', flex: 1 }}>
-            {PRO_FEATURES_ALL.map(f => (
-              <li key={f} style={{ display: 'flex', gap: 10, marginBottom: 12, fontSize: 14, color: T.muted, alignItems: 'flex-start' }}>
-                <Check />{f}
-              </li>
-            ))}
-          </ul>
-          <button
-            onClick={() => termsAgreed && navigate('/dashboard', { state: { openTab: 'subscription' } })}
-            disabled={!termsAgreed}
-            style={{ width: '100%', padding: '12px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', background: 'transparent', color: termsAgreed ? T.text : 'rgba(255,255,255,0.25)', border: `1px solid ${termsAgreed ? T.border : 'rgba(255,255,255,0.06)'}`, borderRadius: 4, cursor: termsAgreed ? 'pointer' : 'not-allowed', fontFamily: FONT, textTransform: 'uppercase', transition: 'color 0.15s, border-color 0.15s' }}
-            onMouseEnter={e => { if (termsAgreed) { e.currentTarget.style.background = T.btnGray; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' } }}
-            onMouseLeave={e => { if (termsAgreed) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = T.border } }}
-          >Get Professional →</button>
+          >Upgrade to Pro — ₹500/month</button>
         </div>
       </div>
 

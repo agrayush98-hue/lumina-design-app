@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Upgrade to Pro - Lumina Design</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#111111",
+                        "panel": "#1a1a1a",
+                        "border": "#222222",
+                        "primary": "#f2c35b",
+                        "gold-dim": "rgba(212, 168, 67, 0.12)",
+                        "text-primary": "#cccccc",
+                        "text-secondary": "#888888",
+                        "warning": "#f59e0b",
+                        "danger": "#ef4444"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter", "sans-serif"],
+                        "mono-value": ["IBM Plex Mono", "monospace"],
+                        "body-standard": ["Inter", "sans-serif"],
+                        "body-medium": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "mono-value": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-standard": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-medium": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-text-primary min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay Backdrop (Contextual) -->
+<div class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center backdrop-blur-sm">
+<!-- Modal Container -->
+<div class="bg-panel border border-border w-full max-w-[480px] shadow-2xl relative z-50 rounded-none flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-4 border-b border-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary icon-fill text-[18px]">star</span>
+<h2 class="font-label-caps text-label-caps text-text-primary">UPGRADE TO PRO</h2>
+</div>
+<button aria-label="Close modal" class="text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Content Area -->
+<div class="p-6 flex flex-col gap-6">
+<!-- Badge -->
+<div class="bg-[#2a1c0d] border border-[#4a3215] py-2 px-3 flex justify-center items-center">
+<span class="font-mono-value text-mono-value text-warning uppercase tracking-wide">FREE TRIAL — 0 days remaining</span>
+</div>
+<!-- Comparison Section -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Free Column -->
+<div class="flex flex-col gap-4 border-r border-border pr-4">
+<div class="font-body-medium text-body-medium text-text-secondary uppercase tracking-wider">Free</div>
+<ul class="flex flex-col gap-3 font-body-standard text-body-standard text-text-secondary">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-danger text-[14px] mt-[1px]">close</span>
+<span>3 projects max</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-danger text-[14px] mt-[1px]">close</span>
+<span>No floor plan upload</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-danger text-[14px] mt-[1px]">close</span>
+<span>No DALI 2.0</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-danger text-[14px] mt-[1px]">close</span>
+<span>No PDF export</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-danger text-[14px] mt-[1px]">close</span>
+<span>No Excel BOQ</span>
+</li>
+</ul>
+</div>
+<!-- Pro Column -->
+<div class="flex flex-col gap-4 pl-2">
+<div class="font-body-medium text-body-medium text-primary flex items-center gap-1 uppercase tracking-wider">
+<span class="material-symbols-outlined icon-fill text-[14px]">star</span>
+                            Pro
+                        </div>
+<ul class="flex flex-col gap-3 font-body-standard text-body-standard text-text-primary">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[14px] mt-[1px]">check</span>
+<span>Unlimited projects</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[14px] mt-[1px]">check</span>
+<span>Floor plan upload (PNG/JPG/PDF)</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[14px] mt-[1px]">check</span>
+<span>DALI 2.0 addressing</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[14px] mt-[1px]">check</span>
+<span>PDF export (8 pages)</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[14px] mt-[1px]">check</span>
+<span>Excel BOQ export</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Pricing -->
+<div class="flex flex-col items-center justify-center gap-1 mt-2 pt-6 border-t border-border">
+<div class="font-mono-value text-[24px] leading-tight font-medium text-text-primary">₹500 / month</div>
+<div class="font-body-standard text-body-standard text-text-secondary">Billed monthly. Cancel anytime.</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-4 border-t border-border bg-[#151515] flex flex-col gap-3">
+<button class="w-full bg-primary text-[#111] font-label-caps text-label-caps py-3 px-4 hover:bg-[#e6b44a] active:bg-[#d4a23a] transition-colors cursor-pointer text-center">
+                    UPGRADE TO PRO
+                </button>
+<button class="w-full text-text-secondary hover:text-text-primary font-body-standard text-body-standard py-2 transition-colors cursor-pointer text-center underline decoration-text-secondary/30 hover:decoration-text-primary">
+                    Continue on Free
+                </button>
+</div>
+</div>
+</div>
+</body></html>

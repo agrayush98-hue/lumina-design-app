@@ -62,8 +62,55 @@ const FLOOR_REFLECTANCES = [
 
 const ROOM_TYPES = [
   "Living Room", "Kitchen", "Bedroom", "Bathroom", "Office",
-  "Corridor", "Dining Room", "Conference Room",
+  "Corridor", "Dining Room", "Conference Room", "Retail", "Museum",
+  "Hospital Room", "Laboratory", "Production", "Warehouse",
 ]
+
+// ROOM INTELLIGENCE: EN 12464-1 compliant specifications per room type
+const ROOM_INTELLIGENCE = {
+  "Living Room": {
+    targetLux: 150, cct: 2700, ugr: 22, ip: "IP20", spacing: 2.5, beam: 60, watt: 12,
+  },
+  "Kitchen": {
+    targetLux: 300, cct: 4000, ugr: 19, ip: "IP44", spacing: 1.8, beam: 36, watt: 15,
+  },
+  "Bedroom": {
+    targetLux: 100, cct: 2700, ugr: 25, ip: "IP20", spacing: 3.0, beam: 60, watt: 10,
+  },
+  "Bathroom": {
+    targetLux: 200, cct: 4000, ugr: 25, ip: "IP65", spacing: 2.0, beam: 45, watt: 12,
+  },
+  "Office": {
+    targetLux: 500, cct: 4000, ugr: 16, ip: "IP20", spacing: 1.5, beam: 36, watt: 20,
+  },
+  "Corridor": {
+    targetLux: 100, cct: 4000, ugr: 22, ip: "IP20", spacing: 3.5, beam: 60, watt: 10,
+  },
+  "Dining Room": {
+    targetLux: 200, cct: 3000, ugr: 19, ip: "IP20", spacing: 2.2, beam: 60, watt: 15,
+  },
+  "Conference Room": {
+    targetLux: 500, cct: 4000, ugr: 16, ip: "IP20", spacing: 1.5, beam: 36, watt: 20,
+  },
+  "Retail": {
+    targetLux: 750, cct: 4000, ugr: 19, ip: "IP20", spacing: 1.2, beam: 36, watt: 25,
+  },
+  "Museum": {
+    targetLux: 300, cct: 3000, ugr: 19, ip: "IP20", spacing: 2.0, beam: 45, watt: 12,
+  },
+  "Hospital Room": {
+    targetLux: 500, cct: 4000, ugr: 16, ip: "IP44", spacing: 1.5, beam: 36, watt: 18,
+  },
+  "Laboratory": {
+    targetLux: 750, cct: 5000, ugr: 16, ip: "IP20", spacing: 1.2, beam: 36, watt: 25,
+  },
+  "Production": {
+    targetLux: 500, cct: 5000, ugr: 22, ip: "IP54", spacing: 1.8, beam: 45, watt: 20,
+  },
+  "Warehouse": {
+    targetLux: 200, cct: 5000, ugr: 25, ip: "IP65", spacing: 3.0, beam: 60, watt: 15,
+  },
+}
 
 const PROTOCOLS = [
   { value: "NON-DIM",   label: "Non-dim (fixed output)" },
@@ -151,7 +198,18 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
         <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>Room Type</div>
         <select
           value={room.roomType ?? "Living Room"}
-          onChange={e => updateField("roomType", e.target.value)}
+          onChange={e => {
+            const roomType = e.target.value
+            const intel = ROOM_INTELLIGENCE[roomType]
+            if (intel) {
+              updateField("roomType", roomType)
+              updateField("targetLux", intel.targetLux)
+              updateField("cct", intel.cct)
+              updateField("ugr", intel.ugr)
+              updateField("ipRating", intel.ip)
+              updateField("spacing", intel.spacing)
+            }
+          }}
           style={selectStyle}
         >
           {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -198,6 +256,10 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
         ["workingPlane",  "Working Plane Height (m)"],
         ["targetLux",     "Target Lux"],
         ["fixtureLumens", "Fixture Lumens"],
+        ["cct",           "CCT (Kelvin)"],
+        ["ugr",           "UGR Limit"],
+        ["ipRating",      "IP Rating"],
+        ["spacing",       "Fixture Spacing (m)"],
       ].map(([key, label]) => (
         <div key={key} style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>{label}</div>

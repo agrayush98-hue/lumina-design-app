@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Share Project - LuminaDesign</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#8eaef4",
+                        "on-primary-fixed": "#261a00",
+                        "surface": "#111111",
+                        "on-tertiary-fixed-variant": "#214584",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-container": "#00393d",
+                        "gold-soft": "#f0c97a",
+                        "tertiary-fixed-dim": "#aec6ff",
+                        "secondary-fixed-dim": "#53d8e2",
+                        "text-muted": "#555555",
+                        "secondary": "#53d8e2",
+                        "text-primary": "#cccccc",
+                        "success": "#4ade80",
+                        "warning": "#f59e0b",
+                        "danger": "#ef4444",
+                        "on-tertiary-container": "#1b407f",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#553e00",
+                        "surface-container-high": "#2a2a2a",
+                        "on-surface-variant": "#d2c5b1",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary-fixed": "#001a42",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "surface-bright": "#3a3939",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#131313",
+                        "primary-fixed": "#ffdf9f",
+                        "secondary-container": "#00acb6",
+                        "inverse-primary": "#795900",
+                        "text-secondary": "#888888",
+                        "surface-tint": "#eec058",
+                        "on-secondary": "#00363a",
+                        "inverse-surface": "#e5e2e1",
+                        "background": "#131313",
+                        "gold-dim": "rgba(212, 168, 67, 0.12)",
+                        "on-error": "#690005",
+                        "surface-variant": "#353534",
+                        "on-primary-fixed-variant": "#5b4300",
+                        "surface-container": "#201f1f",
+                        "outline-variant": "#4e4636",
+                        "tertiary": "#b3caff",
+                        "error-container": "#93000a",
+                        "on-background": "#e5e2e1",
+                        "tertiary-fixed": "#d8e2ff",
+                        "border-subtle": "#2a2a2a",
+                        "secondary-fixed": "#76f5ff",
+                        "room-fill": "#0f1a0f",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-tertiary": "#002e6a",
+                        "on-secondary-fixed": "#002022",
+                        "on-primary": "#402d00",
+                        "panel": "#1a1a1a",
+                        "border": "#222222",
+                        "primary": "#f2c35b",
+                        "primary-container": "#d4a843",
+                        "on-secondary-fixed-variant": "#004f54",
+                        "primary-fixed-dim": "#eec058",
+                        "outline": "#9a8f7d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-left": "240px",
+                        "margin-compact": "8px",
+                        "sidebar-right": "280px",
+                        "margin-standard": "16px",
+                        "header-height": "48px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "mono-small": ["IBM Plex Mono"],
+                        "headline-section": ["Inter"],
+                        "body-standard": ["Inter"],
+                        "body-medium": ["Inter"],
+                        "mono-value": ["IBM Plex Mono"],
+                        "label-caps": ["Inter"],
+                        "headline-modal": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-small": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "headline-section": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "body-standard": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-medium": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "mono-value": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-modal": ["17px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #d4a843;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #d4a843;
+        }
+    </style>
+</head>
+<body class="bg-surface-dim min-h-screen flex items-center justify-center font-body-standard text-text-primary antialiased">
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center p-4">
+<!-- Modal Card -->
+<div class="bg-panel border border-border w-full max-w-[480px] rounded flex flex-col z-50">
+<!-- Header -->
+<div class="flex items-center justify-between px-margin-standard py-3 border-b border-border">
+<h2 class="font-label-caps text-label-caps text-text-primary">SHARE PROJECT</h2>
+<button aria-label="Close" class="text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Content Area -->
+<div class="p-margin-standard flex flex-col gap-6">
+<!-- Section 1: Share Link -->
+<div class="flex flex-col gap-3">
+<label class="font-label-caps text-label-caps text-text-secondary">PUBLIC LINK</label>
+<div class="flex gap-2">
+<div class="flex-1 relative">
+<input class="w-full bg-surface-container-low border border-border rounded font-mono-value text-mono-value text-text-primary px-3 py-2 focus:outline-none focus:border-primary-container h-[32px]" readonly="" type="text" value="https://lumina.arch/p/nexus-tower-f12"/>
+</div>
+<button class="bg-primary-container hover:bg-primary text-on-primary font-body-medium text-body-medium px-4 py-1.5 rounded transition-colors h-[32px] flex items-center justify-center whitespace-nowrap">
+                            Copy Link
+                        </button>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-body-standard text-body-standard text-text-primary">Anyone with link can view</span>
+<div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 border-border appearance-none cursor-pointer transition-all duration-300 z-10 top-0 left-0 checked:left-4" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-4 rounded-full bg-border cursor-pointer transition-colors duration-300" for="toggle"></label>
+</div>
+</div>
+</div>
+<!-- Section 2: Access Level -->
+<div class="flex flex-col gap-3">
+<label class="font-label-caps text-label-caps text-text-secondary">ACCESS LEVEL (LINK)</label>
+<div class="grid grid-cols-2 gap-3">
+<!-- Card 1: View Only (Active) -->
+<button class="bg-surface-container-low border border-primary-container rounded p-3 flex flex-col items-start gap-2 text-left relative overflow-hidden group">
+<div class="absolute inset-0 bg-gold-dim pointer-events-none"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary-container">visibility</span>
+<span class="font-body-medium text-body-medium text-text-primary">View Only</span>
+</div>
+<span class="font-body-standard text-body-standard text-text-secondary mt-1">Can view canvas and export</span>
+</button>
+<!-- Card 2: Comment -->
+<button class="bg-surface-container-low border border-border hover:border-text-muted rounded p-3 flex flex-col items-start gap-2 text-left transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">chat_bubble</span>
+<span class="font-body-medium text-body-medium text-text-primary">Comment</span>
+</div>
+<span class="font-body-standard text-body-standard text-text-secondary mt-1">Can view and add comments</span>
+</button>
+</div>
+</div>
+<!-- Section 3: Shared With -->
+<div class="flex flex-col gap-3">
+<label class="font-label-caps text-label-caps text-text-secondary">SHARED WITH</label>
+<div class="flex flex-col gap-2 border border-border rounded bg-surface-container-lowest p-2">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-border flex items-center justify-center text-text-secondary overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an engineer in a dimly lit, highly technical office environment. High contrast, precise lighting." src="https://lh3.googleusercontent.com/aida/AP1WRLuklQrJMC2H-TTREL6OBTN9LURs03wc6dbOwtK4O5T-_1TIGL4GIsizBUxA7dS3xryAgXXETj5vCpGo5Jk6Sy1S7z8vY3qmu-k6oEqRN8xTeQh2ObEqujZoRjijMvlA1koQq6O2Nnu6CWXV6KNo3LHOeNiPCu9US02MWM_w1A8_KGtD3qxK8dnCVqah2tmvEjRvQ39IB8E1YFQEYcNFXvovQV0spTskk5R1iaJ_MGzkj3srr9q0qAcJpw"/>
+</div>
+<div class="flex flex-col">
+<span class="font-mono-value text-mono-value text-text-primary">lead.eng@company.com</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-text-muted bg-surface px-2 py-0.5 rounded border border-border">VIEW ONLY</span>
+<button class="text-text-muted hover:text-danger font-body-standard text-body-standard transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">Remove</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-2 hover:bg-surface-container-low rounded group transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-border flex items-center justify-center text-text-secondary overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an architect in a minimalist, modern design studio. Soft, ambient lighting with dark tones." src="https://lh3.googleusercontent.com/aida/AP1WRLttFZFH5Z4SeRZAkExM8OzthC8xFwCZ7PLtP3RHpyv4kNXZjMsy_Yz4Y5QVcindkh6_nzbYVKtyaAV4p3FNf7zpzoEWyfJUuoDJn_59nqkIn2VMWY4fwG2B0yxtmE3haPG8Ffa6NgEYF3E921bPsG-wV-W-gkPZF6XX2o60nQBaCUpKHFsJx16E05u07XI09nQyDkcXdtvrwAuog6iLKLHykaGNHXuhbD218EwwbsGqHoM8AHXmR4KbVw"/>
+</div>
+<div class="flex flex-col">
+<span class="font-mono-value text-mono-value text-text-primary">architect@studio.design</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-text-muted bg-surface px-2 py-0.5 rounded border border-border">COMMENT</span>
+<button class="text-text-muted hover:text-danger font-body-standard text-body-standard transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">Remove</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<div class="flex items-center justify-end px-margin-standard py-3 border-t border-border bg-surface-container-low rounded-b">
+<button class="bg-primary-container hover:bg-primary text-on-primary font-body-medium text-body-medium px-6 py-2 rounded transition-colors h-[32px] flex items-center justify-center">
+                    Done
+                </button>
+</div>
+</div>
+</div>
+</body></html>

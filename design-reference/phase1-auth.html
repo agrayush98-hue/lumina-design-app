@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Design - Authentication</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#b3caff",
+                        "gold-soft": "#f0c97a",
+                        "surface-container-high": "#2a2a2a",
+                        "surface": "#111111",
+                        "secondary-fixed": "#76f5ff",
+                        "on-primary": "#402d00",
+                        "text-muted": "#555555",
+                        "border-subtle": "#2a2a2a",
+                        "on-tertiary-fixed-variant": "#214584",
+                        "success": "#4ade80",
+                        "surface-variant": "#353534",
+                        "on-secondary": "#00363a",
+                        "on-primary-fixed": "#261a00",
+                        "on-error": "#690005",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#ffdf9f",
+                        "primary-container": "#d4a843",
+                        "surface-bright": "#3a3939",
+                        "on-secondary-fixed-variant": "#004f54",
+                        "tertiary-container": "#8eaef4",
+                        "secondary-container": "#00acb6",
+                        "room-fill": "#0f1a0f",
+                        "surface-tint": "#eec058",
+                        "secondary": "#53d8e2",
+                        "tertiary-fixed-dim": "#aec6ff",
+                        "on-secondary-fixed": "#002022",
+                        "on-surface-variant": "#d2c5b1",
+                        "warning": "#f59e0b",
+                        "on-secondary-container": "#00393d",
+                        "inverse-on-surface": "#313030",
+                        "on-primary-fixed-variant": "#5b4300",
+                        "danger": "#ef4444",
+                        "secondary-fixed-dim": "#53d8e2",
+                        "surface-container-lowest": "#0e0e0e",
+                        "background": "#131313",
+                        "outline": "#9a8f7d",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#131313",
+                        "primary": "#f2c35b",
+                        "on-background": "#e5e2e1",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-fixed": "#d8e2ff",
+                        "outline-variant": "#4e4636",
+                        "on-primary-container": "#553e00",
+                        "on-tertiary": "#002e6a",
+                        "surface-container": "#201f1f",
+                        "panel": "#1a1a1a",
+                        "surface-container-low": "#1c1b1b",
+                        "text-secondary": "#888888",
+                        "text-primary": "#cccccc",
+                        "gold-dim": "rgba(212, 168, 67, 0.12)",
+                        "inverse-surface": "#e5e2e1",
+                        "border": "#222222",
+                        "on-surface": "#e5e2e1",
+                        "inverse-primary": "#795900",
+                        "surface-container-highest": "#353534",
+                        "primary-fixed-dim": "#eec058",
+                        "on-tertiary-container": "#1b407f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-left": "240px",
+                        "margin-compact": "8px",
+                        "sidebar-right": "280px",
+                        "header-height": "48px",
+                        "gutter": "12px",
+                        "margin-standard": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-section": ["Inter"],
+                        "mono-value": ["IBM Plex Mono"],
+                        "label-caps": ["Inter"],
+                        "headline-modal": ["Inter"],
+                        "mono-small": ["IBM Plex Mono"],
+                        "body-medium": ["Inter"],
+                        "body-standard": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-section": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "mono-value": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-modal": ["17px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "mono-small": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "body-medium": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-standard": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .radial-bg {
+            background-image: radial-gradient(#222222 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for precise CAD feel */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111111; }
+        ::-webkit-scrollbar-thumb { background: #333333; }
+        ::-webkit-scrollbar-thumb:hover { background: #555555; }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-full overflow-hidden flex flex-col md:flex-row font-body-standard antialiased">
+<!-- Left Brand Panel -->
+<div class="hidden md:flex flex-col flex-1 bg-[#0d0d0d] radial-bg relative p-12 justify-center border-r border-border">
+<!-- Overlay gradient to ensure text readability -->
+<div class="absolute inset-0 bg-gradient-to-r from-[#0d0d0d] via-[#0d0d0d]/80 to-transparent"></div>
+<div class="relative z-10 max-w-lg">
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold font-headline-modal tracking-tight text-primary-container mb-4">LUMINA DESIGN</h1>
+<p class="text-lg md:text-xl font-body-medium text-text-secondary mb-12">Professional Lighting Design Platform</p>
+<ul class="space-y-6">
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary-container mt-0.5">calculate</span>
+<div>
+<h3 class="font-body-medium text-on-surface text-base">Lux Calculations</h3>
+<p class="font-body-standard text-text-secondary">High-precision photometric simulations.</p>
+</div>
+</li>
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary-container mt-0.5">settings_input_component</span>
+<div>
+<h3 class="font-body-medium text-on-surface text-base">DALI 2.0 Integration</h3>
+<p class="font-body-standard text-text-secondary">Advanced control systems protocol mapping.</p>
+</div>
+</li>
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary-container mt-0.5">picture_as_pdf</span>
+<div>
+<h3 class="font-body-medium text-on-surface text-base">Automated PDF Export</h3>
+<p class="font-body-standard text-text-secondary">Generate compliance-ready technical documentation.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Right Auth Form Panel -->
+<div class="flex-1 bg-surface flex flex-col justify-center items-center p-8 relative">
+<div class="w-full max-w-md bg-panel border border-border p-8 relative">
+<!-- Tabs -->
+<div class="flex border-b border-border mb-8">
+<button class="flex-1 py-3 font-label-caps text-label-caps text-primary border-b-2 border-primary-container transition-colors" id="tab-signin" onclick="switchTab('signin')">SIGN IN</button>
+<button class="flex-1 py-3 font-label-caps text-label-caps text-text-secondary border-b-2 border-transparent hover:text-on-surface transition-colors" id="tab-register" onclick="switchTab('register')">REGISTER</button>
+</div>
+<!-- Sign In Form -->
+<form class="space-y-5 block" id="form-signin">
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-text-muted block" for="email">EMAIL ADDRESS</label>
+<input class="w-full bg-background border border-border text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-primary-container transition-colors rounded-none placeholder-text-muted" id="email" placeholder="engineer@company.com" type="email"/>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-text-muted block" for="password">PASSWORD</label>
+<a class="font-body-standard text-body-standard text-text-secondary hover:text-primary transition-colors" href="#">Forgot password?</a>
+</div>
+<!-- Error State Example -->
+<input class="w-full bg-background border border-danger text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-danger transition-colors rounded-none" id="password" type="password" value="password123"/>
+<p class="font-body-standard text-[10px] text-danger mt-1">Invalid credentials. Please verify your password.</p>
+</div>
+<button class="w-full bg-primary-container hover:bg-primary-fixed text-on-primary font-label-caps text-label-caps py-3 mt-6 transition-colors rounded-none" type="submit">
+                    SIGN IN
+                </button>
+</form>
+<!-- Register Form (Hidden by default) -->
+<form class="space-y-5 hidden" id="form-register">
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-text-muted block" for="reg-name">FULL NAME</label>
+<input class="w-full bg-background border border-border text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-primary-container transition-colors rounded-none placeholder-text-muted" id="reg-name" placeholder="Jane Doe" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-text-muted block" for="reg-email">EMAIL ADDRESS</label>
+<input class="w-full bg-background border border-border text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-primary-container transition-colors rounded-none placeholder-text-muted" id="reg-email" placeholder="engineer@company.com" type="email"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-text-muted block" for="reg-password">PASSWORD</label>
+<input class="w-full bg-background border border-border text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-primary-container transition-colors rounded-none" id="reg-password" type="password"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-text-muted block" for="reg-confirm">CONFIRM PASSWORD</label>
+<input class="w-full bg-background border border-border text-on-surface font-mono-value text-mono-value px-3 py-2.5 focus:outline-none focus:border-primary-container transition-colors rounded-none" id="reg-confirm" type="password"/>
+</div>
+<button class="w-full bg-primary-container hover:bg-primary-fixed text-on-primary font-label-caps text-label-caps py-3 mt-6 transition-colors rounded-none" type="submit">
+                    CREATE ACCOUNT
+                </button>
+</form>
+<div class="relative flex items-center py-6 mt-2">
+<div class="flex-grow border-t border-border"></div>
+<span class="flex-shrink-0 mx-4 font-label-caps text-label-caps text-text-muted">OR</span>
+<div class="flex-grow border-t border-border"></div>
+</div>
+<button class="w-full flex items-center justify-center gap-3 bg-transparent border border-border hover:bg-surface-container-high text-on-surface font-body-medium text-body-medium py-2.5 transition-colors rounded-none">
+<span class="material-symbols-outlined text-lg">account_circle</span>
+                Continue with Google
+            </button>
+</div>
+<div class="absolute bottom-6 font-body-standard text-[10px] text-text-muted">
+            © 2024 Lumina Design Systems. Precision Engineered.
+        </div>
+</div>
+<script>
+        function switchTab(tab) {
+            const signinBtn = document.getElementById('tab-signin');
+            const registerBtn = document.getElementById('tab-register');
+            const signinForm = document.getElementById('form-signin');
+            const registerForm = document.getElementById('form-register');
+
+            if (tab === 'signin') {
+                // Update Tabs
+                signinBtn.classList.add('text-primary', 'border-primary-container');
+                signinBtn.classList.remove('text-text-secondary', 'border-transparent');
+                
+                registerBtn.classList.remove('text-primary', 'border-primary-container');
+                registerBtn.classList.add('text-text-secondary', 'border-transparent');
+                
+                // Update Forms
+                signinForm.classList.remove('hidden');
+                signinForm.classList.add('block');
+                
+                registerForm.classList.remove('block');
+                registerForm.classList.add('hidden');
+            } else {
+                // Update Tabs
+                registerBtn.classList.add('text-primary', 'border-primary-container');
+                registerBtn.classList.remove('text-text-secondary', 'border-transparent');
+                
+                signinBtn.classList.remove('text-primary', 'border-primary-container');
+                signinBtn.classList.add('text-text-secondary', 'border-transparent');
+                
+                // Update Forms
+                registerForm.classList.remove('hidden');
+                registerForm.classList.add('block');
+                
+                signinForm.classList.remove('block');
+                signinForm.classList.add('hidden');
+            }
+        }
+    </script>
+</body></html>

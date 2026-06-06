@@ -29,15 +29,7 @@ function extractCCT(text) {
   return m.length ? [...new Set(m)] : ['4000K']
 }
 
-function mountingFromCategory(cat, desc) {
-  const d = (desc || '').toLowerCase()
-  if (cat === 'Pendant')    return 'Suspended'
-  if (cat === 'Track_Light') return 'Track'
-  if (cat === 'High_Bay')   return 'Suspension'
-  if (cat === 'Wall_Washer') return 'Surface'
-  if (d.includes('surface')) return 'Surface'
-  return 'Recessed'
-}
+const { mountingFromCategory } = require('./lib/mounting-utils.cjs')
 
 const fixtures = parsed.map(f => {
   // Strip _raw from variants, keep only schema-compatible fields

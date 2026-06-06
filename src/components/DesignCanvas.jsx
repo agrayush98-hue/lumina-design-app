@@ -1975,6 +1975,34 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           </Layer>
         </Stage>
 
+        {/* Canvas hint — shown when no lights and room selected */}
+        {lights.length === 0 && roomWidth > 0 && (() => {
+          const hintX = ROOM_X + ROOM_PX_W / 2
+          const hintY = ROOM_Y + ROOM_PX_H / 2
+          return (
+            <div style={{
+              position: "absolute",
+              top: hintY,
+              left: hintX,
+              transform: "translate(-50%, -50%)",
+              textAlign: "center",
+              pointerEvents: "none",
+              zIndex: 5,
+            }}>
+              <div style={{
+                fontFamily: "IBM Plex Mono",
+                fontSize: 14,
+                color: "#666666",
+                lineHeight: 1.5,
+              }}>
+                Select a fixture from the library and click to place,
+                <br />
+                or use Auto Place
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Box select overlay */}
         {boxSelect.isDrawing && (
           <div style={{

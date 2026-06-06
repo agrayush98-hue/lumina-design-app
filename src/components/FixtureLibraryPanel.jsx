@@ -1,450 +1,54 @@
 import React, { useState, useMemo } from 'react';
-import standardFixtures from '../data/complete-fixture-library.json';
-import brandedFixtures from '../data/branded-fixture-library.json';
-import iesFixtures from '../data/ies-fixture-library.json';
+import { CONFIGURABLE_FIXTURES, FIXTURE_CATEGORIES } from '../data/configurable-fixtures.js';
+import FixtureConfigurator from './FixtureConfigurator';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────
 
-const getBeamColor = (deg) => {
-  if (deg <= 24) return '#3b82f6';
-  if (deg <= 60) return '#f59e0b';
-  return '#10b981';
+const getCategoryColor = (category) => {
+  const colors = {
+    'DOWNLIGHT': '#ffe9b0',
+    'SPOTLIGHT': '#c8d8f8',
+    'LINEAR': '#ffe0c0',
+    'PANEL': '#d0eaff',
+    'TRACK': '#c0d8f8',
+    'WALL_WASHER': '#b8e8ff',
+    'STEP_LIGHT': '#d0e8d8',
+    'UNDER_CABINET': '#a8f0f0',
+    'FLOODLIGHT': '#f8a8a8',
+    'PENDANT': '#f8d8f0',
+    'COVE_LED_STRIP': '#e8d0ff',
+    'HIGH_BAY': '#f8d4a0',
+    'OUTDOOR': '#c8f0c0',
+    'IN_GROUND': '#a8f0a0',
+    'SURFACE_MOUNT': '#ffeec0',
+    'TRACK_SYSTEM': '#c0d8f8',
+    'MAGNETIC_TRACK': '#b8d4f8',
+  };
+  return colors[category] || '#ffe9b0';
 };
 
-// ── Fixture visual presets by category ───────────────────────────────────────
-// Each entry: { shape, fill, stroke, glowColor, visualRadius }
-// shape must match a case in DesignCanvas LightSymbol switch
-
-const FIXTURE_VISUALS = {
-  // Downlights — circle family
-  'Downlight': {
-    default:  { shape: 'circle',    fill: '#ffe9b0', stroke: '#ffb300', glow: 'rgba(255,179,0,0.12)',  r: 7  },
-    'COB Downlight':          { shape: 'circle',    fill: '#ffe9b0', stroke: '#ffb300', glow: 'rgba(255,179,0,0.12)',  r: 7  },
-    'SMD Downlight':          { shape: 'circle',    fill: '#fff5c0', stroke: '#e8d020', glow: 'rgba(232,208,0,0.12)',  r: 8  },
-    'Gimbal / Adjustable Downlight': { shape: 'gimbal', fill: '#ffd8a0', stroke: '#ff8c00', glow: 'rgba(255,140,0,0.14)', r: 7 },
-    'Surface-Mount Downlight':{ shape: 'circle',    fill: '#ffeec0', stroke: '#e0a800', glow: 'rgba(224,168,0,0.12)',  r: 9  },
-  },
-
-  // Panels — square with grid
-  'Panel': {
-    default:  { shape: 'panel-grid', fill: '#d0eaff', stroke: '#4da6ff', glow: 'rgba(77,166,255,0.12)', r: 13 },
-  },
-
-  // Spotlights — diamond (directional, pointed)
-  'Spotlight': {
-    default:  { shape: 'diamond',    fill: '#c8d8f8', stroke: '#2196f3', glow: 'rgba(33,150,243,0.14)', r: 7  },
-    'Track Spotlight':        { shape: 'diamond',    fill: '#b8d4f8', stroke: '#1976d2', glow: 'rgba(25,118,210,0.14)', r: 7 },
-  },
-
-  // Track system — rail + head
-  'Track_System': {
-    default:  { shape: 'track',      fill: '#c0d8f8', stroke: '#1e88e5', glow: 'rgba(30,136,229,0.12)', r: 8  },
-  },
-
-  // LED Strip — thin pill (point) or handled by strip tool
-  'LED_Strip': {
-    default:  { shape: 'cove-slot',  fill: '#e8d0ff', stroke: '#9c5cd0', glow: 'rgba(156,92,208,0.14)', r: 6  },
-    'Rigid LED Bar':          { shape: 'pill',      fill: '#d8c0ff', stroke: '#7b3fd4', glow: 'rgba(123,63,212,0.14)', r: 6  },
-  },
-
-  // Linear — wide rectangle
-  'Linear': {
-    default:  { shape: 'rectangle',  fill: '#ffe0c0', stroke: '#ff9940', glow: 'rgba(255,153,64,0.12)',  r: 10 },
-  },
-
-  // Architectural — cove slot (very thin elongated)
-  'Architectural': {
-    default:  { shape: 'cove-slot',  fill: '#a8f0f0', stroke: '#00bcd4', glow: 'rgba(0,188,212,0.14)',   r: 7  },
-    'Wall Wash Light':        { shape: 'flood',     fill: '#b8e8ff', stroke: '#1e88e5', glow: 'rgba(30,136,229,0.12)', r: 9 },
-    'Cove / Recessed Cove Light': { shape: 'cove-slot', fill: '#a8f8f8', stroke: '#00acc1', glow: 'rgba(0,172,193,0.14)', r: 6 },
-  },
-
-  // High Bay — octagon (industrial UFO shape)
-  'High_Bay': {
-    default:  { shape: 'octagon',    fill: '#f8d4a0', stroke: '#e67c2c', glow: 'rgba(230,124,44,0.16)',  r: 14 },
-    'Low Bay Light':          { shape: 'hexagon',   fill: '#fff3c0', stroke: '#f9a825', glow: 'rgba(249,168,37,0.14)', r: 11 },
-    'Linear High Bay':        { shape: 'rectangle', fill: '#f8d4a0', stroke: '#e67c2c', glow: 'rgba(230,124,44,0.14)', r: 12 },
-    'Explosion-Proof / Hazardous Area Light': { shape: 'hexagon', fill: '#d8d0c8', stroke: '#6d4c41', glow: 'rgba(109,76,65,0.12)', r: 11 },
-  },
-
-  // Floodlights — custom floodlight shape
-  'Floodlight': {
-    default:  { shape: 'floodlight', fill: '#f8a8a8', stroke: '#f44336', glow: 'rgba(244,67,54,0.16)',   r: 11 },
-    'LED Wall Pack':          { shape: 'semicircle', fill: '#c8d8e8', stroke: '#546e7a', glow: 'rgba(84,110,122,0.12)', r: 9 },
-  },
-
-  // Street lights — cobra-arm shape
-  'Street_Light': {
-    default:  { shape: 'streetlight', fill: '#b8c8d8', stroke: '#607d8b', glow: 'rgba(96,125,139,0.12)', r: 9 },
-  },
-
-  // Garden / landscape — spike
-  'Garden_Light': {
-    default:  { shape: 'spike',      fill: '#c8f0c0', stroke: '#43a047', glow: 'rgba(67,160,71,0.14)',   r: 8  },
-    'Inground Uplight':       { shape: 'ring',      fill: '#a8f0a0', stroke: '#2e7d32', glow: 'rgba(46,125,50,0.14)',  r: 7  },
-  },
-
-  // Wall lights — semicircle
-  'Wall_Light': {
-    default:  { shape: 'semicircle', fill: '#f8e8c0', stroke: '#d4a843', glow: 'rgba(212,168,67,0.14)',  r: 8  },
-  },
-
-  // Indoor/Outdoor
-  'Indoor/Outdoor': {
-    default:  { shape: 'octagon',    fill: '#e0f0e0', stroke: '#66bb6a', glow: 'rgba(102,187,106,0.12)', r: 9  },
-    'Step / Stair Light':     { shape: 'pill',      fill: '#d0e8d8', stroke: '#4caf50', glow: 'rgba(76,175,80,0.12)',  r: 5  },
-    'LED Canopy Light':       { shape: 'octagon',   fill: '#d8e8f8', stroke: '#78909c', glow: 'rgba(120,144,156,0.12)', r: 12 },
-  },
-
-  // Pendants — pendant (circle with cord)
-  'Pendant': {
-    default:  { shape: 'pendant',    fill: '#f8d8f0', stroke: '#c2185b', glow: 'rgba(194,24,91,0.12)',   r: 8  },
-    'LED Chandelier':         { shape: 'chandelier', fill: '#d4a8f0', stroke: '#7b1fa2', glow: 'rgba(123,31,162,0.14)', r: 10 },
-  },
-
-  // Emergency — cross-dot
-  'Emergency': {
-    default:  { shape: 'cross-dot',  fill: '#c8f0c8', stroke: '#2e7d32', glow: 'rgba(46,125,50,0.14)',   r: 7  },
-  },
-
-  // Wall Washer — flood wedge shape (asymmetric distribution)
-  'Wall_Washer': {
-    default:  { shape: 'flood',     fill: '#b8e8ff', stroke: '#1e88e5', glow: 'rgba(30,136,229,0.14)',  r: 9  },
-  },
-
-  // Track Light — diamond head (directional mounted on track)
-  'Track_Light': {
-    default:  { shape: 'diamond',   fill: '#c8d8f8', stroke: '#2196f3', glow: 'rgba(33,150,243,0.14)',  r: 7  },
-  },
-}
-
-function getFixtureVisuals(category, fixtureName) {
-  const catVisuals = FIXTURE_VISUALS[category]
-  if (!catVisuals) {
-    // Fallback for unknown categories
-    return { fixtureShape: 'circle', fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.10)', visualRadius: 7 }
-  }
-  const v = catVisuals[fixtureName] ?? catVisuals['default']
-  return {
-    fixtureShape: v.shape,
-    fill:         v.fill,
-    stroke:       v.stroke,
-    glowColor:    v.glow,
-    visualRadius: v.r,
-  }
-}
-
-const categoryLabel = (cat) => ({
-  'ALL':          'All',
-  'Downlight':    'Downlight',
-  'Spotlight':    'Spotlight',
-  'Panel':        'Panel',
-  'Linear':       'Linear',
-  'LED_Strip':    'LED Strip',
-  'High_Bay':     'High Bay',
-  'Floodlight':   'Floodlight',
-  'Street_Light': 'Street Light',
-  'Garden_Light': 'Garden Light',
-  'Wall_Light':   'Wall Light',
-  'Wall_Washer':  'Wall Washer',
-  'Architectural':'Architectural',
-  'Track_System': 'Track System',
-  'Track_Light':  'Track Light',
-  'Indoor/Outdoor':'In/Outdoor',
-  'Pendant':      'Pendant',
-  'Emergency':    'Emergency',
-}[cat] || cat.replace(/_/g, ' '));
-
-const wattageColor = (w) =>
-  !w       ? '#888888' :
-  w <= 10  ? '#16a34a' :
-  w <= 20  ? '#0284c7' :
-  w <= 40  ? '#d97706' : '#dc2626';
-
-// ── VariantRow ────────────────────────────────────────────────────────────────
-
-function VariantRow({ fixture, variant, onVariantClick }) {
-  const beamOptions = variant.beamOptions || fixture.beamOptions || (fixture.beam ? [fixture.beam] : [36]);
-  const [selectedBeam, setSelectedBeam] = useState(beamOptions[0] ?? 36);
-  const [hovered, setHovered] = useState(false);
-
-  const isStrip = !!variant.watt_per_meter;
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: hovered ? '#1a1a1a' : '#161616',
-        border: '1px solid #2a2a2a',
-        borderRadius: 6,
-        padding: 10,
-        cursor: 'pointer',
-        transition: 'background 0.15s ease'
-      }}
-    >
-      {/* Wattage */}
-      <div style={{
-        fontFamily: "'Inter', sans-serif",
-        fontSize: 14, fontWeight: 700,
-        color: wattageColor(variant.watt || variant.watt_per_meter),
-        marginBottom: 4
-      }}>
-        {isStrip
-          ? `${variant.watt_per_meter}W/m`
-          : variant.watt
-            ? `${variant.watt}W`
-            : null}
-        {variant.size && (
-          <span style={{ fontSize: 10, fontWeight: 400, color: '#888888', marginLeft: 6 }}>
-            {variant.size}
-          </span>
-        )}
-      </div>
-
-      {/* Lumens + Efficacy + extra tags */}
-      <div style={{
-        fontFamily: "'Inter', sans-serif",
-        fontSize: 9, color: '#888888', marginBottom: 8, lineHeight: 1.5
-      }}>
-        {isStrip
-          ? `${variant.lumens_per_meter}lm/m`
-          : `${variant.lumens}lm`}
-        {variant.efficacy && ` · ${variant.efficacy}lm/W`}
-        {variant.density && ` · ${variant.density}`}
-        {variant.length && ` · ${variant.length}`}
-      </div>
-
-      {/* CCT Badge — variant-level or fixture-level for IES */}
-      {(variant.cct || (fixture.source === 'ies' && fixture.cct?.length)) && (
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
-          {(variant.cct ? [variant.cct] : fixture.cct).map(k => (
-            <span key={k} style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 9, color: '#888888',
-              background: '#1e1e1e', padding: '2px 6px',
-              borderRadius: 3, display: 'inline-block'
-            }}>
-              {k}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Beam Angle Pills */}
-      {beamOptions.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 }}>
-          {beamOptions.map(beam => {
-            const active = selectedBeam === beam;
-            const isSingleIES = fixture.source === 'ies' && beamOptions.length === 1;
-            return (
-              <button
-                key={beam}
-                onClick={(e) => { e.stopPropagation(); setSelectedBeam(beam); }}
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 9, fontWeight: 600,
-                  color: active ? (isSingleIES ? '#22d3ee' : '#ffffff') : '#b8860b',
-                  background: active ? (isSingleIES ? 'rgba(34,211,238,0.15)' : '#d4a843') : 'transparent',
-                  border: `1px solid ${isSingleIES ? '#22d3ee' : '#d4a843'}`,
-                  borderRadius: 3, padding: '3px 6px',
-                  cursor: isSingleIES ? 'default' : 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {beam}°
-              </button>
-            );
-          })}
-          {/* "measured" label for IES single-beam fixtures */}
-          {fixture.source === 'ies' && beamOptions.length === 1 && (
-            <span style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 8, color: '#22d3ee', opacity: 0.7,
-              letterSpacing: '0.05em'
-            }}>
-              measured
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Add to Canvas */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onVariantClick(fixture, variant, selectedBeam); }}
-        style={{
-          width: '100%', padding: '7px',
-          background: '#d4a843', border: 'none', borderRadius: 4,
-          color: '#0a0a0a', fontFamily: "'Inter', sans-serif",
-          fontSize: 11, fontWeight: 600, cursor: 'pointer',
-          letterSpacing: '0.02em', transition: 'opacity 0.15s ease'
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-      >
-        + ADD TO CANVAS
-      </button>
-    </div>
-  );
-}
-
-// ── FixtureCard ───────────────────────────────────────────────────────────────
-
-function FixtureCard({ fixture, isExpanded, onToggle, onVariantClick }) {
-  const wattRange = useMemo(() => {
-    const watts = fixture.variants.map(v => v.watt || v.watt_per_meter || 0).filter(w => w > 0);
-    if (!watts.length) return null;
-    const min = Math.min(...watts), max = Math.max(...watts);
-    return min === max ? `${min}W` : `${min}–${max}W`;
-  }, [fixture]);
-
-  return (
-    <div style={{
-      background: '#141414',
-      border: `1px solid ${isExpanded ? '#d4a843' : '#222222'}`,
-      borderRadius: 8,
-      marginBottom: 8,
-      overflow: 'hidden',
-      transition: 'border-color 0.2s ease'
-    }}>
-      {/* Card Header */}
-      <div
-        onClick={onToggle}
-        style={{
-          padding: '10px 12px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: isExpanded ? 'rgba(212,168,67,0.08)' : 'transparent',
-          transition: 'background 0.15s ease'
-        }}
-        onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = '#1a1a1a'; }}
-        onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = 'transparent'; }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Name */}
-          <div style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: 12, fontWeight: 600, color: '#cccccc',
-            marginBottom: 4, letterSpacing: '0.01em',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-          }}>
-            {fixture.name}
-          </div>
-
-          {/* Brand / Manufacturer + subcategory + CRI row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            {/* IES source badge */}
-            {fixture.source === 'ies' && (
-              <span style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 9, fontWeight: 700, color: '#22d3ee',
-                background: 'rgba(34,211,238,0.1)', padding: '1px 5px',
-                borderRadius: 3, letterSpacing: '0.06em', border: '1px solid rgba(34,211,238,0.25)'
-              }}>
-                IES
-              </span>
-            )}
-            {/* Manufacturer (IES) or brand (branded) */}
-            {(fixture.manufacturer || fixture.brand) && (
-              <span style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 10, fontWeight: 600,
-                color: fixture.source === 'ies' ? '#22d3ee' : '#d4a843',
-                background: fixture.source === 'ies' ? 'rgba(34,211,238,0.08)' : 'rgba(212,168,67,0.1)',
-                padding: '1px 6px', borderRadius: 3, letterSpacing: '0.03em'
-              }}>
-                {(fixture.manufacturer || fixture.brand).toUpperCase()}
-              </span>
-            )}
-            {/* Catalog number for IES fixtures */}
-            {fixture.catalogNumber && (
-              <span style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 9, color: '#666666', letterSpacing: '0.02em'
-              }}>
-                {fixture.catalogNumber}
-              </span>
-            )}
-            {/* Subcategory (only if not IES — IES subcategory is always "IES Photometric") */}
-            {fixture.subcategory && fixture.source !== 'ies' && (
-              <span style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 10, color: '#888888',
-                textTransform: 'uppercase', letterSpacing: '0.03em'
-              }}>
-                {fixture.subcategory}
-              </span>
-            )}
-            {fixture.cri && (
-              <span style={{
-                fontFamily: "'Inter', sans-serif", fontSize: 10,
-                color: fixture.cri >= 90 ? '#16a34a' : fixture.cri >= 80 ? '#0284c7' : '#aaaaaa'
-              }}>
-                CRI{fixture.cri}
-              </span>
-            )}
-            {wattRange && (
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: '#888888' }}>
-                {wattRange}
-              </span>
-            )}
-            {fixture.ipRating && (
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, color: '#aaaaaa' }}>
-                {fixture.ipRating.split(' / ')[0]}
-              </span>
-            )}
-            {fixture.dimming && (
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, color: '#aaaaaa' }}>
-                {fixture.dimming.split(' / ')[0]}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Count + arrow */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
-          <span style={{
-            fontFamily: "'Inter', sans-serif", fontSize: 10, color: '#aaaaaa'
-          }}>
-            {fixture.variants.length}v
-          </span>
-          <span style={{
-            fontSize: 10, color: '#aaaaaa',
-            display: 'inline-block',
-            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease'
-          }}>
-            ▸
-          </span>
-        </div>
-      </div>
-
-      {/* Expanded Variants Grid */}
-      {isExpanded && (
-        <div style={{
-          padding: '8px 10px 10px',
-          background: '#0e0e0e',
-          borderTop: '1px solid #1e1e1e'
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-            gap: 8,
-            marginTop: 4
-          }}>
-            {fixture.variants.map((variant, idx) => (
-              <VariantRow
-                key={idx}
-                fixture={fixture}
-                variant={variant}
-                onVariantClick={onVariantClick}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+const getCategoryLabel = (category) => {
+  const labels = {
+    'DOWNLIGHT': 'Downlight',
+    'SPOTLIGHT': 'Spotlight',
+    'LINEAR': 'Linear',
+    'PANEL': 'Panel',
+    'TRACK': 'Track Light',
+    'WALL_WASHER': 'Wall Washer',
+    'STEP_LIGHT': 'Step Light',
+    'UNDER_CABINET': 'Under-Cabinet',
+    'FLOODLIGHT': 'Floodlight',
+    'PENDANT': 'Pendant',
+    'COVE_LED_STRIP': 'Cove/Strip',
+    'HIGH_BAY': 'High Bay',
+    'OUTDOOR': 'Outdoor',
+    'IN_GROUND': 'In-Ground',
+    'SURFACE_MOUNT': 'Surface Mount',
+    'TRACK_SYSTEM': 'Track System',
+    'MAGNETIC_TRACK': 'Magnetic Track',
+  };
+  return labels[category] || category.replace(/_/g, ' ');
+};
 
 // ── Main Panel ────────────────────────────────────────────────────────────────
 
@@ -455,74 +59,48 @@ export function FixtureLibraryPanel({
   isProfessional,
   onProfessionalGate
 }) {
-  const [libraryTab,     setLibraryTab]     = useState('STANDARD');
-  const [activeCategory, setActiveCategory] = useState('ALL');
-  const [selectedBrand,  setSelectedBrand]  = useState('ALL');
-  const [searchQuery,    setSearchQuery]    = useState('');
-  const [expandedSet,    setExpandedSet]    = useState(new Set());
-
-  const fixtureData = libraryTab === 'STANDARD' ? standardFixtures
-                    : libraryTab === 'IES'      ? iesFixtures
-                    : brandedFixtures;
-
-  const categories = useMemo(() => {
-    return ['ALL', ...new Set(fixtureData.fixtures.map(f => f.category))];
-  }, [fixtureData]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState(new Set(Object.keys(FIXTURE_CATEGORIES)));
+  const [showConfigurator, setShowConfigurator] = useState(false);
+  const [selectedFixture, setSelectedFixture] = useState(null);
 
   const filteredFixtures = useMemo(() => {
-    return fixtureData.fixtures.filter(fixture => {
-      if (activeCategory !== 'ALL' && fixture.category !== activeCategory) return false;
-      if (searchQuery && !fixture.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !(fixture.brand && fixture.brand.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
-      if (libraryTab === 'BRANDED' && selectedBrand !== 'ALL' && fixture.brand !== selectedBrand) return false;
-      return true;
-    });
-  }, [fixtureData, activeCategory, selectedBrand, searchQuery, libraryTab]);
+    if (!searchQuery) return CONFIGURABLE_FIXTURES;
+    return CONFIGURABLE_FIXTURES.filter(fixture =>
+      fixture.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
 
-  function toggleExpanded(key) {
-    setExpandedSet(prev => {
+  const fixturesByCategory = useMemo(() => {
+    const grouped = {};
+    Object.keys(FIXTURE_CATEGORIES).forEach(cat => {
+      grouped[cat] = [];
+    });
+    filteredFixtures.forEach(fixture => {
+      if (fixture.category && grouped[fixture.category]) {
+        grouped[fixture.category].push(fixture);
+      }
+    });
+    return grouped;
+  }, [filteredFixtures]);
+
+  function toggleCategory(category) {
+    setExpandedCategories(prev => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      next.has(category) ? next.delete(category) : next.add(category);
       return next;
     });
   }
 
-  function handleVariantClick(fixture, variant, selectedBeam) {
-    const category = fixture.category;
-    const beamAngle = selectedBeam ||
-      (variant.beamOptions ? variant.beamOptions[0] : fixture.beam) || 36;
+  function handleFixtureClick(fixture) {
+    setSelectedFixture(fixture);
+    setShowConfigurator(true);
+  }
 
-    const vis = getFixtureVisuals(category, fixture.name);
-
-    onSelect({
-      id: crypto.randomUUID(),
-      category,
-      subcategory: fixture.subcategory,
-      name: fixture.name,
-      brand: fixture.brand ?? fixture.manufacturer ?? null,
-      manufacturer: fixture.manufacturer ?? null,
-      catalogNumber: fixture.catalogNumber ?? null,
-      source: fixture.source ?? null,
-      iesFile: fixture.iesFile ?? null,
-      watt: variant.watt || variant.watt_per_meter || 10,
-      lumens: variant.lumens || variant.lumens_per_meter || 1000,
-      beamAngle,
-      cri: fixture.cri || 80,
-      efficacy: variant.efficacy || 100,
-      mounting: fixture.mounting || 'Recessed',
-      protocol: 'NON-DIM',
-      fixtureShape: vis.fixtureShape,
-      fixtureColor: vis.fill,
-      fill:         vis.fill,
-      stroke:       vis.stroke,
-      glowColor:    vis.glowColor,
-      visualRadius: vis.visualRadius,
-      ...(variant.watt_per_meter && {
-        wattPerMeter: variant.watt_per_meter,
-        lumensPerMeter: variant.lumens_per_meter
-      }),
-      ...(variant.size && { size: variant.size })
-    });
+  function handleConfiguredFixture(config) {
+    onSelect(config);
+    setShowConfigurator(false);
+    setSelectedFixture(null);
   }
 
   return (
@@ -540,35 +118,29 @@ export function FixtureLibraryPanel({
           Fixture Library
         </div>
 
-        {/* STANDARD / BRANDED / IES tabs */}
+        {/* CONFIG button */}
         <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-          {['STANDARD', 'BRANDED', 'IES'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => { setLibraryTab(tab); setActiveCategory('ALL'); setSelectedBrand('ALL'); setSearchQuery(''); setExpandedSet(new Set()); }}
-              style={{
-                flex: 1, padding: '5px 8px',
-                background: libraryTab === tab ? 'rgba(212,168,67,0.1)' : 'transparent',
-                border: libraryTab === tab ? '1px solid #d4a843' : '1px solid #2a2a2a',
-                borderRadius: 5,
-                color: libraryTab === tab ? '#d4a843' : '#555555',
-                fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                letterSpacing: '0.03em', transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (libraryTab !== tab) {
-                  e.currentTarget.style.borderColor = '#444444';
-                  e.currentTarget.style.color = '#cccccc';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (libraryTab !== tab) {
-                  e.currentTarget.style.borderColor = '#2a2a2a';
-                  e.currentTarget.style.color = '#555555';
-                }
-              }}
-            >{tab}</button>
-          ))}
+          <button
+            onClick={() => { setSelectedFixture(null); setShowConfigurator(true); }}
+            style={{
+              flex: 0.8, padding: '5px 8px',
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              borderRadius: 5,
+              color: '#555555',
+              fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              letterSpacing: '0.03em', transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#444444';
+              e.currentTarget.style.color = '#cccccc';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#2a2a2a';
+              e.currentTarget.style.color = '#555555';
+            }}
+            title="Build a custom COB downlight"
+          >⚙ CONFIG</button>
         </div>
 
         {/* Search */}
@@ -580,101 +152,94 @@ export function FixtureLibraryPanel({
           style={{
             width: '100%', padding: '7px 10px', boxSizing: 'border-box',
             background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 5,
-            color: '#cccccc', fontSize: 12, outline: 'none', marginBottom: 10
+            color: '#cccccc', fontSize: 12, outline: 'none'
           }}
           onFocus={(e) => { e.currentTarget.style.borderColor = '#d4a843'; e.currentTarget.style.background = '#1e1e1e'; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.background = '#1a1a1a'; }}
         />
-
-        {/* Category pills */}
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '3px 8px',
-                background: activeCategory === cat ? 'rgba(212,168,67,0.1)' : 'transparent',
-                border: activeCategory === cat ? '1px solid #d4a843' : '1px solid #2a2a2a',
-                borderRadius: 4,
-                color: activeCategory === cat ? '#d4a843' : '#555555',
-                fontSize: 11, fontWeight: 500, cursor: 'pointer',
-                letterSpacing: '0.02em', transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (activeCategory !== cat) {
-                  e.currentTarget.style.borderColor = '#444444';
-                  e.currentTarget.style.color = '#cccccc';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeCategory !== cat) {
-                  e.currentTarget.style.borderColor = '#2a2a2a';
-                  e.currentTarget.style.color = '#555555';
-                }
-              }}
-            >
-              {categoryLabel(cat)}
-            </button>
-          ))}
-        </div>
-
-        {/* Brand pills — BRANDED tab only */}
-        {libraryTab === 'BRANDED' && (
-          <div style={{ marginTop: 10 }}>
-            <div style={{
-              fontSize: 10, fontWeight: 600, color: '#999999',
-              letterSpacing: '0.06em', marginBottom: 6
-            }}>
-              BRANDS
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {['ALL', ...Array.from(new Set(fixtureData.fixtures.map(f => f.brand).filter(Boolean)))].map(brand => (
-                <button
-                  key={brand}
-                  onClick={() => setSelectedBrand(brand)}
-                  style={{
-                    padding: '3px 8px',
-                    background: selectedBrand === brand ? '#d4a843' : 'transparent',
-                    border: '1px solid #d4a843',
-                    borderRadius: 4,
-                    color: selectedBrand === brand ? '#0a0a0a' : '#b8860b',
-                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                    letterSpacing: '0.02em', transition: 'all 0.15s ease',
-                    textTransform: 'uppercase'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (selectedBrand !== brand) e.currentTarget.style.background = '#1a1a1a';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedBrand !== brand) e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  {brand}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Fixture list */}
+      {/* Fixture list by category */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '8px 10px 12px' }}>
         {filteredFixtures.length === 0 ? (
           <div style={{ padding: '32px 20px', textAlign: 'center', color: '#999999', fontSize: 12 }}>
             No fixtures found
           </div>
         ) : (
-          filteredFixtures.map((fixture, idx) => {
-            const key = `${fixture.name}-${idx}`;
+          Object.keys(FIXTURE_CATEGORIES).map(category => {
+            const fixtures = fixturesByCategory[category];
+            if (fixtures.length === 0) return null;
+
             return (
-              <FixtureCard
-                key={key}
-                fixture={fixture}
-                isExpanded={expandedSet.has(key)}
-                onToggle={() => toggleExpanded(key)}
-                onVariantClick={handleVariantClick}
-              />
+              <div key={category} style={{ marginBottom: 12 }}>
+                {/* Category header */}
+                <button
+                  onClick={() => toggleCategory(category)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    background: getCategoryColor(category),
+                    border: 'none',
+                    borderRadius: 4,
+                    color: '#0a0a0a',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.85';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
+                >
+                  <span>{getCategoryLabel(category)} ({fixtures.length})</span>
+                  <span style={{ fontSize: 10 }}>{expandedCategories.has(category) ? '▼' : '▶'}</span>
+                </button>
+
+                {/* Fixtures in category */}
+                {expandedCategories.has(category) && (
+                  <div style={{ paddingLeft: 8, marginTop: 6 }}>
+                    {fixtures.map((fixture) => (
+                      <button
+                        key={fixture.id}
+                        onClick={() => handleFixtureClick(fixture)}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          padding: '6px 8px',
+                          marginBottom: 4,
+                          background: 'transparent',
+                          border: '1px solid #2a2a2a',
+                          borderRadius: 3,
+                          color: '#cccccc',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#1a1a1a';
+                          e.currentTarget.style.borderColor = '#d4a843';
+                          e.currentTarget.style.color = '#d4a843';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderColor = '#2a2a2a';
+                          e.currentTarget.style.color = '#cccccc';
+                        }}
+                      >
+                        {fixture.icon} {fixture.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })
         )}
@@ -687,8 +252,16 @@ export function FixtureLibraryPanel({
         flexShrink: 0
       }}>
         <span>{filteredFixtures.length} fixture{filteredFixtures.length !== 1 ? 's' : ''}</span>
-        <span>{filteredFixtures.reduce((acc, f) => acc + f.variants.length, 0)} variants</span>
       </div>
+
+      {/* Fixture Configurator Modal */}
+      {showConfigurator && (
+        <FixtureConfigurator
+          fixture={selectedFixture}
+          onAddFixture={handleConfiguredFixture}
+          onClose={() => { setShowConfigurator(false); setSelectedFixture(null); }}
+        />
+      )}
     </div>
   );
 }

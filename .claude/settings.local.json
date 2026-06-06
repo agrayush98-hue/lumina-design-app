@@ -58,7 +58,13 @@
       "Bash(node scripts/parse-ies-fixtures.js)",
       "Bash(node scripts/parse-ies-fixtures.cjs)",
       "Bash(node -e \"const d=require\\('./data/parsed-fixtures.json'\\); console.log\\(JSON.stringify\\(d[0], null, 2\\)\\)\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(node scripts/convert-ies-to-library.cjs)",
+      "Bash(node scripts/convert-scraped-to-library.cjs)",
+      "Bash(curl -s http://localhost:5173/)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs basename -a)",
+      "Bash(npm init *)"
     ]
   }
 }

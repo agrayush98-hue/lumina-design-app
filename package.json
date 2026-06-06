@@ -13,7 +13,10 @@
     "parse:ies": "node scripts/parse-ies-fixtures.cjs",
     "generate:ies": "node scripts/generate-ies-fixtures.cjs",
     "download:ies": "node scripts/download-ies-files.cjs",
-    "build:ies-lib": "node scripts/generate-ies-fixtures.cjs && node scripts/parse-ies-fixtures.cjs && node scripts/convert-ies-to-library.cjs"
+    "build:ies-lib": "node scripts/generate-ies-fixtures.cjs && node scripts/parse-ies-fixtures.cjs && node scripts/convert-ies-to-library.cjs",
+    "scrape:philips": "node scripts/scrape-philips.cjs",
+    "scrape:philips:debug": "node scripts/scrape-philips.cjs --limit 5 --debug",
+    "build:philips": "node scripts/scrape-philips.cjs && node scripts/convert-scraped-to-library.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",
@@ -36,6 +39,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.4.1",
+    "cheerio": "^1.2.0",
     "vite": "^5.4.2"
   }
 }

@@ -1,23 +1,24 @@
-IES Photometric Files
-=====================
+IES File Parser — Workflow
+==========================
 
-Place manufacturer IES files here before running the parser.
+This directory stores IESNA:LM-63 photometric data files downloaded from lighting manufacturers.
 
-Good sources (free downloads):
-  - https://ieslibrary.com               — large open archive
-  - https://www.dial.de/en/dialux/       — DIALux fixture library
-  - Philips: https://www.signify.com/en-in/support/photometric-data
-  - Osram:   https://www.osram.com/oe/photometric-data
-  - Tridonic: https://www.tridonic.com/en/products/photometric-data
-  - GE Current: https://www.gecurrent.com/support/product-documentation
+Workflow:
+1. Download .ies files from manufacturer websites (Philips, Osram, Eaton, etc.)
+2. Drop them into this directory
+3. Run: node scripts/parse-ies-fixtures.js
+4. Check data/parsed-fixtures.json for parsed output
+5. Merge fixtures into complete-fixture-library.json as needed
 
-After downloading, run:
-  node scripts/parse-ies-fixtures.js
+Example manufacturers:
+- Philips: downloads.lighting.philips.com
+- Osram: osram.com/os/en/products/
+- Eaton: eaton.com/en-us/catalog/electrical/
 
-Output will be written to: data/parsed-fixtures.json
+File Format:
+IESNA:LM-63-2002 text format containing:
+- Header keywords: [MANUFAC], [LUMCAT], [LUMINAIRE], [LAMP], [WATTAGE]
+- Photometric data: candela distribution by vertical and horizontal angles
+- Automatically parsed to extract lumens, beam angle, efficacy
 
-Tips:
-  - Rename files to something descriptive before parsing
-  - Supports IESNA LM-63-1986, LM-63-1991, LM-63-1995, LM-63-2002
-  - Files with TILT=INCLUDE (adjustable luminaires) are parsed but flagged
-  - The parser handles missing [WATTAGE] headers gracefully
+All specs extracted are category-level industry standards — NO brand names or model numbers are used in the output fixture library.

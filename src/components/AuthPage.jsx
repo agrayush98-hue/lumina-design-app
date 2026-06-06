@@ -1,18 +1,21 @@
 import { useState } from "react"
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, signOut } from "firebase/auth"
 import { auth } from "../firebase"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function AuthPage() {
   const { signup, login, resetPassword } = useAuth()
 
-  const [mode,     setMode]     = useState("login")   // "login" | "register" | "reset"
-  const [email,    setEmail]    = useState("")
-  const [password, setPassword] = useState("")
-  const [confirm,  setConfirm]  = useState("")
-  const [error,    setError]    = useState(null)
-  const [info,     setInfo]     = useState(null)
-  const [loading,  setLoading]  = useState(false)
+  const [mode,       setMode]       = useState("login")   // "login" | "register" | "reset"
+  const [email,      setEmail]      = useState("")
+  const [password,   setPassword]   = useState("")
+  const [confirm,    setConfirm]    = useState("")
+  const [error,      setError]      = useState(null)
+  const [info,       setInfo]       = useState(null)
+  const [loading,    setLoading]    = useState(false)
+  const [showReset,  setShowReset]  = useState(false)
+  const [resetEmail, setResetEmail] = useState("")
+  const [resetSent,  setResetSent]  = useState(false)
 
   const isRegister = mode === "register"
   const isReset    = mode === "reset"
@@ -50,13 +53,33 @@ export default function AuthPage() {
       if (isRegister) {
         // Uses AuthContext.signup() which calls _initUserDocs — sets up trial, Firestore doc, welcome email
         await signup(email, password)
+        if (auth.currentUser) {
+          await sendEmailVerification(auth.currentUser)
+          await signOut(auth)
+        }
+        setInfo("Verification email sent. Please verify before logging in.")
+        setMode("login")
       } else {
         await login(email, password)
+        if (!auth.currentUser?.emailVerified) {
+          await signOut(auth)
+          setError("Please verify your email first.")
+        }
       }
     } catch (err) {
       setError(friendlyError(err.code))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handlePasswordReset(e) {
+    e.preventDefault()
+    try {
+      await sendPasswordResetEmail(auth, resetEmail)
+      setResetSent(true)
+    } catch (err) {
+      // silently ignore — don't reveal whether email exists
     }
   }
 
@@ -214,7 +237,7 @@ export default function AuthPage() {
             <div style={{ textAlign: "right", marginBottom: 16 }}>
               <button
                 type="button"
-                onClick={() => switchMode("reset")}
+                onClick={() => { setResetEmail(""); setResetSent(false); setShowReset(true) }}
                 style={{ background: "none", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 9, cursor: "pointer", letterSpacing: "0.08em", padding: 0 }}
               >Forgot password?</button>
             </div>
@@ -325,6 +348,74 @@ export default function AuthPage() {
       <div style={{ marginTop: 20, fontSize: 9, color: "#1a2b3c", letterSpacing: "0.08em" }}>
         LUMINA DESIGN · LIGHTING CALCULATION TOOL
       </div>
+
+      {/* ── Password Reset Modal ──────────────────────────────────────────── */}
+      {showReset && (
+        <div style={{
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.75)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 200,
+        }} onClick={() => setShowReset(false)}>
+          <div style={{
+            width: 340,
+            background: "#0d1520",
+            border: "1px solid #1a2b3c",
+            borderRadius: 8,
+            overflow: "hidden",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+            fontFamily: "IBM Plex Mono",
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid #1a2b3c", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 10, color: "#39c5cf", letterSpacing: "0.12em" }}>RESET PASSWORD</div>
+              <button onClick={() => setShowReset(false)} style={{ background: "none", border: "none", color: "#2d4f68", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
+            </div>
+
+            {!resetSent ? (
+              <form onSubmit={handlePasswordReset} style={{ padding: "20px" }}>
+                <div style={{ marginBottom: 14, fontSize: 10, color: "#2d4f68", lineHeight: 1.6 }}>
+                  Enter your email and we'll send you a reset link.
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>EMAIL</label>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)}
+                    required
+                    autoFocus
+                    style={inputStyle}
+                  />
+                </div>
+                <button type="submit" style={{
+                  width: "100%", padding: "11px 0",
+                  background: "#0e2a3a", border: "1px solid #39c5cf",
+                  borderRadius: 4, color: "#39c5cf",
+                  fontFamily: "IBM Plex Mono", fontSize: 11, letterSpacing: "0.12em", cursor: "pointer",
+                }}>
+                  Send Reset Email
+                </button>
+              </form>
+            ) : (
+              <div style={{ padding: "28px 20px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 12 }}>✉️</div>
+                <div style={{ fontSize: 11, color: "#4ade80", marginBottom: 8 }}>Reset email sent!</div>
+                <div style={{ fontSize: 10, color: "#2d4f68", lineHeight: 1.6, marginBottom: 20 }}>
+                  Check your inbox for a password reset link.
+                </div>
+                <button onClick={() => setShowReset(false)} style={{
+                  padding: "9px 24px",
+                  background: "#0e2a3a", border: "1px solid #39c5cf",
+                  borderRadius: 4, color: "#39c5cf",
+                  fontFamily: "IBM Plex Mono", fontSize: 11, letterSpacing: "0.12em", cursor: "pointer",
+                }}>
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

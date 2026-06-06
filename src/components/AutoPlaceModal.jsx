@@ -1,450 +1,121 @@
-import { useState, useMemo } from 'react'
-import { SPACE_TYPES, LAYER_META, generateLightingDesign } from '../utils/lightingDesignEngine'
+import React, { useState, useMemo } from 'react'
+import { CONFIGURABLE_FIXTURES } from '../data/configurable-fixtures'
 
-const mono = { fontFamily: 'IBM Plex Mono, monospace' }
-
-// ── Tiny helpers ──────────────────────────────────────────────────────────────
-function Tag({ children, color = '#444444' }) {
-  return (
-    <span style={{
-      ...mono, fontSize: 7, padding: '2px 6px', borderRadius: 10,
-      border: `1px solid ${color}44`, color, letterSpacing: '0.06em',
-    }}>{children}</span>
-  )
+const ROOM_INTELLIGENCE_MAP = {
+  "Living Room": { targetLux: 150, cct: 2700, ugr: 22, ip: "IP20", spacing: 2.5, beam: 60, watt: 12 },
+  "Kitchen": { targetLux: 300, cct: 4000, ugr: 19, ip: "IP44", spacing: 1.8, beam: 36, watt: 15 },
+  "Bedroom": { targetLux: 100, cct: 2700, ugr: 25, ip: "IP20", spacing: 3.0, beam: 60, watt: 10 },
+  "Bathroom": { targetLux: 200, cct: 4000, ugr: 25, ip: "IP65", spacing: 2.0, beam: 45, watt: 12 },
+  "Office": { targetLux: 500, cct: 4000, ugr: 16, ip: "IP20", spacing: 1.5, beam: 36, watt: 20 },
+  "Corridor": { targetLux: 100, cct: 4000, ugr: 22, ip: "IP20", spacing: 3.5, beam: 60, watt: 10 },
+  "Dining Room": { targetLux: 200, cct: 3000, ugr: 19, ip: "IP20", spacing: 2.2, beam: 60, watt: 15 },
+  "Conference Room": { targetLux: 500, cct: 4000, ugr: 16, ip: "IP20", spacing: 1.5, beam: 36, watt: 20 },
+  "Retail": { targetLux: 750, cct: 4000, ugr: 19, ip: "IP20", spacing: 1.2, beam: 36, watt: 25 },
+  "Museum": { targetLux: 300, cct: 3000, ugr: 19, ip: "IP20", spacing: 2.0, beam: 45, watt: 12 },
+  "Hospital Room": { targetLux: 500, cct: 4000, ugr: 16, ip: "IP44", spacing: 1.5, beam: 36, watt: 18 },
+  "Laboratory": { targetLux: 750, cct: 5000, ugr: 16, ip: "IP20", spacing: 1.2, beam: 36, watt: 25 },
+  "Production": { targetLux: 500, cct: 5000, ugr: 22, ip: "IP54", spacing: 1.8, beam: 45, watt: 20 },
+  "Warehouse": { targetLux: 200, cct: 5000, ugr: 25, ip: "IP65", spacing: 3.0, beam: 60, watt: 15 },
 }
 
-function StepDot({ n, label, active, done }) {
-  const col = done ? '#3dba74' : active ? '#d4a843' : '#444444'
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{
-        width: 22, height: 22, borderRadius: '50%', display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        background: done ? '#0e2018' : active ? '#1e1800' : '#0d0d0d',
-        border: `2px solid ${col}`,
-        ...mono, fontSize: 10, fontWeight: 700, color: col, flexShrink: 0,
-      }}>{done ? '✓' : n}</div>
-      <span style={{ ...mono, fontSize: 9, color: col, letterSpacing: '0.06em' }}>{label}</span>
-    </div>
-  )
+const PURPOSE_OPTIONS = [
+  { id: 'ambient', label: 'Ambient', icon: '💡' },
+  { id: 'task', label: 'Task', icon: '🎯' },
+  { id: 'accent', label: 'Accent', icon: '✨' },
+  { id: 'wall-wash', label: 'Wall Wash', icon: '🌊' },
+  { id: 'mood', label: 'Mood', icon: '🎨' },
+]
+
+const CATEGORY_OPTIONS = [
+  { id: 'cob-downlight', label: 'COB Downlight' },
+  { id: 'smd-downlight', label: 'SMD Downlight' },
+  { id: 'spotlight', label: 'Spotlight' },
+  { id: 'panel-light', label: 'Panel Light' },
+  { id: 'track-light', label: 'Track Light' },
+  { id: 'linear', label: 'Linear' },
+  { id: 'auto', label: 'Auto Recommend' },
+]
+
+const PURPOSE_TO_CATEGORY = {
+  'ambient': ['cob-downlight', 'smd-downlight', 'panel-light'],
+  'task': ['cob-downlight', 'spotlight', 'panel-light'],
+  'accent': ['spotlight', 'track-light'],
+  'wall-wash': ['track-light', 'linear'],
+  'mood': ['linear', 'spotlight'],
 }
 
-function LayerCard({ layer }) {
-  const meta = LAYER_META[layer.type] || LAYER_META.ambient
-  const isStrip = layer.type === 'cove' || layer.type === 'task'
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 12,
-      padding: '10px 14px', borderRadius: 5,
-      background: `${meta.color}0a`,
-      border: `1px solid ${meta.color}30`,
-    }}>
-      <div style={{
-        width: 32, height: 32, borderRadius: 4, flexShrink: 0,
-        background: `${meta.color}18`, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        fontSize: 16, color: meta.color,
-      }}>{meta.icon}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-          <span style={{ ...mono, fontSize: 9, fontWeight: 700, color: meta.color, letterSpacing: '0.06em' }}>
-            {layer.label}
-          </span>
-          <span style={{ ...mono, fontSize: 7, color: '#444444', padding: '1px 5px', border: '1px solid #222222', borderRadius: 3 }}>
-            {meta.label.toUpperCase()}
-          </span>
-        </div>
-        {isStrip ? (
-          <div style={{ ...mono, fontSize: 9, color: '#8abfd4' }}>
-            {layer.wattPerMeter} W/m · perimeter strip
-          </div>
-        ) : (
-          <div style={{ ...mono, fontSize: 9, color: '#8abfd4' }}>
-            {layer.fixture?.name} · {layer.watt}W · {layer.beamAngle}° beam
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+export default function AutoPlaceModal({ room = {}, ceilingHeight = 2700, roomArea_m2 = 0, onPlace, onClose }) {
+  const [step, setStep] = useState(1)
+  const [selectedPurposes, setSelectedPurposes] = useState(new Set(['ambient']))
+  const [selectedCategory, setSelectedCategory] = useState('auto')
 
-// ── Step 1: Space type ────────────────────────────────────────────────────────
-function StepSpace({ selected, onSelect }) {
-  const categories = [...new Set(SPACE_TYPES.map(s => s.category))]
-  return (
-    <div>
-      <div style={{ ...mono, fontSize: 9, color: '#ffffff', marginBottom: 14, letterSpacing: '0.1em' }}>
-        SELECT SPACE TYPE — we'll design a full lighting scheme for it
-      </div>
-      {categories.map(cat => (
-        <div key={cat} style={{ marginBottom: 16 }}>
-          <div style={{ ...mono, fontSize: 8, color: '#444444', letterSpacing: '0.12em', marginBottom: 8 }}>
-            {cat.toUpperCase()}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-            {SPACE_TYPES.filter(s => s.category === cat).map(s => {
-              const isSel = selected === s.id
-              return (
-                <div key={s.id} onClick={() => onSelect(s.id)} style={{
-                  padding: '12px 8px', borderRadius: 5, cursor: 'pointer', textAlign: 'center',
-                  background: isSel ? '#111111' : '#0a0a0a',
-                  border: `1px solid ${isSel ? '#d4a843' : '#222222'}`,
-                  transition: 'all 0.12s',
-                  boxShadow: isSel ? '0 0 0 1px #d4a84330' : 'none',
-                }}>
-                  <div style={{ fontSize: 22, marginBottom: 5, lineHeight: 1 }}>{s.icon}</div>
-                  <div style={{ ...mono, fontSize: 9, fontWeight: isSel ? 700 : 400, color: isSel ? '#d4a843' : '#6a8aaa', letterSpacing: '0.05em', marginBottom: 3 }}>
-                    {s.name}
-                  </div>
-                  <div style={{ ...mono, fontSize: 7, color: '#444444' }}>{s.targetLux} lx · {s.cct}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-
-      {selected && (() => {
-        const space = SPACE_TYPES.find(s => s.id === selected)
-        return (
-          <div style={{
-            marginTop: 4, padding: '12px 16px', borderRadius: 5,
-            background: '#0d0d0d', border: '1px solid #222222',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <span style={{ fontSize: 28, lineHeight: 1 }}>{space.icon}</span>
-              <div>
-                <div style={{ ...mono, fontSize: 11, fontWeight: 700, color: '#d4a843', marginBottom: 4 }}>
-                  {space.name}
-                </div>
-                <div style={{ ...mono, fontSize: 9, color: '#8abfd4', lineHeight: 1.6, marginBottom: 8 }}>
-                  {space.description}
-                </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {space.tags.map(t => <Tag key={t} color='#ffffff'>{t}</Tag>)}
-                  <Tag color='#3dba74'>{space.standard}</Tag>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-    </div>
-  )
-}
-
-// ── Step 2: Room config ───────────────────────────────────────────────────────
-function StepRoom({ space, roomW, roomL, ceilH, onChangeW, onChangeL, onChangeCeilH }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 24 }}>
-      {/* Inputs */}
-      <div>
-        <div style={{ ...mono, fontSize: 9, color: '#ffffff', marginBottom: 16, letterSpacing: '0.1em' }}>
-          ROOM DIMENSIONS
-        </div>
-        {[
-          { label: 'WIDTH',           val: roomW,  set: onChangeW,    unit: 'm', min: 1, max: 100, step: 0.5 },
-          { label: 'LENGTH',          val: roomL,  set: onChangeL,    unit: 'm', min: 1, max: 100, step: 0.5 },
-          { label: 'CEILING HEIGHT',  val: ceilH,  set: onChangeCeilH,unit: 'm', min: 2, max: 12,  step: 0.1 },
-        ].map(({ label, val, set, unit, min, max, step }) => (
-          <div key={label} style={{ marginBottom: 14 }}>
-            <div style={{ ...mono, fontSize: 8, color: '#444444', marginBottom: 5, letterSpacing: '0.08em' }}>{label}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input
-                type="number" value={val} min={min} max={max} step={step}
-                onChange={e => set(parseFloat(e.target.value) || 0)}
-                style={{
-                  ...mono, width: 90, fontSize: 14, fontWeight: 700,
-                  background: '#0d0d0d', color: '#cccccc',
-                  border: '1px solid #222222', borderRadius: 3, padding: '6px 10px',
-                }}
-              />
-              <span style={{ ...mono, fontSize: 10, color: '#ffffff' }}>{unit}</span>
-            </div>
-          </div>
-        ))}
-
-        {/* Room summary */}
-        <div style={{
-          marginTop: 8, padding: '10px 12px', borderRadius: 4,
-          background: '#0d0d0d', border: '1px solid #222222',
-        }}>
-          <div style={{ ...mono, fontSize: 8, color: '#444444', marginBottom: 6, letterSpacing: '0.08em' }}>ROOM SUMMARY</div>
-          {[
-            ['Area',  `${(roomW * roomL).toFixed(1)} m²`],
-            ['RCR',   (() => {
-              const ri = (roomW * roomL) / (ceilH * (roomW + roomL))
-              return `${(5 / ri).toFixed(2)}`
-            })()],
-            ['Target', `${space.targetLux} lx (${space.standard})`],
-            ['CCT',    `${space.cct} · CRI ${space.cri}+`],
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ ...mono, fontSize: 8, color: '#444444' }}>{k}</span>
-              <span style={{ ...mono, fontSize: 8, color: '#6a8aaa' }}>{v}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Design brief */}
-      <div>
-        <div style={{ ...mono, fontSize: 9, color: '#ffffff', marginBottom: 16, letterSpacing: '0.1em' }}>
-          LIGHTING DESIGN BRIEF — {space.name.toUpperCase()}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {space.layers.map((layer, i) => (
-            <LayerCard key={i} layer={layer} />
-          ))}
-        </div>
-        <div style={{
-          marginTop: 14, padding: '10px 14px', borderRadius: 4,
-          background: '#0d0d0d', border: '1px solid #222222',
-        }}>
-          <div style={{ ...mono, fontSize: 8, color: '#444444', marginBottom: 6, letterSpacing: '0.08em' }}>WHY THIS SCHEME?</div>
-          <div style={{ ...mono, fontSize: 9, color: '#8abfd4', lineHeight: 1.7 }}>
-            {space.description}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Step 3: Preview ───────────────────────────────────────────────────────────
-function StepPreview({ design, space }) {
-  if (!design) return null
-  const { layers, totalW, estimatedLux, compliance, complianceColor, area } = design
-
-  return (
-    <div>
-      {/* Summary hero */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 20,
-        padding: '16px 20px', borderRadius: 6,
-        background: '#0d0d0d', border: '1px solid #222222',
-      }}>
-        {[
-          { label: 'EST. AVERAGE LUX', val: `${estimatedLux}`, unit: 'lx', color: '#d4a843' },
-          { label: 'TARGET LUX',       val: `${space.targetLux}`, unit: 'lx', color: '#ffffff' },
-          { label: 'TOTAL LOAD',       val: `${totalW}`, unit: 'W', color: '#6ae5ff' },
-          { label: 'COVERAGE',         val: `${area.toFixed(1)}`, unit: 'm²', color: '#a78bfa' },
-        ].map(({ label, val, unit, color }) => (
-          <div key={label}>
-            <div style={{ ...mono, fontSize: 7, color: '#444444', letterSpacing: '0.1em', marginBottom: 4 }}>{label}</div>
-            <div style={{ ...mono, fontSize: 26, fontWeight: 700, color, lineHeight: 1 }}>
-              {val} <span style={{ fontSize: 11, fontWeight: 400 }}>{unit}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Compliance badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <div style={{
-          padding: '5px 14px', borderRadius: 14,
-          background: `${complianceColor}18`, border: `1px solid ${complianceColor}55`,
-          ...mono, fontSize: 10, fontWeight: 700, color: complianceColor, letterSpacing: '0.1em',
-        }}>
-          {compliance === 'COMPLIANT' ? '✓' : compliance === 'OVERLIT' ? '⚠' : '✗'} {compliance}
-        </div>
-        <span style={{ ...mono, fontSize: 9, color: '#444444' }}>
-          {compliance === 'COMPLIANT' ? `Meets ${space.standard}` :
-           compliance === 'OVERLIT'   ? 'Above target — consider dimming' :
-           compliance === 'ACCEPTABLE'? 'Within ±20% of target' :
-                                        `Below ${space.targetLux} lx target — add fixtures`}
-        </span>
-      </div>
-
-      {/* Layer breakdown */}
-      <div style={{ ...mono, fontSize: 9, color: '#ffffff', marginBottom: 12, letterSpacing: '0.1em' }}>
-        LAYER BREAKDOWN — {layers.length} layer{layers.length !== 1 ? 's' : ''}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-        {layers.map((layer, i) => {
-          const meta = LAYER_META[layer.type] || LAYER_META.ambient
-          const isStrip = layer.type === 'cove' || layer.type === 'task'
-          const luxContrib = Math.round((layer.actualLm * design.UF * design.MF) / area)
-          const pct = Math.round((layer.totalW / totalW) * 100)
-          return (
-            <div key={i} style={{
-              padding: '12px 16px', borderRadius: 5,
-              background: `${meta.color}08`, border: `1px solid ${meta.color}28`,
-              display: 'grid', gridTemplateColumns: '28px 1fr auto auto auto', gap: 12, alignItems: 'center',
-            }}>
-              <div style={{ fontSize: 18, color: meta.color, textAlign: 'center' }}>{meta.icon}</div>
-              <div>
-                <div style={{ ...mono, fontSize: 10, fontWeight: 700, color: meta.color, marginBottom: 2 }}>
-                  {layer.label}
-                </div>
-                {isStrip ? (
-                  <div style={{ ...mono, fontSize: 8, color: '#6a8aaa' }}>
-                    {layer.lenM?.toFixed(1)} m · {layer.wattPerMeter} W/m
-                  </div>
-                ) : (
-                  <div style={{ ...mono, fontSize: 8, color: '#6a8aaa' }}>
-                    {layer.fixture?.name} · {layer.watt}W · {layer.beamAngle}° beam
-                  </div>
-                )}
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ ...mono, fontSize: 14, fontWeight: 700, color: '#cccccc' }}>
-                  {isStrip ? `${layer.lenM?.toFixed(1)}m` : layer.count}
-                </div>
-                <div style={{ ...mono, fontSize: 7, color: '#444444' }}>{isStrip ? 'strip' : 'fixtures'}</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ ...mono, fontSize: 14, fontWeight: 700, color: '#6ae5ff' }}>~{luxContrib}</div>
-                <div style={{ ...mono, fontSize: 7, color: '#444444' }}>lx contrib</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ ...mono, fontSize: 14, fontWeight: 700, color: '#a78bfa' }}>{Math.round(layer.totalW)}W</div>
-                <div style={{ ...mono, fontSize: 7, color: '#444444' }}>{pct}% load</div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Standards note */}
-      <div style={{ ...mono, fontSize: 8, color: '#444444', padding: '8px 12px', border: '1px solid #1a1a1a', borderRadius: 3 }}>
-        Calculation: Lumen Method · UF 0.65 · MF 0.80 · {space.standard} · CCT {space.cct} · CRI {space.cri}+
-      </div>
-    </div>
-  )
-}
-
-// ── Main modal ────────────────────────────────────────────────────────────────
-export default function AutoPlaceModal({
-  onPlace, onClose,
-  roomW_m: defaultW, roomL_m: defaultL,
-  ceilingHeight,
-  roomX, roomY, roomPxW, roomPxH, pxPerMeter,
-}) {
-  const [step, setStep]   = useState(1)
-  const [spaceId, setSpaceId] = useState(null)
-  const [roomW,   setRoomW]   = useState(defaultW || 6)
-  const [roomL,   setRoomL]   = useState(defaultL || 4)
-  const [ceilH,   setCeilH]   = useState((ceilingHeight || 2700) / 1000)
-
-  const space  = SPACE_TYPES.find(s => s.id === spaceId)
-
-  const design = useMemo(() => {
-    if (!space) return null
-    return generateLightingDesign(
-      space, roomW, roomL, ceilH,
-      roomX, roomY, roomPxW, roomPxH, pxPerMeter
-    )
-  }, [space, roomW, roomL, ceilH, roomX, roomY, roomPxW, roomPxH, pxPerMeter])
-
-  const STEPS = ['SPACE', 'ROOM', 'DESIGN']
-
-  const handleNext = () => {
-    if (step === 1 && !spaceId) return
-    if (step < 3) setStep(step + 1)
+  const togglePurpose = (id) => {
+    const updated = new Set(selectedPurposes)
+    if (updated.has(id)) {
+      if (updated.size > 1) updated.delete(id)
+    } else {
+      updated.add(id)
+    }
+    setSelectedPurposes(updated)
   }
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1)
-  }
+  const recommendedFixture = useMemo(() => {
+    if (selectedCategory === 'auto') {
+      const purposes = Array.from(selectedPurposes)
+      const recommendedCats = new Set()
+      purposes.forEach(p => {
+        const cats = PURPOSE_TO_CATEGORY[p] || []
+        cats.forEach(c => recommendedCats.add(c))
+      })
+      const cats = Array.from(recommendedCats)
+      const fixtureId = cats.length > 0 ? cats[0] : 'cob-downlight'
+      return CONFIGURABLE_FIXTURES.find(f => f.id === fixtureId)
+    }
+    return CONFIGURABLE_FIXTURES.find(f => f.id === selectedCategory)
+  }, [selectedPurposes, selectedCategory])
+
+  const preview = useMemo(() => {
+    if (!recommendedFixture) return null
+    const roomType = room.roomType || 'Living Room'
+    const intel = ROOM_INTELLIGENCE_MAP[roomType] || ROOM_INTELLIGENCE_MAP['Living Room']
+    const spacing = intel.spacing, targetLux = intel.targetLux
+    const powerOptions = recommendedFixture.powerOptions || [12, 15, 20]
+    let wattage = ceilingHeight < 2500 ? powerOptions[0] : ceilingHeight > 3500 ? powerOptions[powerOptions.length - 1] : powerOptions[Math.floor(powerOptions.length / 2)]
+    const beamOptions = recommendedFixture.beamOptions || [{ angle: 36 }, { angle: 60 }]
+    let beamAngle = selectedPurposes.has('accent') ? (beamOptions[0]?.angle || 36) : selectedPurposes.has('wall-wash') ? (beamOptions[beamOptions.length - 1]?.angle || 60) : (beamOptions[Math.floor(beamOptions.length / 2)]?.angle || 45)
+    const quantity = Math.ceil(Math.sqrt(roomArea_m2) / spacing)
+    const defaultChip = recommendedFixture.chipOptions ? recommendedFixture.chipOptions[0] : null
+    const lumens = recommendedFixture.calculateLumens ? recommendedFixture.calculateLumens(wattage, defaultChip) : wattage * 100
+    const MAINT_FACTOR = 0.8, UF = 0.75, totalLumens = lumens * quantity
+    const estimatedLux = roomArea_m2 > 0 ? Math.round((totalLumens * UF * MAINT_FACTOR) / roomArea_m2) : 0
+    const compliant = estimatedLux >= targetLux
+    return { fixture: recommendedFixture, wattage, beamAngle, quantity, lumens, spacing, targetLux, estimatedLux, compliant }
+  }, [recommendedFixture, selectedPurposes, ceilingHeight, room.roomType, roomArea_m2])
 
   const handlePlace = () => {
-    if (!design || !space) return
-    onPlace({ layers: design.layers, space, pxPerMeter })
+    if (preview && onPlace) {
+      onPlace({ fixture: preview.fixture, wattage: preview.wattage, beamAngle: preview.beamAngle, quantity: preview.quantity, purposes: Array.from(selectedPurposes) })
+    }
+    onClose?.()
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.80)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-    }} onClick={onClose}>
-      <div style={{
-        background: '#0a0a0a', border: '1px solid #222222', borderRadius: 8,
-        width: 800, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.9)',
-      }} onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 24px', borderBottom: '1px solid #222222', flexShrink: 0,
-        }}>
-          <div>
-            <div style={{ ...mono, fontSize: 13, fontWeight: 700, color: '#d4a843', letterSpacing: '0.1em', marginBottom: 6 }}>
-              ⚡ SMART LIGHTING DESIGN
-            </div>
-            {/* Step indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {STEPS.map((s, i) => (
-                <>
-                  <StepDot key={s} n={i+1} label={s} active={step === i+1} done={step > i+1} />
-                  {i < STEPS.length - 1 && (
-                    <div key={`line-${i}`} style={{ width: 28, height: 1, background: step > i+1 ? '#3dba74' : '#222222' }} />
-                  )}
-                </>
-              ))}
-            </div>
-          </div>
-          <button onClick={onClose} style={{
-            ...mono, background: 'transparent', border: 'none', color: '#ffffff', fontSize: 18, cursor: 'pointer', lineHeight: 1,
-          }}>✕</button>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ backgroundColor: '#0f0f0f', border: '1px solid #2a2a2a', borderRadius: '8px', width: '500px', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', fontFamily: 'IBM Plex Mono', color: '#cdd9e5' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#d4a843', letterSpacing: '1px', textTransform: 'uppercase' }}>Auto Place Fixtures</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '18px', color: '#666', cursor: 'pointer', padding: '0' }}>X</button>
         </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
-          {step === 1 && <StepSpace selected={spaceId} onSelect={setSpaceId} />}
-          {step === 2 && space && (
-            <StepRoom
-              space={space}
-              roomW={roomW} roomL={roomL} ceilH={ceilH}
-              onChangeW={setRoomW} onChangeL={setRoomL} onChangeCeilH={setCeilH}
-            />
-          )}
-          {step === 3 && design && <StepPreview design={design} space={space} />}
+        <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+          {step === 1 && (<div><div style={{ fontSize: '12px', color: '#d4a843', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Step 1: Lighting Purpose</div><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>{PURPOSE_OPTIONS.map(p => (<button key={p.id} onClick={() => togglePurpose(p.id)} style={{ padding: '16px', backgroundColor: selectedPurposes.has(p.id) ? 'rgba(212,168,67,0.15)' : '#1a1a1a', border: selectedPurposes.has(p.id) ? '1px solid #d4a843' : '1px solid #2a2a2a', borderRadius: '6px', color: selectedPurposes.has(p.id) ? '#d4a843' : '#cdd9e5', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'IBM Plex Mono', textAlign: 'center' }}><div style={{ fontSize: '18px', marginBottom: '6px' }}>{p.icon}</div><div>{p.label}</div></button>))}</div></div>)}
+          {step === 2 && (<div><div style={{ fontSize: '12px', color: '#d4a843', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Step 2: Fixture Category</div><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>{CATEGORY_OPTIONS.map(c => (<button key={c.id} onClick={() => setSelectedCategory(c.id)} style={{ padding: '12px', backgroundColor: selectedCategory === c.id ? 'rgba(212,168,67,0.15)' : '#1a1a1a', border: selectedCategory === c.id ? '1px solid #d4a843' : '1px solid #2a2a2a', borderRadius: '4px', color: selectedCategory === c.id ? '#d4a843' : '#cdd9e5', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'IBM Plex Mono', textAlign: 'left' }}>{c.label}</button>))}</div></div>)}
+          {step === 3 && preview && (<div><div style={{ fontSize: '12px', color: '#d4a843', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Step 3: Review & Place</div><div style={{ backgroundColor: '#1a1a1a', padding: '16px', borderRadius: '6px', border: '1px solid #2a2a2a', marginBottom: '16px' }}><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '12px' }}><div><div style={{ color: '#666', marginBottom: '4px' }}>Fixture</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.fixture.name}</div></div><div><div style={{ color: '#666', marginBottom: '4px' }}>Wattage</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.wattage}W</div></div><div><div style={{ color: '#666', marginBottom: '4px' }}>Beam</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.beamAngle}°</div></div><div><div style={{ color: '#666', marginBottom: '4px' }}>Qty</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.quantity}</div></div><div><div style={{ color: '#666', marginBottom: '4px' }}>Spacing</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.spacing.toFixed(1)}m</div></div><div><div style={{ color: '#666', marginBottom: '4px' }}>Lumens</div><div style={{ color: '#d4a843', fontWeight: 600 }}>{preview.lumens}</div></div></div></div><div style={{ backgroundColor: '#111', padding: '12px', borderRadius: '6px', border: '1px solid ' + (preview.compliant ? '#3dba74' : '#ff6b6b'), marginBottom: '16px' }}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '8px' }}><span style={{ color: '#666' }}>Target</span><span>{preview.targetLux}lx</span></div><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span style={{ color: '#666' }}>Est</span><span style={{ color: preview.compliant ? '#3dba74' : '#ff6b6b', fontWeight: 600 }}>{preview.estimatedLux}lx {preview.compliant ? 'OK' : 'LOW'}</span></div></div></div>)}
         </div>
-
-        {/* Footer */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 24px', borderTop: '1px solid #222222', flexShrink: 0,
-          background: '#0a0a0a',
-        }}>
-          <div style={{ ...mono, fontSize: 8, color: '#444444' }}>
-            {step === 1 && 'Select a space type to continue'}
-            {step === 2 && space && `${space.name} · ${space.layers.length} lighting layers`}
-            {step === 3 && design && `${design.layers.reduce((s,l)=>s+(l.count||0),0)} fixtures + strips · ${design.totalW} W total`}
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {step > 1 && (
-              <button onClick={handleBack} style={{
-                ...mono, padding: '8px 18px', background: 'transparent',
-                color: '#ffffff', border: '1px solid #222222', borderRadius: 4, cursor: 'pointer', fontSize: 10,
-              }}>← BACK</button>
-            )}
-            <button onClick={onClose} style={{
-              ...mono, padding: '8px 18px', background: 'transparent',
-              color: '#ffffff', border: '1px solid #222222', borderRadius: 4, cursor: 'pointer', fontSize: 10,
-            }}>CANCEL</button>
-            {step < 3 ? (
-              <button
-                onClick={handleNext}
-                disabled={step === 1 && !spaceId}
-                style={{
-                  ...mono, padding: '8px 22px', fontSize: 10, fontWeight: 700,
-                  background: (step === 1 && !spaceId) ? '#1a1a1a' : '#d4a843',
-                  color:      (step === 1 && !spaceId) ? '#444444' : '#0f0f0f',
-                  border: 'none', borderRadius: 4,
-                  cursor: (step === 1 && !spaceId) ? 'default' : 'pointer',
-                }}
-              >NEXT →</button>
-            ) : (
-              <button onClick={handlePlace} style={{
-                ...mono, padding: '8px 24px', fontSize: 10, fontWeight: 700,
-                background: '#d4a843', color: '#0f0f0f',
-                border: 'none', borderRadius: 4, cursor: 'pointer',
-              }}>⚡ PLACE DESIGN</button>
-            )}
-          </div>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid #2a2a2a', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          {step > 1 && <button onClick={() => setStep(step - 1)} style={{ padding: '8px 16px', backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a', color: '#cdd9e5', cursor: 'pointer', borderRadius: '4px', fontSize: '12px', fontWeight: 600, fontFamily: 'IBM Plex Mono' }}>BACK</button>}
+          <button onClick={onClose} style={{ padding: '8px 16px', backgroundColor: '#1a1a1a', border: '1px solid #2a2a2a', color: '#cdd9e5', cursor: 'pointer', borderRadius: '4px', fontSize: '12px', fontWeight: 600, fontFamily: 'IBM Plex Mono' }}>CANCEL</button>
+          {step < 3 && <button onClick={() => setStep(step + 1)} style={{ padding: '8px 16px', backgroundColor: '#d4a843', border: 'none', color: '#000', cursor: 'pointer', borderRadius: '4px', fontSize: '12px', fontWeight: 700, fontFamily: 'IBM Plex Mono' }}>NEXT</button>}
+          {step === 3 && <button onClick={handlePlace} style={{ padding: '8px 16px', backgroundColor: '#d4a843', border: 'none', color: '#000', cursor: 'pointer', borderRadius: '4px', fontSize: '12px', fontWeight: 700, fontFamily: 'IBM Plex Mono' }}>PLACE</button>}
         </div>
       </div>
     </div>

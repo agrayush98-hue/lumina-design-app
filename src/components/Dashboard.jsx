@@ -45,36 +45,18 @@ const PLANS = [
   {
     id: "pro",
     name: "PRO",
-    price: "₹999",
+    price: "₹500",
     period: "/month",
     features: [
-      { text: "10 projects",                      highlight: true },
-      { text: "5 rooms per project",              highlight: true },
-      { text: "50 AI calls / month",              highlight: true },
-      { text: "PDF + Excel export",               highlight: true },
-      { text: "Floor plan upload",                highlight: true },
-      { text: "DALI 2.0 planning",               highlight: true },
-      { text: "Heatmap + beam analysis",         highlight: true },
-      { text: "All standard fixtures",            highlight: true },
-      { text: "Email support",                    highlight: false },
+      { text: "Floor plan upload" },
+      { text: "DALI 2.0 addressing" },
+      { text: "PDF + Excel export" },
+      { text: "Unlimited projects" },
+      { text: "Unlimited rooms" },
+      { text: "Heatmap + beam angles" },
+      { text: "All fixtures" },
     ],
-    amountPaise: 99900,
-  },
-  {
-    id: "professional",
-    name: "PROFESSIONAL",
-    price: "₹1,499",
-    period: "/month",
-    features: [
-      { text: "Unlimited projects & rooms",             highlight: true },
-      { text: "200 AI calls / month",                   highlight: true },
-      { text: "PDF + Excel export",                     highlight: true },
-      { text: "Floor plan upload",                      highlight: true },
-      { text: "DALI 2.0 planning",                      highlight: true },
-      { text: "Branded fixtures (Philips/Havells/Wipro)", highlight: true },
-      { text: "Priority email support",                 highlight: true },
-    ],
-    amountPaise: 149900,
+    amountPaise: 50000,
   },
 ]
 
@@ -155,10 +137,9 @@ function ProjectsTab({ user, setTab }) {
   const [trialDays,  setTrialDays]  = useState(null)
   const sub        = userDoc?.subscription
   const isPro      = sub?.status === 'active' && sub?.plan === 'pro'
-  const isProfessional = sub?.status === 'active' && sub?.plan === 'professional'
-  const isPaid     = isPro || isProfessional
-  const projectLimit = isProfessional ? Infinity : isPro ? 10 : 3
-  const aiLimit      = isProfessional ? 200 : isPro ? 50 : 5  // free/trial: 5 calls/month
+  const isPaid     = isPro
+  const projectLimit = isPro ? Infinity : 3
+  const aiLimit      = isPro ? Infinity : 5  // free/trial: 5 calls/month
   const aiUsed       = userDoc?.aiUsage?.thisMonth ?? 0
 
   useEffect(() => {
@@ -229,10 +210,6 @@ function ProjectsTab({ user, setTab }) {
     planStatValue = "PRO"
     planStatLabel = "PLAN ACTIVE"
     planStatColor = "#d4a843"
-  } else if (isProfessional) {
-    planStatValue = "PRO+"
-    planStatLabel = "PLAN ACTIVE"
-    planStatColor = "#d4a843"
   } else if (trialDays != null && trialDays > 0) {
     planStatValue = Math.max(0, trialDays)
     planStatLabel = "TRIAL DAYS LEFT"
@@ -272,8 +249,8 @@ function ProjectsTab({ user, setTab }) {
             </div>
             <div className="dash-stat-divider" />
             <div className="dash-stat">
-              <div className="dash-stat-value" style={{ color: aiUsed >= aiLimit ? "#ef4444" : "#4ade80" }}>
-                {Math.max(0, aiLimit - aiUsed)}
+              <div className="dash-stat-value" style={{ color: "#4ade80" }}>
+                {isPro ? "Unlimited" : Math.max(0, aiLimit - aiUsed)}
               </div>
               <div className="dash-stat-label">AI Calls Left</div>
             </div>
@@ -568,7 +545,7 @@ function ProjectsTab({ user, setTab }) {
                   <BadgeCheck size={16} color="#d4a843" strokeWidth={1.5} />
                   <div>
                     <div className="dash-pro-active-title">
-                      {isProfessional ? "YOU'RE ON PROFESSIONAL" : "YOU'RE ON PRO"}
+                      YOU'RE ON PRO
                     </div>
                     <div className="dash-pro-active-sub">All features unlocked</div>
                   </div>

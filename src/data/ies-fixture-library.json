@@ -2,7 +2,7 @@
   "metadata": {
     "version": "1.0",
     "totalFixtures": 18,
-    "lastUpdated": "2026-05-20",
+    "lastUpdated": "2026-05-21",
     "description": "IES photometric fixtures — LM-63 parsed data"
   },
   "fixtures": [
@@ -166,7 +166,7 @@
       "iesFile": "synth-ledstrip-9w-per-meter.ies",
       "source": "ies",
       "description": "LED Strip Cove 9W/m 3000K 120° Beam",
-      "mounting": "Recessed",
+      "mounting": "Surface",
       "cri": 80,
       "cct": [
         "3000K"
@@ -196,7 +196,7 @@
       "iesFile": "synth-linear-batten-24w.ies",
       "source": "ies",
       "description": "LED Linear Batten 24W 3000K 600mm",
-      "mounting": "Recessed",
+      "mounting": "Surface",
       "cri": 80,
       "cct": [
         "3000K"
@@ -226,7 +226,7 @@
       "iesFile": "synth-linear-batten-36w.ies",
       "source": "ies",
       "description": "LED Linear Batten 36W 4000K 1200mm",
-      "mounting": "Recessed",
+      "mounting": "Surface",
       "cri": 80,
       "cct": [
         "4000K"
