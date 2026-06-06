@@ -1,4 +1,7 @@
-import { useState } from "react"
+jsx = open('design-reference/phase1-auth.html', encoding='utf-8').read()
+
+# Write a minimal working AuthPage that loads the Stitch design via iframe-like approach
+content = '''import { useState } from "react"
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, signOut } from "firebase/auth"
 import { auth } from "../firebase"
 import { useAuth } from "../contexts/AuthContext"
@@ -69,7 +72,7 @@ export default function AuthPage() {
     right: { flex:1, display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", padding:32, background:"#111", position:"relative" },
     card: { width:"100%", maxWidth:420, background:"#1a1a1a", border:"1px solid #222", padding:32 },
     tabs: { display:"flex", borderBottom:"1px solid #222", marginBottom:32 },
-    tab: (active) => ({ flex:1, padding:"12px 0", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", border:"none", background:"none", cursor:"pointer", color:active?"#d4a843":"#888", borderBottom:(active?"2px solid #d4a843":"2px solid transparent")}),
+    tab: (active) => ({ flex:1, padding:"12px 0", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", border:"none", background:"none", cursor:"pointer", color:active?"#d4a843":"#888", borderBottom:2px solid  }),
     label: { display:"block", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:"#555", marginBottom:6 },
     input: { width:"100%", background:"#131313", border:"1px solid #222", color:"#e5e2e1", fontFamily:"IBM Plex Mono,monospace", fontSize:12, padding:"10px 12px", outline:"none", boxSizing:"border-box" },
     inputErr: { width:"100%", background:"#131313", border:"1px solid #ef4444", color:"#e5e2e1", fontFamily:"IBM Plex Mono,monospace", fontSize:12, padding:"10px 12px", outline:"none", boxSizing:"border-box" },
@@ -186,3 +189,8 @@ export default function AuthPage() {
     </div>
   )
 }
+'''
+
+with open('src/components/AuthPage.jsx', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Written:', len(content), 'chars')
