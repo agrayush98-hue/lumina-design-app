@@ -3096,7 +3096,7 @@ export default function App() {
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
                   
                 }}>
-                  {luxVal ?? "â€”"}
+                  {luxVal ?? "—"}
                 </div>
                 {luxStatus && (
                   <div style={{
@@ -3311,7 +3311,7 @@ export default function App() {
 
               {/* ROOM METRICS */}
               <Section title="Room">
-                <MetricRow label="Area"               value={`${areaM2.toFixed(1)}mÂ²`} />
+                <MetricRow label="Area"               value={`${areaM2.toFixed(1)}m²`} />
                 <MetricRow label="Mounting Height"    value={`${mh.toFixed(2)}m`} />
                 <MetricRow label="RCR"                value={rcr.toFixed(2)} />
                 <MetricRow label="Utilization Factor" value={uf.toFixed(2)} />
