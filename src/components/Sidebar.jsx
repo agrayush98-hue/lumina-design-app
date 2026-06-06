@@ -126,7 +126,7 @@ export default function Sidebar({ activeItem, onItemChange, children }) {
                 marginBottom: 4,
               }}
             >
-              {Icon && <Icon size={18} color={active ? '#d4a843' : '#555555'} />}
+              {Icon && <Icon size={20} color={active ? '#d4a843' : '#888888'} />}
             </button>
           )
         })}
