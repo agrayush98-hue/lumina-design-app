@@ -277,7 +277,7 @@ export default function AIRecommender({ activeRoom, onApplyFixture, onApplyAll, 
     try {
       const response = await fetch(workerUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-App-Token": import.meta.env.VITE_APP_SECRET_TOKEN ?? "" },
         body: JSON.stringify({ roomType, widthM, heightM, ceilM, ambiance, requirements }),
       })
 
