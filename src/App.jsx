@@ -447,7 +447,7 @@ export default function App() {
   const totalWatt   = lights.reduce((s, l) => s + (l.watt   ?? 0), 0)
   // Lumen method: E = (Î¦ Ã— UF Ã— MF) / A
   const totalLux    = areaM2 === 0 ? 0 : (totalLumens * uf * MAINT_FACTOR) / areaM2
-  const luxBreakdown = computeLuxBreakdown(lights, areaM2, uf)
+  const luxBreakdown = useMemo(() => computeLuxBreakdown(lights, areaM2, uf), [lights, areaM2, uf])
 
   // â”€â”€ Global / project summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -1155,7 +1155,6 @@ export default function App() {
   }
 
   function normalizeIds(floors) {
-    console.log("[normalizeIds] input floors:", JSON.stringify((floors||[]).map(f => ({id: f.id, idType: typeof f.id, activeRoomId: f.activeRoomId, rooms: (f.rooms||[]).map(r => ({id: r.id, idType: typeof r.id}))}))))
     return (floors || []).map(f => ({
       ...f,
       id: String(f.id),

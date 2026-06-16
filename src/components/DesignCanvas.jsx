@@ -349,7 +349,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   const isStripMode = isPerMetreCat(activeFixtureCategory)
   // DEBUG — remove after confirming strip mode works
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[DesignCanvas] activeFixtureCategory:', activeFixtureCategory, '| canonCat:', canonCat, '| isStripMode:', isStripMode)
   }
 
   const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
