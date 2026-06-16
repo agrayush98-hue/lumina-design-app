@@ -391,6 +391,7 @@ export default function App() {
   const [editingName,        setEditingName]        = useState(false)
   const [saving,             setSaving]             = useState(false)
   const [showSettings,       setShowSettings]       = useState(false)
+  const [floorPlanAnalysis,  setFloorPlanAnalysis]  = useState(null)
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
   const [leftTab,            setLeftTab]            = useState('fixture')
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
@@ -447,7 +448,7 @@ export default function App() {
   const totalWatt   = lights.reduce((s, l) => s + (l.watt   ?? 0), 0)
   // Lumen method: E = (Î¦ Ã— UF Ã— MF) / A
   const totalLux    = areaM2 === 0 ? 0 : (totalLumens * uf * MAINT_FACTOR) / areaM2
-  const luxBreakdown = useMemo(() => computeLuxBreakdown(lights, areaM2, uf), [lights, areaM2, uf])
+  const luxBreakdown = computeLuxBreakdown(lights, areaM2, uf)
 
   // â”€â”€ Global / project summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -817,6 +818,37 @@ export default function App() {
   function updateFloorPlan(data) {
     patchActiveFloor(() => ({ floorPlan: data }))
   }
+
+  async function handleAnalyzeFloorPlan(floorPlan) {
+    if (!floorPlan?.url) return
+    showToast("Analyzing floor plan...")
+    try {
+      // Convert blob URL or data URL to base64
+      let base64, mediaType
+      if (floorPlan.url.startsWith("blob:")) {
+        const blob = await fetch(floorPlan.url).then(r => r.blob())
+        mediaType = blob.type || "image/jpeg"
+        const reader = new FileReader()
+        base64 = await new Promise(res => { reader.onload = e => res(e.target.result.split(",")[1]); reader.readAsDataURL(blob) })
+      } else {
+        base64 = floorPlan.url.split(",")[1]
+        mediaType = floorPlan.url.split(";")[0].split(":")[1]
+      }
+      const res = await fetch(import.meta.env.VITE_AI_WORKER_URL + "/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mediaType })
+      })
+      const data = await res.json()
+      if (data.error) { showToast("Analysis failed: " + data.error); return }
+      console.log("[floorplan analysis]", JSON.stringify(data))
+      setFloorPlanAnalysis(data)
+      showToast("Analysis complete - " + (data.rooms?.length ?? 0) + " rooms detected")
+    } catch(e) {
+      showToast("Analysis failed")
+    }
+  }
+
 
   function removeFloorPlan() {
     patchActiveFloor(() => ({ floorPlan: null }))
@@ -3319,8 +3351,52 @@ export default function App() {
               onUploadFloorPlanBlocked={() => setGateModal({ feature: 'Floor plan upload' })}
               activeTool={activeTool}
               onSetActiveTool={setActiveTool}
+              onAnalyzeFloorPlan={handleAnalyzeFloorPlan}
               embedded
             />
+          </div>
+        </div>
+      )}
+
+      {/* Floor Plan Analysis Panel */}
+      {floorPlanAnalysis && (
+        <div style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 340,
+          background: "#111111", borderLeft: "1px solid #222222",
+          display: "flex", flexDirection: "column",
+          zIndex: 600, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>AI FLOOR PLAN ANALYSIS</span>
+            <button onClick={() => setFloorPlanAnalysis(null)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 16 }}>x</button>
+          </div>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: "#555555", lineHeight: 1.6 }}>{floorPlanAnalysis.summary?.substring(0, 150)}...</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+            <div style={{ fontSize: 10, color: "#555555", letterSpacing: "0.1em", padding: "8px 16px 4px" }}>DETECTED ROOMS - CLICK TO APPLY DIMENSIONS</div>
+            {(floorPlanAnalysis.rooms ?? []).map((room, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  updateRoom({ roomWidth: Math.round(room.widthM * 1000), roomHeight: Math.round(room.heightM * 1000) })
+                  showToast(`Applied: ${room.name} (${room.widthM}m x ${room.heightM}m)`)
+                }}
+                style={{
+                  padding: "10px 16px", cursor: "pointer", borderBottom: "1px solid #1a1a1a",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#1a1a1a"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <div>
+                  <div style={{ fontSize: 13, color: "#f0f0f0", marginBottom: 2 }}>{room.name}</div>
+                  <div style={{ fontSize: 10, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{room.type}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#d4a843", fontFamily: "IBM Plex Mono" }}>{room.widthM}m x {room.heightM}m</div>
+              </div>
+            ))}
           </div>
         </div>
       )}

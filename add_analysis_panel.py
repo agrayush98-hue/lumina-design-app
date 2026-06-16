@@ -1,0 +1,52 @@
+lines = open("src/App.jsx", encoding="utf-8").readlines()
+
+panel = (
+    "\n"
+    "      {/* Floor Plan Analysis Panel */}\n"
+    "      {floorPlanAnalysis && (\n"
+    "        <div style={{\n"
+    "          position: \"fixed\", top: 0, right: 0, bottom: 0, width: 340,\n"
+    "          background: \"#111111\", borderLeft: \"1px solid #222222\",\n"
+    "          display: \"flex\", flexDirection: \"column\",\n"
+    "          zIndex: 600, boxShadow: \"-8px 0 32px rgba(0,0,0,0.6)\",\n"
+    "          fontFamily: \"'Inter', sans-serif\",\n"
+    "        }}>\n"
+    "          <div style={{ display: \"flex\", justifyContent: \"space-between\", alignItems: \"center\", padding: \"14px 16px\", borderBottom: \"1px solid #222222\", flexShrink: 0 }}>\n"
+    "            <span style={{ fontSize: 12, color: \"#d4a843\", letterSpacing: \"0.12em\", fontWeight: 600 }}>AI FLOOR PLAN ANALYSIS</span>\n"
+    "            <button onClick={() => setFloorPlanAnalysis(null)} style={{ background: \"transparent\", border: \"none\", color: \"#888888\", cursor: \"pointer\", fontSize: 16 }}>x</button>\n"
+    "          </div>\n"
+    "          <div style={{ padding: \"12px 16px\", borderBottom: \"1px solid #1a1a1a\", flexShrink: 0 }}>\n"
+    "            <div style={{ fontSize: 11, color: \"#555555\", lineHeight: 1.6 }}>{floorPlanAnalysis.summary?.substring(0, 150)}...</div>\n"
+    "          </div>\n"
+    "          <div style={{ flex: 1, overflowY: \"auto\", padding: \"8px 0\" }}>\n"
+    "            <div style={{ fontSize: 10, color: \"#555555\", letterSpacing: \"0.1em\", padding: \"8px 16px 4px\" }}>DETECTED ROOMS — CLICK TO APPLY DIMENSIONS</div>\n"
+    "            {(floorPlanAnalysis.rooms ?? []).map((room, idx) => (\n"
+    "              <div\n"
+    "                key={idx}\n"
+    "                onClick={() => {\n"
+    "                  updateRoom({ roomWidth: Math.round(room.widthM * 1000), roomHeight: Math.round(room.heightM * 1000) })\n"
+    "                  showToast(`Applied: ${room.name} (${room.widthM}m x ${room.heightM}m)`)\n"
+    "                }}\n"
+    "                style={{\n"
+    "                  padding: \"10px 16px\", cursor: \"pointer\", borderBottom: \"1px solid #1a1a1a\",\n"
+    "                  display: \"flex\", justifyContent: \"space-between\", alignItems: \"center\",\n"
+    "                }}\n"
+    "                onMouseEnter={e => e.currentTarget.style.background = \"#1a1a1a\"}\n"
+    "                onMouseLeave={e => e.currentTarget.style.background = \"transparent\"}\n"
+    "              >\n"
+    "                <div>\n"
+    "                  <div style={{ fontSize: 13, color: \"#f0f0f0\", marginBottom: 2 }}>{room.name}</div>\n"
+    "                  <div style={{ fontSize: 10, color: \"#555555\", textTransform: \"uppercase\", letterSpacing: \"0.08em\" }}>{room.type}</div>\n"
+    "                </div>\n"
+    "                <div style={{ fontSize: 12, color: \"#d4a843\", fontFamily: \"IBM Plex Mono\" }}>{room.widthM}m x {room.heightM}m</div>\n"
+    "              </div>\n"
+    "            ))}\n"
+    "          </div>\n"
+    "        </div>\n"
+    "      )}\n"
+)
+
+# Insert after line 3359 (index 3358)
+new_lines = lines[:3359] + [panel] + lines[3359:]
+open("src/App.jsx", "w", encoding="utf-8").write("".join(new_lines))
+print(f"Done. Lines: {len(lines)} -> {len(new_lines)}")

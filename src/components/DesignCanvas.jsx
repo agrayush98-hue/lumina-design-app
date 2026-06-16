@@ -168,8 +168,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     function tick() {
       const a = animRef.current
       const t = targetRef.current
-      const EZ = 0.15  // zoom ease (slower = smoother feel)
-      const EP = 0.20  // pan ease
+      const EZ = 0.35  // zoom ease
+      const EP = 0.40  // pan ease
 
       const nz = a.zoom + (t.zoom - a.zoom) * EZ
       const nx = a.x    + (t.x    - a.x)    * EP
@@ -182,8 +182,11 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
       const next = done ? t : { zoom: nz, x: nx, y: ny }
       animRef.current = next
-      setTransform({ ...next })
-      rafId.current = done ? null : requestAnimationFrame(tick)
+      // Update Konva stage directly - bypasses React re-render
+      const stage = stageRef.current
+      if (stage) { stage.x(next.x); stage.y(next.y); stage.scaleX(next.zoom); stage.scaleY(next.zoom); stage.batchDraw() }
+      if (done) { setTransform({ ...next }); rafId.current = null }
+      else { rafId.current = requestAnimationFrame(tick) }
     }
     rafId.current = requestAnimationFrame(tick)
   }
