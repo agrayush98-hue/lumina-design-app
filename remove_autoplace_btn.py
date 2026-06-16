@@ -1,8 +1,0 @@
-lines = open("src/App.jsx", encoding="utf-8").readlines()
-print(f"Line 2489: {lines[2488].rstrip()}")
-print(f"Line 2490: {lines[2489].rstrip()}")
-print(f"Line 2491: {lines[2490].rstrip()}")
-print(f"Line 2492: {lines[2491].rstrip()}")
-print(f"Line 2493: {lines[2492].rstrip()}")
-print(f"Line 2494: {lines[2493].rstrip()}")
-print(f"Line 2495: {lines[2494].rstrip()}")
