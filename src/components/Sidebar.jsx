@@ -142,8 +142,9 @@ export default function Sidebar({ activeItem, onItemChange, children }) {
         flexDirection: 'column',
         overflow: 'hidden',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        pointerEvents: 'none',
       }}>
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', pointerEvents: 'auto' }}>
           {children}
         </div>
       </div>

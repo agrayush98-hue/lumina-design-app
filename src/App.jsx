@@ -362,9 +362,9 @@ export default function App() {
   }, [])
 
   const { state: floors, set: setFloors, undo, redo, canUndo, canRedo } = useUndoRedo([{
-    id: 1, name: "Floor 1", activeRoomId: 1, floorPlan: null,
+    id: "1", name: "Floor 1", activeRoomId: "1", floorPlan: null,
     rooms: [{
-      id: 1, name: "Room 1",
+      id: "1", name: "Room 1",
       room: { ...DEFAULT_ROOM },
       lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
     }],
@@ -415,7 +415,7 @@ export default function App() {
 
   const activeFloor   = floors.find(f => f.id === activeFloorId) ?? floors[0]
   const activeRoomId  = activeFloor.activeRoomId
-  const activeRoomObj = activeFloor.rooms.find(r => r.id === activeRoomId) ?? activeFloor.rooms[0]
+  const activeRoomObj = activeFloor.rooms.find(r => String(r.id) === String(activeRoomId)) ?? activeFloor.rooms[0]
   const { room, lights, dbMarkers, ctrMarkers, jbMarkers, emergencyLights = [], roomOffsetX, roomOffsetY, drawnWidthPx, drawnHeightPx } = activeRoomObj
   const floorPlan = activeFloor.floorPlan ?? null
 
@@ -660,6 +660,7 @@ export default function App() {
 
   function addLight(lightData) {
     const now = Date.now()
+    console.log("[addLight called] lightData:", lightData, "activeFixture:", activeFixture?.id, "activeFixtureCategory:", activeFixtureCategory)
     if (now - lastAddLightTime.current < 100) return
     lastAddLightTime.current = now
     const normCat = (c) => (c ?? "").toUpperCase().replace(/[\s-]/g, "_")
@@ -968,118 +969,58 @@ export default function App() {
   // â”€â”€ Auto-place lights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function autoPlaceLights() {
-    // â”€â”€ Validate fixture selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!activeFixture) {
       showToast("Please select a fixture from the library first")
       return
     }
-
+    const W = roomWidth / 1000
+    const H = roomHeight / 1000
+    const area = W * H
+    if (area <= 0) { showToast("Please set room dimensions first"); return }
+    console.log("[autoPlace] activeFixture:", JSON.stringify(activeFixture).substring(0, 400))
+    const variants = activeFixture.variants ?? []
+    const midVariant = variants[Math.floor(variants.length / 2)] ?? {}
+    console.log("[autoPlace] variants count:", variants.length, "midVariant:", JSON.stringify(midVariant))
+    const fixWatt   = midVariant.watt      ?? activeFixture.watt      ?? 12
+    const fixLumens = midVariant.lumens    ?? activeFixture.lumens    ?? (fixWatt * 90)
+    const fixBeam   = midVariant.beamAngle ?? activeFixture.beamAngle ?? 36
+    const targetLuxVal = Number(room.targetLux) || 300
+    const UF = uf ?? 0.75
+    const MF = 0.80
+    const needed = Math.ceil((targetLuxVal * area) / (fixLumens * UF * MF))
+    const count  = Math.min(needed, 36)
+    const cols = Math.max(1, Math.round(Math.sqrt(count * (W / H))))
+    const rows = Math.ceil(count / cols)
     const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
-    // When the room was drawn on the floor plan, use the exact drawn pixel box.
     const useDrawn  = roomOffsetX != null && drawnWidthPx != null
     const ROOM_PX_W = useDrawn ? drawnWidthPx  : roomWidth  * SCALE
     const ROOM_PX_H = useDrawn ? drawnHeightPx : roomHeight * SCALE
     const ROOM_X    = roomOffsetX != null ? roomOffsetX : 20
     const ROOM_Y    = roomOffsetY != null ? roomOffsetY : 30
-    // px-per-mm ratio: used to convert spacing into pixels correctly.
     const pxPerMm   = useDrawn ? drawnWidthPx / roomWidth : SCALE
-
-    // â”€â”€ Get fixture specs from activeFixture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // Default power: first option from powerOptions
-    const defaultPower = activeFixture.powerOptions?.[0] ?? 12
-
-    // Default beam angle: middle option from beamOptions (or closest to middle)
-    const beamOpts = activeFixture.beamOptions ?? []
-    const defaultBeamIdx = Math.floor(beamOpts.length / 2)
-    const defaultBeam = beamOpts[defaultBeamIdx]?.angle ?? 36
-
-    // Default chip: first option from chipOptions
-    const defaultChip = activeFixture.chipOptions?.[0] ?? { efficacy: 90 }
-
-    // Calculate lumens using activeFixture's calculateLumens function
-    const fixtureLumens = activeFixture.calculateLumens?.(defaultPower, defaultChip) ?? (defaultPower * 90)
-
-    // â”€â”€ Get spacing from ROOM_INTELLIGENCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const ROOM_INTELLIGENCE_MAP = {
-      "Living Room": { spacing: 2.5 },
-      "Kitchen": { spacing: 1.8 },
-      "Bedroom": { spacing: 3.0 },
-      "Bathroom": { spacing: 2.0 },
-      "Office": { spacing: 1.5 },
-      "Corridor": { spacing: 3.5 },
-      "Dining Room": { spacing: 2.2 },
-      "Conference Room": { spacing: 1.5 },
-      "Retail": { spacing: 1.2 },
-      "Museum": { spacing: 2.0 },
-      "Hospital Room": { spacing: 1.5 },
-      "Laboratory": { spacing: 1.2 },
-      "Production": { spacing: 1.8 },
-      "Warehouse": { spacing: 3.0 },
-    }
-    const roomType = room.roomType || "Living Room"
-    const spacingM = ROOM_INTELLIGENCE_MAP[roomType]?.spacing ?? 1.8
-    const spacingMm = spacingM * 1000
-
-    const { rows, cols } = calcGrid(
-      Number(room.targetLux), areaM2, uf, fixtureLumens, roomWidth, roomHeight,
-    )
-
-    // â”€â”€ Grid layout: spacing/2 offset from walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const spacingPx = spacingMm * pxPerMm
-    const wallOffPx = spacingPx / 2
-
-    const usableW = ROOM_PX_W - wallOffPx * 2
-    const usableH = ROOM_PX_H - wallOffPx * 2
-    const spX     = cols > 1 ? usableW / (cols - 1) : 0
-    const spY     = rows > 1 ? usableH / (rows - 1) : 0
-
-    // â”€â”€ Generate fixtures with activeFixture specs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const wallOffPx = 500 * pxPerMm
+    const usableW   = ROOM_PX_W - wallOffPx * 2
+    const usableH   = ROOM_PX_H - wallOffPx * 2
+    const spX       = cols > 1 ? usableW / (cols - 1) : 0
+    const spY       = rows > 1 ? usableH / (rows - 1) : 0
     const generated = []
     let ts = Date.now()
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        // Create fixture with activeFixture specs
-        const light = makeLight(
-          ts++,
-          Math.round(ROOM_X + wallOffPx + c * spX),
-          Math.round(ROOM_Y + wallOffPx + r * spY),
-          activeFixture,
-          fixtureLumens,
-        )
-        // Override watt and beamAngle with defaults if not in activeFixture
-        light.watt = activeFixture.watt ?? defaultPower
-        light.beamAngle = defaultBeam
+        const px = cols > 1 ? ROOM_X + wallOffPx + c * spX : ROOM_X + ROOM_PX_W / 2
+        const py = rows > 1 ? ROOM_Y + wallOffPx + r * spY : ROOM_Y + ROOM_PX_H / 2
+        const light = makeLight(ts++, Math.round(px), Math.round(py), activeFixture, fixLumens)
+        light.watt = fixWatt
+        light.lumens = fixLumens
+        light.beamAngle = fixBeam
         generated.push(light)
       }
     }
-
-    // â”€â”€ Lux-aware trim: remove outermost fixtures if over-lit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const targetLuxVal = Number(room.targetLux) || 300
-    const calcLuxForSet = (set) => {
-      if (areaM2 === 0 || set.length === 0) return 0
-      const lumens = set.reduce((s, l) => s + (l.lumens ?? 0), 0)
-      return (lumens * uf * MAINT_FACTOR) / areaM2
-    }
-
-    // Keep at least 1 fixture; remove furthest-from-centre first
-    const centerX = ROOM_X + ROOM_PX_W / 2
-    const centerY = ROOM_Y + ROOM_PX_H / 2
-    let trimmed = [...generated]
-    while (trimmed.length > 1 && calcLuxForSet(trimmed) > targetLuxVal * 1.2) {
-      let maxDist = -1, maxIdx = -1
-      trimmed.forEach((f, i) => {
-        const d = Math.hypot(f.x - centerX, f.y - centerY)
-        if (d > maxDist) { maxDist = d; maxIdx = i }
-      })
-      trimmed.splice(maxIdx, 1)
-    }
-
-    const finalLux = Math.round(calcLuxForSet(trimmed))
-    const removedCount = generated.length - trimmed.length
-    const trimNote = removedCount > 0 ? ` (${removedCount} removed â€” over-lit)` : ""
-    patchActiveRoom(() => ({ lights: trimmed }))
-    showToast(`${trimmed.length} ${activeFixture.name} fixtures placed â€” ${finalLux} lux achieved${trimNote}`)
+    const achievedLux = Math.round((generated.length * fixLumens * UF * MF) / area)
+    patchActiveRoom(r => ({ lights: [...r.lights, ...generated] }))
+    showToast(`Placed ${generated.length} fixtures - ${achievedLux} lux`)
   }
+
 
   // â”€â”€ Handle AutoPlaceModal selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function handleAutoPlace(modalData) {
@@ -1213,10 +1154,21 @@ export default function App() {
     }
   }
 
-  function handleLoadFromModal(id, data) {
+  function normalizeIds(floors) {
+    console.log("[normalizeIds] input floors:", JSON.stringify((floors||[]).map(f => ({id: f.id, idType: typeof f.id, activeRoomId: f.activeRoomId, rooms: (f.rooms||[]).map(r => ({id: r.id, idType: typeof r.id}))}))))
+    return (floors || []).map(f => ({
+      ...f,
+      id: String(f.id),
+      activeRoomId: String(f.activeRoomId ?? f.rooms?.[0]?.id ?? "1"),
+      rooms: (f.rooms || []).map(r => ({ ...r, id: String(r.id) }))
+    }))
+  }
+
+    function handleLoadFromModal(id, data) {
     if (data.floors) {
-      setFloors(data.floors)
-      setActiveFloorId(data.floors[0]?.id ?? 1)
+      const nf = normalizeIds(data.floors)
+      setFloors(nf)
+      setActiveFloorId(String(nf[0]?.id ?? "1"))
       setProjectId(id)
     }
     if (data.name) setProjectName(data.name)
@@ -1267,8 +1219,9 @@ export default function App() {
           sessionStorage.removeItem("lumina_pending_template")
           const tpl = JSON.parse(raw)
           if (tpl?.floors) {
-            setFloors(tpl.floors)
-            setActiveFloorId(tpl.floors[0]?.id ?? 1)
+            const tf = normalizeIds(tpl.floors)
+            setFloors(tf)
+            setActiveFloorId(String(tf[0]?.id ?? "1"))
             showToast(`Template loaded: ${tpl.name}`)
           }
         }
@@ -2383,7 +2336,7 @@ export default function App() {
   if (!user) return <AuthPage />
 
   // â”€â”€ Mobile guard â€” canvas tool requires desktop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  if (typeof window !== "undefined" && window.innerWidth < 768) return (
+  if (typeof window !== "undefined" && window.innerWidth < 400) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "'Inter', sans-serif", padding: 32, textAlign: "center", gap: 16 }}>
       <div style={{ fontSize: 40 }}>ðŸ–¥ï¸</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#d4a843", letterSpacing: "0.04em" }}>Desktop required</div>
@@ -2529,14 +2482,6 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", width: "100%", minWidth: "max-content" }}>
 
               {/* â”€â”€ Group 1: Canvas Tools â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-              <button
-                onClick={() => setShowAutoPlaceModal(true)}
-                title="Auto-place fixtures in room"
-                style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" }}
-              >Auto Place</button>
-
               <button
                 onClick={() => setSnapToGrid(p => !p)}
                 title="Toggle snap to grid"

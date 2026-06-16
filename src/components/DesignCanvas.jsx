@@ -546,24 +546,29 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     ]
   }
   function insideRoom(x, y) {
+    console.log("[insideRoom] x:", x, "y:", y, "ROOM_X:", ROOM_X, "ROOM_Y:", ROOM_Y, "ROOM_PX_W:", ROOM_PX_W, "ROOM_PX_H:", ROOM_PX_H)
     return x >= ROOM_X && x <= ROOM_X + ROOM_PX_W && y >= ROOM_Y && y <= ROOM_Y + ROOM_PX_H
   }
 
   // ── Stage-level click — handles fixture/marker placement when floor plan is loaded
   //    (room-fill Rect is hidden when floorPlan is set, so we fall back to the Stage)
   function handleStageClick(e) {
-    if (e.target !== e.currentTarget) return
     if (isPanning.current) return
     if (isStripMode) return
     if (activeTool === "draw-room") return
-    // When no floor plan, the room-fill Rect handles clicks via its own onClick — don't double-fire
-    if (!floorPlan) return
+    // When no floor plan, the room-fill Rect handles clicks via its own onClick.
+    // However, if the room-fill Rect fails to capture the click for any reason,
+    // we fallback to checking if the stage click was inside the room area.
+    const _raw = { x: e.evt.offsetX, y: e.evt.offsetY }
+    const _pos = toWorld(_raw)
+    if (!insideRoom(_pos.x, _pos.y)) return
     e.cancelBubble = true
     handleRoomClick(e)
   }
 
   // ── Regular fixture / marker click ───────────────────────────
   function handleRoomClick(e) {
+    console.log("[ROOM CLICK FIRED] isStripMode:", isStripMode, "activeTool:", activeTool)
     e.cancelBubble = true
     if (isStripMode) return
     if (activeTool === "draw-room") return
@@ -575,6 +580,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const x = snap(pos.x, ROOM_X, ROOM_PX_W)
     const y = snap(pos.y, ROOM_Y, ROOM_PX_H)
     if (activeTool === "fixture") {
+      // Debug: log placement coords
+      console.log("[place] x:", x, "y:", y, "roomW:", roomWidth, "roomH:", roomHeight)
       onAddLight({ id: crypto.randomUUID(), x, y })
     } else if (activeTool === "emergency") {
       onAddEmergencyLight?.(x, y)
@@ -1809,7 +1816,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
             {/* ALL room boundaries — inactive rooms faint, active room bright */}
             {(allRooms ?? []).map(r => {
               if (!r.room) return null
-              const isActive = r.id === activeRoomId
+              const isActive = String(r.id) === String(activeRoomId)
               const rX = r.roomOffsetX ?? ROOM_X
               const rY = r.roomOffsetY ?? ROOM_Y
               const rW   = Number(r.room.roomWidth  ?? 0)
