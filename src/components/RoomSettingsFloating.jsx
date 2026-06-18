@@ -41,7 +41,7 @@ async function readPdfFile(file) {
 }
 
 // ── Sub-component: floor plan section ────────────────────────────────────────
-function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActiveTool, canUpload = true, onUploadBlocked, onAnalyzeFloorPlan }) {
+function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActiveTool, canUpload = true, onUploadBlocked }) {
   const inputRef              = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -122,20 +122,6 @@ function FloorPlanSection({ floorPlan, onUpload, onRemove, activeTool, onSetActi
             onMouseLeave={e => { if (!isDrawRoom) { e.currentTarget.style.borderColor = "#2e2e2e"; e.currentTarget.style.color = "#888" } }}
             title="Draw room boundary on the floor plan"
           >{isDrawRoom ? "Drawing Room…  (click to cancel)" : "Draw Room Boundary"}</button>
-
-          {/* AI Analyze button */}
-          <button
-            onClick={() => onAnalyzeFloorPlan?.(floorPlan)}
-            style={{
-              width: "100%", height: 30, marginTop: 6,
-              background: "rgba(212,168,67,0.08)",
-              border: "1px solid #d4a843",
-              borderRadius: 4,
-              color: "#d4a843",
-              fontFamily: "IBM Plex Mono", fontSize: 11,
-              cursor: "pointer", letterSpacing: "0.04em",
-            }}
-          >Analyze with AI</button>
         </>
       ) : (
         <div
@@ -179,7 +165,6 @@ export default function RoomSettingsFloating({
   floorPlan, onUploadFloorPlan, onRemoveFloorPlan,
   canUploadFloorPlan = true, onUploadFloorPlanBlocked,
   activeTool, onSetActiveTool,
-  onAnalyzeFloorPlan,
   embedded,
 }) {
   const inner = (
@@ -192,7 +177,6 @@ export default function RoomSettingsFloating({
         onUploadBlocked={onUploadFloorPlanBlocked}
         activeTool={activeTool}
         onSetActiveTool={onSetActiveTool}
-        onAnalyzeFloorPlan={onAnalyzeFloorPlan}
       />
       <RoomSettingsPanel
         room={room}

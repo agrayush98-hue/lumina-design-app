@@ -42,6 +42,11 @@ const ICONS = {
       <path d="M6 8h4M6 10.5h4M6 6h2" stroke={color} strokeWidth="1.25" strokeLinecap="round"/>
     </svg>
   ),
+  'electrical':   ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="9 1 1 9 7 9 7 15 15 7 9 7 9 1" />
+    </svg>
+  ),
 }
 
 const NAV_ITEMS = [
@@ -50,6 +55,7 @@ const NAV_ITEMS = [
   { id: 'calculation', label: 'Calculation' },
   { id: 'heatmaps',    label: 'Heatmaps' },
   { id: 'dali-bus',    label: 'DALI Bus' },
+  { id: 'electrical',  label: 'Electrical' },
   { id: 'reports',     label: 'Reports' },
 ]
 
@@ -89,7 +95,42 @@ function NavItem({ item, active, onClick }) {
   )
 }
 
-export default function Sidebar({ activeItem, onItemChange, children }) {
+export default function Sidebar({ activeItem, onItemChange, collapsed, onToggleCollapse, children }) {
+  if (collapsed) {
+    return (
+      <div style={{
+        width: 32,
+        background: '#111111',
+        borderRight: '1px solid #222222',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: 8,
+        flexShrink: 0,
+        height: '100%'
+      }}>
+        <button
+          onClick={onToggleCollapse}
+          title="Expand sidebar"
+          style={{
+            width: 24,
+            height: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: '#888888',
+            cursor: 'pointer',
+            fontSize: 14,
+          }}
+        >
+          »
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flexShrink: 0, height: '100%' }}>
 
@@ -104,6 +145,27 @@ export default function Sidebar({ activeItem, onItemChange, children }) {
         paddingTop: 8,
         flexShrink: 0,
       }}>
+        <button
+          onClick={onToggleCollapse}
+          title="Collapse sidebar"
+          style={{
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: '#555555',
+            cursor: 'pointer',
+            fontSize: 16,
+            marginBottom: 8,
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#cccccc'}
+          onMouseLeave={e => e.currentTarget.style.color = '#555555'}
+        >
+          «
+        </button>
         {NAV_ITEMS.map(item => {
           const active = activeItem === item.id
           const Icon = ICONS[item.id]
@@ -119,8 +181,8 @@ export default function Sidebar({ activeItem, onItemChange, children }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: active ? 'rgba(212,168,67,0.12)' : 'transparent',
-                borderLeft: active ? '2px solid #d4a843' : '2px solid transparent',
                 border: 'none',
+                borderLeft: active ? '2px solid #d4a843' : '2px solid transparent',
                 color: active ? '#d4a843' : '#555555',
                 cursor: 'pointer',
                 marginBottom: 4,

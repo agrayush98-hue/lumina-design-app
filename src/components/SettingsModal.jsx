@@ -316,8 +316,8 @@ export default function SettingsModal({ isOpen, onClose }) {
                   ...mono, fontSize: 10, textAlign: 'left',
                   padding: '9px 16px', border: 'none', cursor: 'pointer',
                   background: activeTab === t.id ? '#111111' : 'transparent',
-                  color: activeTab === t.id ? '#6ae5ff' : '#666666',
-                  borderLeft: `2px solid ${activeTab === t.id ? '#6ae5ff' : 'transparent'}`,
+                  color: activeTab === t.id ? '#d4a843' : '#666666',
+                  borderLeft: `2px solid ${activeTab === t.id ? '#d4a843' : 'transparent'}`,
                   letterSpacing: '0.06em',
                 }}
               >

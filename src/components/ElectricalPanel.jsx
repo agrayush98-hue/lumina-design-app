@@ -3,11 +3,11 @@ import React from "react"
 const PHASE_COLOR = { L1: "#39c5cf", L2: "#3dba74", L3: "#e8a830" }
 
 const C = {
-  bg:     "#0a1018",
-  border: "#1a2b3c",
-  label:  "#2d4f68",
-  value:  "#4a7a96",
-  accent: "#cdd9e5",
+  bg:     "#1a1a1a",
+  border: "#2e2e2e",
+  label:  "#888888",
+  value:  "#f0f0f0",
+  accent: "#d4a843",
 }
 
 const MAX_SAFE = 60
@@ -134,7 +134,7 @@ export default function ElectricalPanel({
                 ? busCableLengths.find(entry => entry.busId === b.id)
                 : null
               return (
-                <div key={b.id} style={{ background: "#0d1620", border: `1px solid ${C.border}`, borderRadius: 3, overflow: "hidden" }}>
+                <div key={b.id} style={{ background: "#141414", border: `1px solid ${C.border}`, borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "70px 1fr 110px 120px 90px 90px", alignItems: "center", padding: "5px 10px", gap: 8 }}>
                     <span style={{ color: "#a78bfa", fontWeight: 600 }}>{b.id}</span>
                     <span style={{ color: C.value, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={roomNames.join(", ")}>{roomNames.join(", ") || "—"}</span>

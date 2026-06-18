@@ -1,4 +1,4 @@
-﻿import { useUndoRedo } from './hooks/useUndoRedo';
+import { useUndoRedo } from './hooks/useUndoRedo';
 import { useState, useRef, useMemo, useEffect, useCallback } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { onAuthStateChanged, signOut } from "firebase/auth"
@@ -395,6 +395,7 @@ export default function App() {
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
   const [leftTab,            setLeftTab]            = useState('fixture')
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
   const [navTab,             setNavTab]             = useState('canvas')
   const [sidebarView,        setSidebarView]        = useState('luminaires')
   const [settingsPos,        setSettingsPos]        = useState({ x: 10, y: 50 })
@@ -2390,6 +2391,7 @@ export default function App() {
     'floor-plan':  'fixture',
     'heatmaps':    'fixture',
     'dali-bus':    'fixture',
+    'electrical':  'fixture',
     'reports':     'fixture',
   }
   function handleSidebarChange(view) {
@@ -2427,7 +2429,12 @@ export default function App() {
       <main style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
 
         {/* â”€â”€ Left: Sidebar (Nav + content panels) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <Sidebar activeItem={sidebarView} onItemChange={handleSidebarChange}>
+        <Sidebar
+          activeItem={sidebarView}
+          onItemChange={handleSidebarChange}
+          collapsed={leftSidebarCollapsed}
+          onToggleCollapse={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+        >
           {/* Fixture Library â€” shown when Luminaires or Floor Plan active */}
           {(sidebarView === 'luminaires' || sidebarView === 'floor-plan') && (
             <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -2480,11 +2487,130 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          {/* Electrical View */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'electrical' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
+            {(() => {
+              // Calculate phase loads and voltage drop
+              const phaseLoads = [0, 0, 0]
+              circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
+
+              const maxVDrop = voltageDropResults.length > 0
+                ? Math.max(...voltageDropResults.map(r => r.vDropPercent))
+                : null
+
+              const vDropColor = maxVDrop == null ? "#666666"
+                : maxVDrop <= 3 ? "#4ade80"  // Green - Good
+                : maxVDrop <= 5 ? "#fb923c"  // Orange - Warning
+                : "#ef4444"                  // Red - Critical
+
+              const StatCard = ({ label, value, subtext, color = "#cccccc" }) => (
+                <div style={{
+                  background: "#161616",
+                  border: "1px solid #222222",
+                  borderRadius: 6,
+                  padding: 12,
+                  marginBottom: 12,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4
+                }}>
+                  <div style={{ fontSize: 10, color: "#777777", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase" }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 600, color }}>
+                    {value}
+                  </div>
+                  {subtext && (
+                    <div style={{ fontSize: 12, color: "#888888" }}>
+                      {subtext}
+                    </div>
+                  )}
+                </div>
+              )
+
+              if (circuits.length === 0) {
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.6, padding: "40px 0" }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span style={{ fontSize: 13, color: "#888888", textAlign: "center" }}>No active circuits. Add fixtures to floor plan to calculate.</span>
+                  </div>
+                )
+              }
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#d4a843", marginBottom: 16, letterSpacing: "0.03em" }}>
+                    ELECTRICAL STATS
+                  </div>
+
+                  <StatCard
+                    label="Circuits"
+                    value={`${circuits.length} circuit${circuits.length !== 1 ? "s" : ""}`}
+                    subtext={`${totalWatt}W total load`}
+                  />
+
+                  <StatCard
+                    label="Voltage Drop"
+                    value={maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
+                    color={vDropColor}
+                    subtext={maxVDrop != null
+                      ? maxVDrop <= 3 ? "Excellent"
+                      : maxVDrop <= 5 ? "Acceptable"
+                      : "Critical"
+                      : "Not calculated"
+                    }
+                  />
+
+                  <StatCard
+                    label="Driver Schedule"
+                    value={`${driverSchedule.length} driver type${driverSchedule.length !== 1 ? "s" : ""}`}
+                    subtext={`${lights.length} fixture${lights.length !== 1 ? "s" : ""}`}
+                  />
+
+                  {/* Phase Balance */}
+                  <div style={{
+                    background: "#161616",
+                    border: "1px solid #222222",
+                    borderRadius: 6,
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8
+                  }}>
+                    <div style={{ fontSize: 10, color: "#777777", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase" }}>
+                      Phase Balance
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {["L1", "L2", "L3"].map((phase, i) => {
+                        const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Cyan, Green, Amber
+                        const load = Math.round(phaseLoads[i])
+                        return (
+                          <div key={phase} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <div style={{ width: 6, height: 6, borderRadius: "50%", background: colors[i] }} />
+                              <span style={{ fontSize: 13, color: "#999999" }}>{phase}</span>
+                            </div>
+                            <span style={{ fontSize: 13, color: colors[i], fontWeight: 600 }}>{load}W</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#666666", marginTop: 2, borderTop: "1px solid #222222", paddingTop: 6 }}>
+                      3-phase distribution
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
         </Sidebar>
 
         {/* â”€â”€ Center: Canvas Area 1fr â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {/* navTab controls which main view shows: canvas / library */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d", minHeight: 0 }}>
 
           {/* â”€â”€ Library tab â”€â”€ */}
           {navTab === 'library' && (
@@ -2700,7 +2826,7 @@ export default function App() {
           />
 
           {/* Scrollable canvas + detail panels */}
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d", minHeight: 0 }}>
 
             {/* Settings panel moved to fixed right slide-in below */}
 
@@ -2876,115 +3002,7 @@ export default function App() {
 
           </div>
 
-          {/* Bottom electrical bar â€” only when circuits exist */}
-          {circuits.length > 0 && (() => {
-            // Calculate phase loads and voltage drop
-            const phaseLoads = [0, 0, 0]
-            circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
 
-            const maxVDrop = voltageDropResults.length > 0
-              ? Math.max(...voltageDropResults.map(r => r.vDropPercent))
-              : null
-
-            // Color coding for voltage drop status
-            const vDropColor = maxVDrop == null ? "#666666"
-              : maxVDrop <= 3 ? "#4ade80"  // Green - Good
-              : maxVDrop <= 5 ? "#fb923c"  // Orange - Warning
-              : "#ef4444"                  // Red - Critical
-
-            // Reusable column component
-            const StatCol = ({ label, children, last }) => (
-              <div style={{
-                flex: 1,
-                borderRight: last ? "none" : "1px solid #1e1e1e",
-                padding: "0 20px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: 4
-              }}>
-                <div style={{
-                  fontSize: 11,
-                  color: "#999999",
-                  letterSpacing: "0.1em",
-                  fontWeight: 500,
-                  textTransform: "uppercase"
-                }}>
-                  {label}
-                </div>
-                {children}
-              </div>
-            )
-
-            return (
-              <div style={{
-                height: 68,
-                background: "#111111",
-                borderTop: "1px solid #1e1e1e",
-                display: "flex",
-                alignItems: "stretch",
-                flexShrink: 0,
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
-              }}>
-                {/* Circuits */}
-                <StatCol label="CIRCUITS">
-                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
-                    {circuits.length} circuit{circuits.length !== 1 ? "s" : ""}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {totalWatt}W total load
-                  </span>
-                </StatCol>
-
-                {/* Voltage Drop */}
-                <StatCol label="VOLTAGE DROP">
-                  <span style={{ fontSize: 17, color: vDropColor, fontWeight: 600 }}>
-                    {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {maxVDrop != null
-                      ? maxVDrop <= 3 ? "Excellent"
-                      : maxVDrop <= 5 ? "Acceptable"
-                      : "Critical"
-                      : "Not calculated"
-                    }
-                  </span>
-                </StatCol>
-
-                {/* Driver Schedule */}
-                <StatCol label="DRIVER SCHEDULE">
-                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
-                    {driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {lights.length} fixture{lights.length !== 1 ? "s" : ""}
-                  </span>
-                </StatCol>
-
-                {/* Phase Balance */}
-                <StatCol label="PHASE BALANCE" last>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    {["L1", "L2", "L3"].map((phase, i) => {
-                      const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Cyan, Green, Amber
-                      const load = Math.round(phaseLoads[i])
-                      return (
-                        <span key={phase} style={{
-                          fontSize: 14,
-                          color: colors[i],
-                          fontWeight: 600
-                        }}>
-                          {phase}: {load}W
-                        </span>
-                      )
-                    })}
-                  </div>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    3-phase distribution
-                  </span>
-                </StatCol>
-              </div>
-            )
-          })()}
 
           </>}  {/* end canvas tab */}
 
@@ -3034,18 +3052,73 @@ export default function App() {
 
           return (
             <div style={{
-              width: 280,
+              width: rightCollapsed ? 32 : 240,
               background: "#111111",
-              borderLeft: "1px solid #222222",
-              overflowY: "auto",
+              border: "1px solid #222222",
+              borderRadius: 8,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              margin: "52px 12px 12px 12px",
+              height: "calc(100% - 64px)",
+              overflowY: rightCollapsed ? "hidden" : "auto",
               display: "flex",
               flexDirection: "column",
               flexShrink: 0,
-              height: "100%",
               fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             }}>
 
-              {/* ROOM INTELLIGENCE â€” at top */}
+              {rightCollapsed ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  paddingTop: 8,
+                  height: '100%'
+                }}>
+                  <button
+                    onClick={() => setRightCollapsed(false)}
+                    title="Expand panel"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#888888',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                    }}
+                  >
+                    «
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    padding: '8px 8px 0 0',
+                    flexShrink: 0
+                  }}>
+                    <button
+                      onClick={() => setRightCollapsed(true)}
+                      title="Collapse panel"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#555555',
+                        cursor: 'pointer',
+                        fontSize: 16,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#cccccc'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#555555'}
+                    >
+                      »
+                    </button>
+                  </div>
+
+                  {/* ROOM INTELLIGENCE â€” at top */}
               <RoomIntelligencePanel
                 room={room}
                 allFixtures={lights}
@@ -3312,7 +3385,8 @@ export default function App() {
                   subtitle="W"
                 />
               </Section>
-
+                </>
+              )}
             </div>
           )
         })()}

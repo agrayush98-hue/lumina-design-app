@@ -232,33 +232,6 @@ export default {
       })
     }
 
-    // Route: /analyze - Floor plan vision analysis
-    const reqUrl = new URL(request.url)
-    if (reqUrl.pathname === "/analyze") {
-      const { image, mediaType } = body
-      if (!image) {
-        return new Response(JSON.stringify({ error: "No image provided" }), {
-          status: 400, headers: { ...headers, "Content-Type": "application/json" }
-        })
-      }
-      const ar = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({
-          model: "claude-opus-4-6",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: [
-            { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
-            { type: "text", text: "Analyze this floor plan. Identify rooms, estimate dimensions in meters, identify room type. Return ONLY valid JSON: {\"rooms\": [{\"name\": string, \"type\": string, \"widthM\": number, \"heightM\": number}], \"summary\": string}" }
-          ]}]
-        })
-      })
-      const ad = await ar.json()
-      const txt = ad.content?.[0]?.text ?? "{}"
-      const clean = txt.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim()
-      return new Response(clean, { status: 200, headers: { ...headers, "Content-Type": "application/json" } })
-    }
-
     const { roomType, widthM, heightM, ceilM, ambiance = "Bright & Functional", requirements = "" } = body
 
     if (!roomType || !widthM || !heightM || !ceilM) {

@@ -2,17 +2,17 @@ import React, { useState, useEffect, useRef } from "react"
 import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/units"
 
 const C = {
-  panelBg:     "#0a1018",
-  panelBorder: "#1a2b3c",
-  accent:      "#39c5cf",
-  label:       "#4a7a96",
-  value:       "#cdd9e5",
-  sub:         "#2d4f68",
+  panelBg:     "#1a1a1a",
+  panelBorder: "#2e2e2e",
+  accent:      "#d4a843",
+  label:       "#888888",
+  value:       "#f0f0f0",
+  sub:         "#555555",
 }
 
 const inputStyle = {
   width: "100%",
-  background: "#111d28",
+  background: "#222222",
   border: `1px solid ${C.panelBorder}`,
   padding: "6px 8px",
   color: C.value,
