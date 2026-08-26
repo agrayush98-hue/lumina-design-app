@@ -215,7 +215,11 @@ export default {
       return new Response(null, { status: 204, headers })
     }
 
-    // Auth check disabled temporarily
+        if (!isAuthorized(request, env)) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...headers, "Content-Type": "application/json" }
+      })
+    }
 
     if (request.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
