@@ -2399,7 +2399,7 @@ export default function App() {
     if (SIDEBAR_TO_LEFTTAB[view]) setLeftTab(SIDEBAR_TO_LEFTTAB[view])
     if (view === 'heatmaps') setShowHeatmap(true)
     if (view === 'dali-bus' && !daliEnabled) setDaliEnabled(true)
-    if (view === 'reports') setShowExportModal(true)
+    if (view === 'reports') { if (!isProActive()) { setGateModal({ feature: 'Export' }); return } setShowExportModal(true) }
   }
 
   return (
@@ -2411,7 +2411,7 @@ export default function App() {
         onProjectNameChange={setProjectName}
         saving={saving}
         onSave={handleSave}
-        onExport={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
+        onExport={() => { if (!isProActive()) { setGateModal({ feature: 'Export' }); return } setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
         onShare={handleShare}
         onSignOut={() => signOut(auth)}
         onShowShortcuts={() => setShowShortcuts(true)}
