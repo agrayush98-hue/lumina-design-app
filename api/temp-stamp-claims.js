@@ -2,7 +2,11 @@ import { getAdminAuth } from './_adminDb.js'
 
 export default async function handler(req, res) {
   const token = req.headers['x-app-token'] ?? ''
-  const secret = process.env.APP_SECRET_TOKEN ?? process.env.VITE_APP_SECRET_TOKEN ?? 'lumina-secret-2024'
+  const secret = process.env.APP_SECRET_TOKEN
+
+  if (!secret) {
+    return res.status(500).send('APP_SECRET_TOKEN not configured on server')
+  }
 
   if (token !== secret) {
     return res.status(401).send('Unauthorized')
