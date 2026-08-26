@@ -132,6 +132,14 @@ export default async function handler(req, res) {
 
     console.log('[verify-payment] ✓ Firestore write complete for userId:', verifiedUserId)
 
+    try {
+      const adminAuth = getAdminAuth()
+      await adminAuth.setCustomUserClaims(verifiedUserId, { plan: planId, subStatus: 'active' })
+      console.log('[verify-payment] ✓ Custom claims set for userId:', verifiedUserId)
+    } catch (e) {
+      console.error('[verify-payment] Failed to set custom claims:', e.message)
+    }
+
     // Fire payment_success email — fetch user email from Firestore, never block the response
     db.doc(`users/${verifiedUserId}`).get().then(snap => {
       const { email, name } = snap.data() ?? {}
