@@ -67,6 +67,11 @@ export default function FloorPlanUpload({ floorPlan, onUpload, onRemove }) {
   async function handleFile(e) {
     const file = e.target.files[0]
     if (!file) return
+    const MAX_SIZE = 700 * 1024 // 700KB — leaves headroom under Firestore's 1MB doc limit
+    if (file.size > MAX_SIZE) {
+      setError(`File too large (${(file.size / 1024).toFixed(0)}KB). Max ${MAX_SIZE / 1024}KB.`)
+      return
+    }
     setLoading(true)
     setError(null)
     setLoadMsg(file.type === "application/pdf" ? "Rendering PDF…" : "Loading…")
