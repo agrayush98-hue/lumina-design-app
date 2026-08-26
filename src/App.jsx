@@ -1545,7 +1545,7 @@ export default function App() {
     const allR        = _allRoomsForExport
     const totalFix    = allR.reduce((s, r) => s + r.lights.length, 0)
     const totalLoad   = allR.reduce((s, r) => s + r.lights.reduce((w, l) => w + (l.watt ?? 0), 0), 0)
-    const CYAN        = [0, 212, 255]
+    const GOLD        = [212, 168, 67]
     const DARK        = [17, 17, 17]
     const GRAY_HDR    = [240, 240, 240]
     const ROW_ALT     = [249, 249, 249]
@@ -1574,9 +1574,9 @@ export default function App() {
       doc.setTextColor(30, 30, 30)
     }
 
-    // Section header with cyan top-line
+    // Section header with gold top-line
     function sectionHeader(title, y) {
-      doc.setDrawColor(...CYAN); doc.setLineWidth(0.6)
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.6)
       doc.line(M, y - 1, PW - M, y - 1)
       doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.1)
       doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...DARK)
@@ -2411,6 +2411,7 @@ export default function App() {
         onProjectNameChange={setProjectName}
         saving={saving}
         onSave={handleSave}
+        onLoadProject={() => setShowLoadModal(true)}
         onExport={() => { if (!isProActive()) { setGateModal({ feature: 'Export' }); return } setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
         onShare={handleShare}
         onSignOut={() => signOut(auth)}
@@ -2585,7 +2586,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {["L1", "L2", "L3"].map((phase, i) => {
-                        const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Cyan, Green, Amber
+                        const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Teal, Green, Amber
                         const load = Math.round(phaseLoads[i])
                         return (
                           <div key={phase} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
