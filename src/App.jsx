@@ -2938,7 +2938,7 @@ export default function App() {
               snapToGrid={snapToGrid}
               rcr={rcr}
               uf={uf}
-              targetLux={Number(room.targetLux)}
+              targetLux={Number(room.targetLux) || 300}
               activeTool={activeTool}
               activeFixtureCategory={activeFixtureCategory}
               activeFixture={activeFixture}
@@ -3399,7 +3399,7 @@ export default function App() {
       {showSettings && (
         <div style={{
           position: "fixed", top: 84, right: 0, bottom: 0, width: 320,
-          background: "#f9f9f9", borderLeft: "1px solid #e5e5e5",
+              background: "#141414", borderLeft: "1px solid #2a2a2a",
           display: "flex", flexDirection: "column",
           zIndex: 500, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
           fontFamily: "'Inter', sans-serif",
@@ -3544,7 +3544,7 @@ export default function App() {
                       return (
                         <label key={key} style={{
                           display: "flex", alignItems: "flex-start", gap: 10,
-                          padding: "10px 12px", background: "#f9f9f9",
+                          padding: "10px 12px", background: "#1a1a1a",
                           border: `1px solid ${checked ? "#d4a843" : "#2e2e2e"}`,
                           borderRadius: 3, cursor: "pointer",
                         }}>
@@ -3785,7 +3785,7 @@ export default function App() {
                 </div>
               </div>
             ))}
-            <div style={{ borderTop: "1px solid #e5e5e5", marginTop: 8, paddingTop: 12, fontSize: 11, color: "#444", letterSpacing: "0.06em" }}>
+            <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 12, fontSize: 11, color: "#888", letterSpacing: "0.06em" }}>
               Press <span style={{ color: "#d4a843" }}>?</span> or <span style={{ color: "#d4a843" }}>Escape</span> to dismiss
             </div>
           </div>

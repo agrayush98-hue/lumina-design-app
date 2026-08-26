@@ -178,6 +178,112 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
     setRoom({ ...room, [key]: value })
   }
 
+  const CEILING_PRESETS = [
+    { value: 2.7, label: "Standard Home" },
+    { value: 3.5, label: "High Ceiling" },
+    { value: 3.2, label: "Commercial/Office" },
+    { value: 4.5, label: "Double Height" },
+  ]
+  const FALSE_CEILING_PRESETS = [
+    { value: 0,   label: "None" },
+    { value: 0.3, label: "Standard" },
+    { value: 0.5, label: "Deep (Hides Ducting)" },
+  ]
+  const WORKING_PLANE_PRESETS = [
+    { value: 0.75, label: "Desk Height" },
+    { value: 0,    label: "Floor Level" },
+    { value: 0.9,  label: "Counter Height" },
+  ]
+
+  const currentCeilingVal = Number(room.ceilingHeight)
+  const isCeilingPreset = CEILING_PRESETS.some(p => p.value === currentCeilingVal)
+  const [ceilingSelect, setCeilingSelect] = useState(isCeilingPreset ? currentCeilingVal : 'custom')
+  const [ceilingInput, setCeilingInput] = useState(() => String(room.ceilingHeight ?? ''))
+
+  const currentFalseCeilingVal = Number(room.falseCeiling || 0)
+  const isFalseCeilingPreset = FALSE_CEILING_PRESETS.some(p => p.value === currentFalseCeilingVal)
+  const [falseCeilingSelect, setFalseCeilingSelect] = useState(isFalseCeilingPreset ? currentFalseCeilingVal : 'custom')
+  const [falseCeilingInput, setFalseCeilingInput] = useState(() => String(room.falseCeiling ?? ''))
+
+  const currentWorkingPlaneVal = Number(room.workingPlane || 0)
+  const isWorkingPlanePreset = WORKING_PLANE_PRESETS.some(p => p.value === currentWorkingPlaneVal)
+  const [workingPlaneSelect, setWorkingPlaneSelect] = useState(isWorkingPlanePreset ? currentWorkingPlaneVal : 'custom')
+  const [workingPlaneInput, setWorkingPlaneInput] = useState(() => String(room.workingPlane ?? ''))
+
+  const [warnings, setWarnings] = useState({ ceilingHeight: '', falseCeiling: '', workingPlane: '' })
+
+  useEffect(() => {
+    const cVal = Number(room.ceilingHeight)
+    setCeilingSelect(CEILING_PRESETS.some(p => p.value === cVal) ? cVal : 'custom')
+    setCeilingInput(String(room.ceilingHeight ?? ''))
+
+    const fcVal = Number(room.falseCeiling || 0)
+    setFalseCeilingSelect(FALSE_CEILING_PRESETS.some(p => p.value === fcVal) ? fcVal : 'custom')
+    setFalseCeilingInput(String(room.falseCeiling ?? ''))
+
+    const wpVal = Number(room.workingPlane || 0)
+    setWorkingPlaneSelect(WORKING_PLANE_PRESETS.some(p => p.value === wpVal) ? wpVal : 'custom')
+    setWorkingPlaneInput(String(room.workingPlane ?? ''))
+  }, [room.ceilingHeight, room.falseCeiling, room.workingPlane])
+
+  function handleCustomBlur(key, min, max, rawVal, setInputVal) {
+    let num = parseFloat(rawVal)
+    if (isNaN(num)) {
+      num = min
+    }
+
+    let clamped = num
+    let didClamp = false
+
+    if (num < min) {
+      clamped = min
+      didClamp = true
+    } else if (num > max) {
+      clamped = max
+      didClamp = true
+    }
+
+    updateField(key, clamped)
+    setInputVal(String(clamped))
+
+    if (didClamp || isNaN(parseFloat(rawVal))) {
+      setWarnings(prev => ({ ...prev, [key]: 'Adjusted to valid range' }))
+      setTimeout(() => setWarnings(prev => ({ ...prev, [key]: '' })), 3000)
+    } else {
+      setWarnings(prev => ({ ...prev, [key]: '' }))
+    }
+  }
+
+  function handleCeilingSelectChange(val) {
+    setCeilingSelect(val)
+    if (val !== 'custom') {
+      const num = Number(val)
+      updateField('ceilingHeight', num)
+      setCeilingInput(String(num))
+      setWarnings(prev => ({ ...prev, ceilingHeight: '' }))
+    }
+  }
+
+  function handleFalseCeilingSelectChange(val) {
+    setFalseCeilingSelect(val)
+    if (val !== 'custom') {
+      const num = Number(val)
+      updateField('falseCeiling', num)
+      setFalseCeilingInput(String(num))
+      setWarnings(prev => ({ ...prev, falseCeiling: '' }))
+    }
+  }
+
+  function handleWorkingPlaneSelectChange(val) {
+    setWorkingPlaneSelect(val)
+    if (val !== 'custom') {
+      const num = Number(val)
+      updateField('workingPlane', num)
+      setWorkingPlaneInput(String(num))
+      setWarnings(prev => ({ ...prev, workingPlane: '' }))
+    }
+  }
+
   return (
     <div style={{
       width: 280,
@@ -249,11 +355,104 @@ export default function RoomSettingsPanel({ room, setRoom, calculations, style }
         />
       </div>
 
+      {/* Ceiling Height */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>Ceiling Height (m)</div>
+        <select
+          value={ceilingSelect}
+          onChange={e => handleCeilingSelectChange(e.target.value)}
+          style={selectStyle}
+        >
+          {CEILING_PRESETS.map(p => (
+            <option key={p.value} value={p.value}>{p.label} ({p.value}m)</option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
+        {ceilingSelect === 'custom' && (
+          <div style={{ marginTop: 6 }}>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={ceilingInput}
+              onChange={e => setCeilingInput(e.target.value)}
+              onBlur={() => handleCustomBlur('ceilingHeight', 2, 8, ceilingInput, setCeilingInput)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCustomBlur('ceilingHeight', 2, 8, ceilingInput, setCeilingInput) }}
+              placeholder="Enter height (2 - 8m)"
+              style={inputStyle}
+            />
+            {warnings.ceilingHeight && (
+              <div style={{ fontSize: 10, color: "#d97706", marginTop: 4 }}>{warnings.ceilingHeight}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* False Ceiling Drop */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>False Ceiling Drop (m)</div>
+        <select
+          value={falseCeilingSelect}
+          onChange={e => handleFalseCeilingSelectChange(e.target.value)}
+          style={selectStyle}
+        >
+          {FALSE_CEILING_PRESETS.map(p => (
+            <option key={p.value} value={p.value}>{p.label} ({p.value}m)</option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
+        {falseCeilingSelect === 'custom' && (
+          <div style={{ marginTop: 6 }}>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={falseCeilingInput}
+              onChange={e => setFalseCeilingInput(e.target.value)}
+              onBlur={() => handleCustomBlur('falseCeiling', 0, 1.5, falseCeilingInput, setFalseCeilingInput)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCustomBlur('falseCeiling', 0, 1.5, falseCeilingInput, setFalseCeilingInput) }}
+              placeholder="Enter drop (0 - 1.5m)"
+              style={inputStyle}
+            />
+            {warnings.falseCeiling && (
+              <div style={{ fontSize: 10, color: "#d97706", marginTop: 4 }}>{warnings.falseCeiling}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Working Plane */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 9, color: C.label, marginBottom: 4 }}>Working Plane Height (m)</div>
+        <select
+          value={workingPlaneSelect}
+          onChange={e => handleWorkingPlaneSelectChange(e.target.value)}
+          style={selectStyle}
+        >
+          {WORKING_PLANE_PRESETS.map(p => (
+            <option key={p.value} value={p.value}>{p.label} ({p.value}m)</option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
+        {workingPlaneSelect === 'custom' && (
+          <div style={{ marginTop: 6 }}>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={workingPlaneInput}
+              onChange={e => setWorkingPlaneInput(e.target.value)}
+              onBlur={() => handleCustomBlur('workingPlane', 0, 1.5, workingPlaneInput, setWorkingPlaneInput)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCustomBlur('workingPlane', 0, 1.5, workingPlaneInput, setWorkingPlaneInput) }}
+              placeholder="Enter working plane (0 - 1.5m)"
+              style={inputStyle}
+            />
+            {warnings.workingPlane && (
+              <div style={{ fontSize: 10, color: "#d97706", marginTop: 4 }}>{warnings.workingPlane}</div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Other numeric inputs */}
       {[
-        ["ceilingHeight", "Ceiling Height (m)"],
-        ["falseCeiling",  "False Ceiling Drop (m)"],
-        ["workingPlane",  "Working Plane Height (m)"],
         ["targetLux",     "Target Lux"],
         ["fixtureLumens", "Fixture Lumens"],
         ["cct",           "CCT (Kelvin)"],

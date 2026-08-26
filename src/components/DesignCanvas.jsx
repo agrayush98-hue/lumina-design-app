@@ -921,7 +921,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       })
 
     return (
-      <Group listening={false}>
+      <Group listening={false} clipX={ROOM_X} clipY={ROOM_Y} clipWidth={ROOM_PX_W} clipHeight={ROOM_PX_H}>
         {beams.map((beam, i) => (
           <Group key={beam.id ?? i} x={beam.x} y={beam.y}>
             {/* ZONE 1: Field Angle - Outer spill light (very dim) */}

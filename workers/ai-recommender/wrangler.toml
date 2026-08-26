@@ -8,3 +8,7 @@ compatibility_date = "2024-01-01"
 
 [env.production]
 name = "lumina-ai-recommender"
+
+[[kv_namespaces]]
+binding = "AI_USAGE"
+id = "3e750d0b583b42fc9241caf5fe5b734a"
