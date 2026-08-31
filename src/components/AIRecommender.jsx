@@ -125,25 +125,26 @@ const S = {
 // Handles both the exact types we teach Claude and any aliases it might use
 
 const CATEGORY_MAP = {
-  COB_DOWNLIGHT:    "COB_DOWNLIGHT",
+  COB_DOWNLIGHT:    "DOWNLIGHT",
+  DOWNLIGHT:        "DOWNLIGHT",
   SPOTLIGHT:        "SPOTLIGHT",
   PANEL:            "PANEL",
   LINEAR:           "LINEAR",
-  WALL_WASHER:      "WALL_WASHER",
-  LED_STRIP:        "LED_STRIP",
+  WALL_WASHER:      "WALL WASHER",
+  'WALL WASHER':    "WALL WASHER",
+  LED_STRIP:        "STRIP",
+  STRIP:            "STRIP",
   // Professional types
   CHANDELIER:       "CHANDELIER",
   PENDANT:          "PENDANT",
-  TRACK_LIGHT:      "TRACK_LIGHT",
+  TRACK_LIGHT:      "TRACK",
+  TRACK:            "TRACK",
   COVE_LIGHT:       "COVE_LIGHT",
   BOLLARD:          "BOLLARD",
   FLOOD_LIGHT:      "FLOOD_LIGHT",
   SURFACE_PANEL:    "SURFACE_PANEL",
   // Common aliases Claude may use
-  DOWNLIGHT:        "COB_DOWNLIGHT",
-  STRIP:            "LED_STRIP",
-  WASHER:           "WALL_WASHER",
-  TRACK:            "TRACK_LIGHT",
+  WASHER:           "WALL WASHER",
   BATTEN:           "LINEAR",
   COVE:             "COVE_LIGHT",
   CHANDELIER_LIGHT: "CHANDELIER",
@@ -155,34 +156,58 @@ const CATEGORY_MAP = {
 // ── Per-type accent colours ───────────────────────────────────────────────────
 
 const TYPE_COLOR = {
-  COB_DOWNLIGHT: "#d4a843",
+  DOWNLIGHT:     "#d4a843",
   SPOTLIGHT:     "#f09a3e",
   PANEL:         "#60b8f0",
   LINEAR:        "#3dba74",
-  WALL_WASHER:   "#a78bfa",
-  LED_STRIP:     "#e879f9",
+  'WALL WASHER': "#a78bfa",
+  STRIP:         "#e879f9",
   // Professional types
   CHANDELIER:    "#9b59b6",
   PENDANT:       "#e91e8c",
-  TRACK_LIGHT:   "#2196f3",
+  TRACK:         "#2196f3",
   COVE_LIGHT:    "#00bcd4",
   BOLLARD:       "#4caf50",
   FLOOD_LIGHT:   "#f44336",
   SURFACE_PANEL: "#ff9800",
 }
 
-// ── Build a placeable fixture object from an AI zone record ──────────────────
+// ── Category → representative stable sub-type ID ─────────────────────────────
+// AI Recommend picks a category (e.g. DOWNLIGHT) but never a specific sub-type.
+// Map each category to the most generic/representative CONFIGURABLE_FIXTURES id
+// so that icon lookup, fixture schedule grouping, and "apply to all of type" all work.
+const CATEGORY_TO_SUBTYPE = {
+  DOWNLIGHT:       'cob-downlight',
+  SPOTLIGHT:       'pinhole-spotlight',
+  PANEL:           'led-panel',
+  LINEAR:          'linear-diffused',
+  'WALL WASHER':   'recessed-wall-washer',
+  STRIP:           'cove-strip',
+  CHANDELIER:      'cob-downlight',      // no chandelier in configurable set; use closest
+  PENDANT:         'pendant-spotlight',
+  TRACK:           'track-spotlight',
+  COVE_LIGHT:      'cove-strip',
+  BOLLARD:         'outdoor-spotlight',
+  FLOOD_LIGHT:     'outdoor-spotlight',
+  SURFACE_PANEL:   'led-panel',
+  'HIGH BAY':      'high-bay',
+  OUTDOOR:         'outdoor-spotlight',
+  'STEP LIGHT':    'step-light',
+}
 
 function buildFixture(zone) {
-  const category  = CATEGORY_MAP[zone.type] ?? "COB_DOWNLIGHT"
+  const category  = CATEGORY_MAP[zone.type] ?? "DOWNLIGHT"
   const watt      = zone.wattage ?? zone.watt ?? 10
-  const id        = `ai-${category.toLowerCase()}-${watt}w-${Date.now()}-${Math.random().toString(36).slice(2,6)}`
+  const id        = `ai-${category.toLowerCase().replace(/[\s_]/g, "-")}-${watt}w-${Date.now()}-${Math.random().toString(36).slice(2,6)}`
+  // Stable type ID for icon/grouping lookup — independent of the unique instance id
+  const fixtureId = CATEGORY_TO_SUBTYPE[category] ?? 'cob-downlight'
   // Placement: use AI's decision, fall back to sensible defaults per category
   const placement = zone.placement
-    ?? (category === "LED_STRIP" || category === "WALL_WASHER" ? "perimeter"
+    ?? (category === "STRIP" || category === "WALL WASHER" ? "perimeter"
       : category === "LINEAR" ? "rows" : "grid")
   return resolveFixture({
     id,
+    fixtureId,
     category,
     name:      zone.name ?? `${zone.type.replace(/_/g, " ")} ${watt}W (AI)`,
     watt,

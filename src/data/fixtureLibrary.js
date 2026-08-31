@@ -11,26 +11,36 @@ export const FIXTURE_LIBRARY = [
 // ── Category → canvas visual defaults ────────────────────────────────────────
 export const CATEGORY_VISUAL = {
   // ── Standard ───────────────────────────────────────────────────────────────
-  COB_DOWNLIGHT: { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.12)',  visualRadius: 7,  fixtureShape: 'circle'     },
+  DOWNLIGHT:     { fill: '#ffe9b0', stroke: '#ffb300', glowColor: 'rgba(255,179,0,0.12)',  visualRadius: 7,  fixtureShape: 'circle'     },
   SPOTLIGHT:     { fill: '#c8d8f8', stroke: '#2196f3', glowColor: 'rgba(33,150,243,0.14)', visualRadius: 7,  fixtureShape: 'diamond'    },
   PANEL:         { fill: '#d0eaff', stroke: '#4da6ff', glowColor: 'rgba(77,166,255,0.12)', visualRadius: 13, fixtureShape: 'panel-grid' },
   LINEAR:        { fill: '#ffe0c0', stroke: '#ff9940', glowColor: 'rgba(255,153,64,0.12)', visualRadius: 10, fixtureShape: 'rectangle'  },
-  WALL_WASHER:   { fill: '#b8e8ff', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'flood'      },
-  LED_STRIP:     { fill: '#e8d0ff', stroke: '#9c5cd0', glowColor: 'rgba(156,92,208,0.14)', visualRadius: 6,  fixtureShape: 'cove-slot'  },
+  'WALL WASHER': { fill: '#b8e8ff', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'flood'      },
+  STRIP:         { fill: '#e8d0ff', stroke: '#9c5cd0', glowColor: 'rgba(156,92,208,0.14)', visualRadius: 6,  fixtureShape: 'cove-slot'  },
   // ── Professional ───────────────────────────────────────────────────────────
   CHANDELIER:    { fill: '#d4a8f0', stroke: '#7b1fa2', glowColor: 'rgba(123,31,162,0.14)', visualRadius: 10, fixtureShape: 'chandelier' },
   PENDANT:       { fill: '#f8d8f0', stroke: '#c2185b', glowColor: 'rgba(194,24,91,0.12)',  visualRadius: 8,  fixtureShape: 'pendant'    },
-  TRACK_LIGHT:   { fill: '#c0d8f8', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'track'      },
+  TRACK:         { fill: '#c0d8f8', stroke: '#1e88e5', glowColor: 'rgba(30,136,229,0.12)', visualRadius: 9,  fixtureShape: 'track'      },
   COVE_LIGHT:    { fill: '#a8f0f8', stroke: '#00acc1', glowColor: 'rgba(0,172,193,0.14)',   visualRadius: 7,  fixtureShape: 'cove-slot'  },
   BOLLARD:       { fill: '#c8f0c0', stroke: '#43a047', glowColor: 'rgba(67,160,71,0.14)',   visualRadius: 8,  fixtureShape: 'spike'      },
   FLOOD_LIGHT:   { fill: '#f8a8a8', stroke: '#f44336', glowColor: 'rgba(244,67,54,0.16)',   visualRadius: 11, fixtureShape: 'floodlight' },
   SURFACE_PANEL: { fill: '#f8d4a8', stroke: '#ff9800', glowColor: 'rgba(255,152,0,0.12)',   visualRadius: 12, fixtureShape: 'panel-grid' },
+  // ── New Categories ─────────────────────────────────────────────────────────
+  'HIGH BAY':    { fill: '#ffd8a8', stroke: '#ff8f00', glowColor: 'rgba(255,143,0,0.14)', visualRadius: 10, fixtureShape: 'octagon' },
+  'OUTDOOR':     { fill: '#f8c8a8', stroke: '#e64a19', glowColor: 'rgba(230,74,25,0.14)', visualRadius: 10, fixtureShape: 'floodlight' },
+  'STEP LIGHT':  { fill: '#c8f8d0', stroke: '#2e7d32', glowColor: 'rgba(46,125,50,0.14)', visualRadius: 6,  fixtureShape: 'pill' }
 }
+
+// ── Backward compatibility aliases for old category names ──────────────────
+CATEGORY_VISUAL.COB_DOWNLIGHT = CATEGORY_VISUAL.DOWNLIGHT;
+CATEGORY_VISUAL.TRACK_LIGHT   = CATEGORY_VISUAL.TRACK;
+CATEGORY_VISUAL.WALL_WASHER   = CATEGORY_VISUAL['WALL WASHER'];
+CATEGORY_VISUAL.LED_STRIP     = CATEGORY_VISUAL.STRIP;
 
 // ── Category metadata — drives modal UI ───────────────────────────────────────
 export const CATEGORY_META = {
   // ── Standard ──────────────────────────────────────────────────────────────
-  COB_DOWNLIGHT: {
+  DOWNLIGHT: {
     label: 'COB Downlight',
     beamAngles: [36, 24, 60],          // 36° standard COB default
     cctOptions: ['2700K', '3000K', '4000K', '6500K', 'Tunable'],
@@ -86,7 +96,7 @@ export const CATEGORY_META = {
       { watt: 24, lumens: 2100, beamAngle: 120 },
     ],
   },
-  WALL_WASHER: {
+  'WALL WASHER': {
     label: 'Wall Washer',
     beamAngles: [60, 90],               // 60° standard wall washer
     cctOptions: ['2700K', '3000K', '4000K', 'Tunable'],
@@ -95,7 +105,7 @@ export const CATEGORY_META = {
       { watt: 15, lumens: 1200, beamAngle: 60 },
     ],
   },
-  LED_STRIP: {
+  STRIP: {
     label: 'LED Strip',
     beamAngles: [120],
     cctOptions: ['3000K', '4000K', '6500K', 'Tunable'],
@@ -124,7 +134,7 @@ export const CATEGORY_META = {
       { watt: 30, lumens: 2700, beamAngle: 60, label: 'Large'  },
     ],
   },
-  TRACK_LIGHT: {
+  TRACK: {
     label: 'Track Light', professionalOnly: true,
     beamAngles: [36],
     cctOptions: ['3000K', '4000K'],
@@ -176,10 +186,16 @@ export const CATEGORY_META = {
   },
 }
 
+// ── Backward compatibility aliases for old category names ──────────────────
+CATEGORY_META.COB_DOWNLIGHT = CATEGORY_META.DOWNLIGHT;
+CATEGORY_META.TRACK_LIGHT   = CATEGORY_META.TRACK;
+CATEGORY_META.WALL_WASHER   = CATEGORY_META['WALL WASHER'];
+CATEGORY_META.LED_STRIP     = CATEGORY_META.STRIP;
+
 // ── LED Strip placeholder entry ───────────────────────────────────────────────
 export const LED_STRIP_PLACEHOLDER = {
   id: 'led-strip',
-  category: 'LED_STRIP',
+  category: 'STRIP',
   name: 'LED Strip',
   watt: 0,
   lumens: 0,
@@ -195,7 +211,7 @@ export const LED_STRIP_PLACEHOLDER = {
 export const PREDEFINED_FIXTURES = [
   LED_STRIP_PLACEHOLDER,
   ...Object.entries(CATEGORY_META)
-    .filter(([cat]) => cat !== 'LED_STRIP')
+    .filter(([cat]) => cat !== 'STRIP')
     .flatMap(([cat, meta]) =>
       meta.variants.map(v => ({
         id: `${cat.toLowerCase().replace(/_/g, '-')}-${v.watt}w`,
@@ -213,11 +229,11 @@ export const PREDEFINED_FIXTURES = [
 
 // ── Resolve a config into a full fixture object (with visual props) ────────────
 export function resolveFixture(config) {
-  const vis      = CATEGORY_VISUAL[config.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+  const vis      = CATEGORY_VISUAL[config.category] ?? CATEGORY_VISUAL.DOWNLIGHT
   const catMeta  = CATEGORY_META[config.category]
   const catLabel = catMeta?.label ?? config.category ?? 'Fixture'
   const isLinear = config.category === 'LINEAR'
-  const isStrip  = config.category === 'LED_STRIP'
+  const isStrip  = config.category === 'STRIP'
   const tunable  = config.cct === 'Tunable'
   const watt     = config.watt ?? 0
   const lumens   = config.lumens ?? 0
@@ -230,7 +246,7 @@ export function resolveFixture(config) {
     subLabel: (isLinear || isStrip)
       ? `${config.beamAngle ?? 120}° · ${lumens} lm/m`
       : `${config.beamAngle ?? 36}° · ${lumens} lm`,
-    type: (config.category ?? 'COB_DOWNLIGHT').toLowerCase().replace(/_/g, ''),
+    type: (config.category ?? 'DOWNLIGHT').toLowerCase().replace(/[\s_]/g, ''),
   }
 }
 

@@ -112,6 +112,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 }, ref) {
   const toast = useToast()
   const stageRef = useRef(null)
+  const containerRef = useRef(null)
   useImperativeHandle(ref, () => ({
     getStage: () => stageRef.current,
     getRoomBounds: () => ({
@@ -120,6 +121,31 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       width: ROOM_PX_W,
       height: ROOM_PX_H,
     }),
+    getTransform: () => ({
+      zoom: animRef.current.zoom,
+      x: animRef.current.x,
+      y: animRef.current.y,
+    }),
+    setTransformImmediate: (zoom, x, y) => {
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current)
+        rafId.current = null
+      }
+      targetRef.current = { zoom, x, y }
+      animRef.current = { zoom, x, y }
+      setTransform({ zoom, x, y })
+      const stage = stageRef.current
+      if (stage) {
+        stage.scaleX(zoom)
+        stage.scaleY(zoom)
+        stage.x(x)
+        stage.y(y)
+        stage.draw()
+      }
+    },
+    fitToScreen: () => {
+      fitToScreen()
+    },
   }))
   const floorPlanDisplayRef = useRef({ imgX: 0, imgY: 0, displayW: 0, displayH: 0, scaleX: 1, scaleY: 1 })
   const hasFloorPlan = !!floorPlan?.url
@@ -252,6 +278,10 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     if (activeTool !== "draw-room") setRoomDraw({ drawing: false, x1: 0, y1: 0, x2: 0, y2: 0 })
   }, [activeTool])
 
+  useEffect(() => {
+    setRoomSizePopup(null)
+  }, [activeRoomId])
+
   // Convert stage-container screen pos → world canvas coords (uses live animRef)
   function toWorld(rawPos) {
     const { zoom, x, y } = animRef.current
@@ -315,7 +345,13 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   function _applyZoomStep(factor) {
     const cur     = animRef.current
     const newZoom = Math.min(5, Math.max(0.3, cur.zoom * factor))
-    const cx = CANVAS_W / 2, cy = CANVAS_H / 2
+    let cx = CANVAS_W / 2
+    let cy = CANVAS_H / 2
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      if (rect.width > 0) cx = rect.width / 2
+      if (rect.height > 0) cy = rect.height / 2
+    }
     const mp = {
       x: (cx - cur.x) / cur.zoom,
       y: (cy - cur.y) / cur.zoom,
@@ -330,6 +366,23 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   function zoomIn()    { _applyZoomStep(1.2) }
   function zoomOut()   { _applyZoomStep(1 / 1.2) }
   function zoomReset() { targetRef.current = { zoom: 1, x: 0, y: 0 }; startAnim() }
+  function fitToScreen() {
+    const PAD = 0.85 // leave 15% margin
+    let viewW = CANVAS_W
+    let viewH = CANVAS_H
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      if (rect.width > 0) viewW = rect.width
+      if (rect.height > 0) viewH = rect.height
+    }
+    const zoomX = (viewW / ROOM_PX_W) * PAD
+    const zoomY = (viewH / ROOM_PX_H) * PAD
+    const newZoom = Math.min(5, Math.max(0.3, Math.min(zoomX, zoomY)))
+    const newX = viewW / 2 - (ROOM_X + ROOM_PX_W / 2) * newZoom
+    const newY = viewH / 2 - (ROOM_Y + ROOM_PX_H / 2) * newZoom
+    targetRef.current = { zoom: newZoom, x: newX, y: newY }
+    startAnim()
+  }
 
   // ── Strip drawing mode & per-mode state ───────────────────────
   const [stripDrawMode, setStripDrawMode]   = useState("line")
@@ -548,7 +601,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     ]
   }
   function insideRoom(x, y) {
-    console.log("[insideRoom] x:", x, "y:", y, "ROOM_X:", ROOM_X, "ROOM_Y:", ROOM_Y, "ROOM_PX_W:", ROOM_PX_W, "ROOM_PX_H:", ROOM_PX_H)
     return x >= ROOM_X && x <= ROOM_X + ROOM_PX_W && y >= ROOM_Y && y <= ROOM_Y + ROOM_PX_H
   }
 
@@ -570,7 +622,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Regular fixture / marker click ───────────────────────────
   function handleRoomClick(e) {
-    console.log("[ROOM CLICK FIRED] isStripMode:", isStripMode, "activeTool:", activeTool)
     e.cancelBubble = true
     if (isStripMode) return
     if (activeTool === "draw-room") return
@@ -582,8 +633,6 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     const x = snap(pos.x, ROOM_X, ROOM_PX_W)
     const y = snap(pos.y, ROOM_Y, ROOM_PX_H)
     if (activeTool === "fixture") {
-      // Debug: log placement coords
-      console.log("[place] x:", x, "y:", y, "roomW:", roomWidth, "roomH:", roomHeight)
       onAddLight({ id: crypto.randomUUID(), x, y })
     } else if (activeTool === "emergency") {
       onAddEmergencyLight?.(x, y)
@@ -603,6 +652,28 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       setPanning(true)
       panLast.current = { x: e.evt.clientX, y: e.evt.clientY }
       return
+    }
+
+    // Plain drag pan: left click on empty space (or room background) when no placement tool is active
+    const isLeftClick = e.evt.button === 0
+    const isPlacement = activeTool === "fixture" || activeTool === "draw-room" || activeTool === "emergency"
+    if (isLeftClick && !e.evt.shiftKey && !isPlacement) {
+      let target = e.target
+      let isDraggableNode = false
+      while (target && target !== stageRef.current) {
+        if (target.attrs.draggable) {
+          isDraggableNode = true
+          break
+        }
+        target = target.getParent()
+      }
+
+      if (!isDraggableNode) {
+        isPanning.current = true
+        setPanning(true)
+        panLast.current = { x: e.evt.clientX, y: e.evt.clientY }
+        return
+      }
     }
 
     // Box select: shift + left drag
@@ -705,7 +776,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   }
 
   function handleStageMouseUp(e) {
-    if (isPanning.current && (e.evt.button === 1 || (e.evt.button === 0 && spaceDown.current))) {
+    if (isPanning.current) {
       isPanning.current = false
       setPanning(false)
       return
@@ -869,15 +940,15 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
   // ── Beam spread visualization ────────────────────────────────
   const BEAM_COLORS = {
-    COB_DOWNLIGHT: "#ffb347",
+    DOWNLIGHT:     "#ffb347",
     SPOTLIGHT:     "#ffb347",
     PANEL:         "#e8f4ff",
     LINEAR:        "#e8f4ff",
-    WALL_WASHER:   "#7ec8e3",
+    'WALL WASHER': "#7ec8e3",
     // Professional types
     CHANDELIER:    "#d4a8f0",
     PENDANT:       "#f8a8d4",
-    TRACK_LIGHT:   "#a8d4f8",
+    TRACK:         "#a8d4f8",
     COVE_LIGHT:    "#a8f0f8",
     BOLLARD:       "#a8f0a8",
     FLOOD_LIGHT:   "#f8a8a8",
@@ -908,7 +979,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
         const cat = (light.category ?? "").toUpperCase().replace(/_/g, "")
         const color =
           cat === "DOWNLIGHT" || cat === "COBDOWNLIGHT" ? "#ffe9a0" :
-          cat === "SPOTLIGHT" || cat === "TRACKLIGHT"   ? "#ffd4a3" :
+          cat === "SPOTLIGHT" || cat === "TRACK" || cat === "TRACKLIGHT" ? "#ffd4a3" :
           cat === "PANEL"     || cat === "SURFACEPANEL" ? "#e8f4ff" :
           cat === "LINEAR"                              ? "#fff5e1" :
           cat === "WALLWASHER"                          ? "#ffe4b5" :
@@ -1783,7 +1854,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       )}
 
       {/* Canvas + zoom controls wrapper */}
-      <div style={{ position: "relative", width: CANVAS_W, height: CANVAS_H, background: "#1a1a1a", backgroundImage: "radial-gradient(circle, #2a2a2a 1px, transparent 1px)", backgroundSize: "24px 24px", borderRadius: isStripMode ? "0 0 6px 6px" : 6 }}>
+      <div ref={containerRef} style={{ position: "relative", width: "100%", maxWidth: CANVAS_W, height: CANVAS_H, overflow: "hidden", background: "#1a1a1a", backgroundImage: "radial-gradient(circle, #2a2a2a 1px, transparent 1px)", backgroundSize: "24px 24px", borderRadius: isStripMode ? "0 0 6px 6px" : 6 }}>
         <Stage
           ref={stageRef}
           width={CANVAS_W}
@@ -2042,6 +2113,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
           </span>
           <button onClick={zoomOut}   style={zoomBtnStyle}>−</button>
           <button onClick={zoomIn}    style={zoomBtnStyle}>+</button>
+          <button onClick={fitToScreen} style={{ ...zoomBtnStyle, color: "#4a9eff", border: "1px solid #1e4060" }}>FIT</button>
           <button onClick={zoomReset} style={{ ...zoomBtnStyle, color: "#4a9eff", border: "1px solid #1e4060" }}>RESET</button>
         </div>
 

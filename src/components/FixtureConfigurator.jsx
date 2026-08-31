@@ -27,6 +27,7 @@ export default function FixtureConfigurator({ fixture = null, onAddFixture, onCl
       chip: chip?.brand || chip?.label || 'Standard',
       cct,
       lumens,
+      powerOptions: activeFixture.powerOptions,
     }
     onAddFixture?.(config)
     onClose?.()

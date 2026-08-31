@@ -25,6 +25,7 @@ import { FixtureLibraryPanel } from "./components/FixtureLibraryPanel"
 import Navigation from "./components/Navigation"
 import Sidebar from "./components/Sidebar"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
+import { CONFIGURABLE_FIXTURES } from "./data/configurable-fixtures"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
 import { SIDEBAR_LEGEND } from "./utils/heatmapColors"
@@ -85,28 +86,89 @@ function calcUF(rcr, cR = 0.7, wR = 0.5, fR = 0.2) {
   return Math.min(0.95, Math.max(0.4, ufRaw))
 }
 
+const FIXTURE_TYPE_SHAPES = {
+  'cob-downlight': 'circle',
+  'smd-downlight': 'ring',
+  'ip65-downlight': 'cross-dot',
+  'pinhole-spotlight': 'diamond',
+  'tiltable-spotlight': 'gimbal',
+  'trimless-spotlight': 'triangle',
+  'surface-spotlight': 'square',
+  'recessed-wall-washer': 'flood',
+  'floor-washer': 'semicircle',
+  'track-spotlight': 'track',
+  'magnetic-track-spotlight': 'track',
+  'pendant-spotlight': 'pendant',
+  'linear-spotlight': 'rectangle',
+  'linear-diffused': 'pill',
+  'led-panel': 'panel-grid',
+  'cove-strip': 'cove-slot',
+  'high-bay': 'octagon',
+  'step-light': 'pill',
+  'outdoor-spotlight': 'floodlight',
+  'inground-uplight': 'spike',
+}
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255
+  const max = Math.max(r,g,b), min = Math.min(r,g,b)
+  let h=0, s=0, l=(max+min)/2
+  if (max !== min) {
+    const d = max-min
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min)
+    if (max===r) h = ((g-b)/d + (g<b?6:0))
+    else if (max===g) h = (b-r)/d + 2
+    else h = (r-g)/d + 4
+    h /= 6
+  }
+  return [h*360, s*100, l*100]
+}
+
+function hslToHex(h, s, l) {
+  s/=100; l/=100
+  const k = n => (n + h/30) % 12
+  const a = s * Math.min(l, 1-l)
+  const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)))
+  const toHex = x => Math.round(x*255).toString(16).padStart(2,'0')
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`
+}
+
+function wattageAdjustedColor(baseHex, watt, minWatt, maxWatt) {
+  if (!baseHex || minWatt == null || maxWatt == null || maxWatt === minWatt) return baseHex
+  const ratio = Math.max(0, Math.min(1, (watt - minWatt) / (maxWatt - minWatt)))
+  const [h, s, l] = hexToHsl(baseHex)
+  const newL = l + (40 - ratio*70)
+  return hslToHex(h, s, Math.max(10, Math.min(90, newL)))
+}
+
 function makeLight(id, x, y, fixture, lumensOverride) {
   // Prefer per-fixture visual props; fall back to category defaults
   const vis = fixture?.category ? (CATEGORY_VISUAL[fixture.category] ?? {}) : {}
+  // Wattage-based size scaling: 75% at lowest watt, 135% at highest
+  const _pMin = fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0
+  const _pMax = fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0
+  const _pVal = fixture?.power ?? fixture?.watt ?? 0
+  const _pRatio = (_pMax > _pMin) ? Math.max(0, Math.min(1, (_pVal - _pMin) / (_pMax - _pMin))) : 0.5
+  const _sizeScale = 0.75 + _pRatio * 0.6 // 75% at min watt → 135% at max watt
   return {
     id, x, y,
-    fixtureId:    fixture?.id,
+    fixtureId:    fixture?.fixtureId ?? fixture?.id,
     category:     fixture?.category ?? null,
     name:         fixture?.name ?? fixture?.label ?? "Fixture",
     brand:        fixture?.brand ?? null,
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
-    watt:         fixture?.watt ?? 0,
+    watt:         fixture?.power ?? fixture?.watt ?? 0,
     lumens:       lumensOverride ?? fixture?.lumens ?? 0,
     beamAngle:    fixture?.beamAngle ?? 36,
     cri:          fixture?.cri ?? 80,
     efficacy:     fixture?.efficacy ?? null,
     mounting:     fixture?.mounting ?? null,
     // Visual — fixture-level props take priority over category defaults
-    fill:         fixture?.fill         ?? vis.fill         ?? "#ffe9b0",
-    stroke:       fixture?.stroke       ?? vis.stroke       ?? "#ffb300",
+    fill:         wattageAdjustedColor(fixture?.fill ?? vis.fill ?? "#ffe9b0", fixture?.power ?? fixture?.watt ?? 0, fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0, fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0),
+    stroke:       wattageAdjustedColor(fixture?.stroke ?? vis.stroke ?? "#ffb300", fixture?.power ?? fixture?.watt ?? 0, fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0, fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0),
     glowColor:    fixture?.glowColor    ?? vis.glowColor    ?? "rgba(255,179,0,0.08)",
-    visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
-    fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
+    visualRadius: (fixture?.visualRadius ?? vis.visualRadius ?? 6) * _sizeScale,
+    fixtureShape: FIXTURE_TYPE_SHAPES[fixture?.fixtureId] ?? fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
     fixtureColor: fixture?.fixtureColor ?? fixture?.fill   ?? vis.fill ?? "#ffe9b0",
     // Protocol
     protocol:     fixture?.protocol ?? null,
@@ -129,14 +191,14 @@ function computeCircuits(lights) {
         fixtures:  [],
         totalWatt: 0,
         mcb:       "6A",
-        wireSize:  "1.5mmÂ²",
+        wireSize:  "1.5mm²",
       }
       result.push(cur)
     }
     cur.fixtures.push(light)
     cur.totalWatt += w
     cur.mcb      = cur.totalWatt <= 1380 ? "6A" : cur.totalWatt <= 2300 ? "10A" : "16A"
-    cur.wireSize = cur.totalWatt <= 2944 ? "1.5mmÂ²" : "2.5mmÂ²"
+    cur.wireSize = cur.totalWatt <= 2944 ? "1.5mm²" : "2.5mm²"
   }
   return result
 }
@@ -219,7 +281,7 @@ function computePerRoomSummary(floors, daliAddresses, busTopologies, busCableLen
       const noCtr       = false  // new busCableLengths array never has noCtr
       const cableM      = daliBusNums.reduce((s, b) => s + (getCableEntry(b)?.totalCableM ?? 0), 0)
       return {
-        name:         `${floor.name} Â· ${room.name}`,
+        name:         `${floor.name} · ${room.name}`,
         fixtures:     room.lights.length,
         load:         room.lights.reduce((s, l) => s + (l.watt ?? 0), 0),
         circuitCount: circuits.length,
@@ -362,7 +424,7 @@ export default function App() {
   }, [])
 
   const { state: floors, set: setFloors, undo, redo, canUndo, canRedo } = useUndoRedo([{
-    id: "1", name: "Floor 1", activeRoomId: "1", floorPlan: null,
+    id: 1, name: "Floor 1", activeRoomId: "1", floorPlan: null,
     rooms: [{
       id: "1", name: "Room 1",
       room: { ...DEFAULT_ROOM },
@@ -403,6 +465,7 @@ export default function App() {
   const [visualEditorPos,    setVisualEditorPos]    = useState({ x: 400, y: 50 })
   const [showBeam,           setShowBeam]           = useState(false)
   const [showHeatmap,        setShowHeatmap]        = useState(false)
+  const [showLegend,         setShowLegend]         = useState(false)
   const [showAutoPlaceModal, setShowAutoPlaceModal] = useState(false)
   const [showEmergency,      setShowEmergency]      = useState(false)
   const [emergencyDuration,  setEmergencyDuration]  = useState("1hr")
@@ -447,7 +510,7 @@ export default function App() {
   )
   const totalLumens = lights.reduce((s, l) => s + (l.lumens ?? 0), 0)
   const totalWatt   = lights.reduce((s, l) => s + (l.watt   ?? 0), 0)
-  // Lumen method: E = (Î¦ Ã— UF Ã— MF) / A
+  // Lumen method: E = (Φ × UF × MF) / A
   const totalLux    = areaM2 === 0 ? 0 : (totalLumens * uf * MAINT_FACTOR) / areaM2
   const luxBreakdown = computeLuxBreakdown(lights, areaM2, uf)
 
@@ -530,7 +593,7 @@ export default function App() {
   const voltageDropResults = useMemo(() => {
     if (circuits.length === 0 || dbMarkers.length === 0 || roomWidth <= 0 || roomHeight <= 0) return []
     const SCALE = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
-    const RHO = 0.0175  // copper Î©Â·mmÂ²/m
+    const RHO = 0.0175  // copper Ω·mm²/m
 
     return circuits.map(c => {
       const avgX = c.fixtures.reduce((s, f) => s + (f.x ?? 0), 0) / c.fixtures.length
@@ -547,9 +610,9 @@ export default function App() {
       const current      = c.totalWatt / 230
 
       let cableSize, area
-      if (current <= 10)       { cableSize = "1.5mmÂ²"; area = 1.5 }
-      else if (current <= 16)  { cableSize = "2.5mmÂ²"; area = 2.5 }
-      else                     { cableSize = "4mmÂ²";   area = 4   }
+      if (current <= 10)       { cableSize = "1.5mm²"; area = 1.5 }
+      else if (current <= 16)  { cableSize = "2.5mm²"; area = 2.5 }
+      else                     { cableSize = "4mm²";   area = 4   }
 
       const vDropPercent = (2 * cableLengthM * current * RHO / area) / 230 * 100
       const status = vDropPercent <= 3 ? "GOOD" : vDropPercent <= 5 ? "WARNING" : "CRITICAL"
@@ -662,7 +725,7 @@ export default function App() {
 
   function addLight(lightData) {
     const now = Date.now()
-    console.log("[addLight called] lightData:", lightData, "activeFixture:", activeFixture?.id, "activeFixtureCategory:", activeFixtureCategory)
+
     if (now - lastAddLightTime.current < 100) return
     lastAddLightTime.current = now
     const normCat = (c) => (c ?? "").toUpperCase().replace(/[\s-]/g, "_")
@@ -737,6 +800,18 @@ export default function App() {
     })))
     setSelectedLights(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
   }, [])
+
+  function batchUpdateLights(ids, updates) {
+    const idSet = new Set(ids)
+    setFloors(prev => prev.map(f => ({
+      ...f,
+      rooms: f.rooms.map(r => ({
+        ...r,
+        lights: r.lights.map(l => idSet.has(l.id) ? { ...l, ...updates } : l),
+      })),
+    })))
+    setSelectedLights(prev => prev.map(l => idSet.has(l.id) ? { ...l, ...updates } : l))
+  }
 
   function updateLightsOfType(fixtureId, updates) {
     setFloors(prev => prev.map(f => ({
@@ -842,7 +917,7 @@ export default function App() {
       })
       const data = await res.json()
       if (data.error) { showToast("Analysis failed: " + data.error); return }
-      console.log("[floorplan analysis]", JSON.stringify(data))
+
       setFloorPlanAnalysis(data)
       showToast("Analysis complete - " + (data.rooms?.length ?? 0) + " rooms detected")
     } catch(e) {
@@ -910,7 +985,7 @@ export default function App() {
       }))
     }
     setActiveTool("fixture")
-    showToast(`Room: ${widthM.toFixed(2)}m Ã— ${heightM.toFixed(2)}m`)
+    showToast(`Room: ${widthM.toFixed(2)}m × ${heightM.toFixed(2)}m`)
   }
 
   // â”€â”€ Room management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -930,11 +1005,13 @@ export default function App() {
     const newId = uid()
     setFloors(prev => prev.map(f => {
       if (f.id !== activeFloorId) return f
+      const usedNumbers = f.rooms.map(r => parseInt((r.name || '').replace(/\D/g, ''), 10)).filter(n => !isNaN(n))
+      const nextNum = usedNumbers.length ? Math.max(...usedNumbers) + 1 : f.rooms.length + 1
       return {
         ...f,
         activeRoomId: newId,
         rooms: [...f.rooms, {
-          id: newId, name: `Room ${f.rooms.length + 1}`,
+          id: newId, name: `Room ${nextNum}`,
           room: { ...DEFAULT_ROOM },
           lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
         }],
@@ -1010,10 +1087,8 @@ export default function App() {
     const H = roomHeight / 1000
     const area = W * H
     if (area <= 0) { showToast("Please set room dimensions first"); return }
-    console.log("[autoPlace] activeFixture:", JSON.stringify(activeFixture).substring(0, 400))
     const variants = activeFixture.variants ?? []
     const midVariant = variants[Math.floor(variants.length / 2)] ?? {}
-    console.log("[autoPlace] variants count:", variants.length, "midVariant:", JSON.stringify(midVariant))
     const fixWatt   = midVariant.watt      ?? activeFixture.watt      ?? 12
     const fixLumens = midVariant.lumens    ?? activeFixture.lumens    ?? (fixWatt * 90)
     const fixBeam   = midVariant.beamAngle ?? activeFixture.beamAngle ?? 36
@@ -1179,7 +1254,7 @@ export default function App() {
         totalWatts:  allRoomsForSave.reduce((s, r) => s + r.lights.reduce((w, l) => w + (l.watt ?? 0), 0), 0),
       }, user?.uid)
       setProjectId(id)
-      showToast("Project saved âœ“")
+      showToast("Project saved ✓")
     } catch (e) {
       showToast(`Save failed: ${e.message}`)
     } finally {
@@ -1196,16 +1271,43 @@ export default function App() {
     }))
   }
 
-    function handleLoadFromModal(id, data) {
+  function syncNextIdFromLoadedData(floorsList) {
+    let maxId = 9
+    const checkId = (id) => {
+      const num = parseInt(id, 10)
+      if (!isNaN(num) && num > maxId) {
+        maxId = num
+      }
+    }
+    
+    (floorsList || []).forEach(f => {
+      checkId(f.id)
+      if (f.rooms) {
+        f.rooms.forEach(r => {
+          checkId(r.id)
+          if (r.lights) r.lights.forEach(l => checkId(l.id))
+          if (r.dbMarkers) r.dbMarkers.forEach(m => checkId(m.id))
+          if (r.ctrMarkers) r.ctrMarkers.forEach(m => checkId(m.id))
+          if (r.jbMarkers) r.jbMarkers.forEach(m => checkId(m.id))
+          if (r.emergencyLights) r.emergencyLights.forEach(el => checkId(el.id))
+        })
+      }
+    })
+    
+    nextId.current = maxId + 1
+  }
+
+  function handleLoadFromModal(id, data) {
     if (data.floors) {
       const nf = normalizeIds(data.floors)
+      syncNextIdFromLoadedData(nf)
       setFloors(nf)
       setActiveFloorId(String(nf[0]?.id ?? "1"))
       setProjectId(id)
     }
     if (data.name) setProjectName(data.name)
     setShowLoadModal(false)
-    showToast("Project loaded âœ“")
+    showToast("Project loaded ✓")
   }
 
   // Keep ref in sync so auto-save always has latest closure
@@ -1252,6 +1354,7 @@ export default function App() {
           const tpl = JSON.parse(raw)
           if (tpl?.floors) {
             const tf = normalizeIds(tpl.floors)
+            syncNextIdFromLoadedData(tf)
             setFloors(tf)
             setActiveFloorId(String(tf[0]?.id ?? "1"))
             showToast(`Template loaded: ${tpl.name}`)
@@ -1267,7 +1370,7 @@ export default function App() {
       await fbShareProject(projectId)
       const url = `${window.location.origin}/share/${projectId}`
       navigator.clipboard?.writeText(url)
-      showToast("Share link copied to clipboard âœ“")
+      showToast("Share link copied to clipboard ✓")
     } catch (e) {
       showToast(`Share failed: ${e.message}`)
     }
@@ -1569,7 +1672,7 @@ export default function App() {
       doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(160, 160, 160)
       doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2)
       doc.line(M, PH - 12, PW - M, PH - 12)
-      doc.text("LUMINA DESIGN Â· LIGHTING CALCULATION REPORT", M, PH - 8)
+      doc.text("LUMINA DESIGN · LIGHTING CALCULATION REPORT", M, PH - 8)
       doc.text(`Page ${n}${total ? ` of ${total}` : ""}`, PW - M, PH - 8, { align: "right" })
       doc.setTextColor(30, 30, 30)
     }
@@ -1627,7 +1730,7 @@ export default function App() {
     doc.rect(0, 0, 6, PH, "F")
 
     // â”€â”€ Cover page layout — vertically centred between branding and footer â”€â”€
-    // Usable band: branding ends ~28mm, footer line at PH-12=285mm â†’ 257mm tall
+    // Usable band: branding ends ~28mm, footer line at PH-12=285mm → 257mm tall
     const BRAND_BOTTOM = 28
     const FOOTER_TOP   = PH - 12
     const USABLE_H     = FOOTER_TOP - BRAND_BOTTOM   // 257mm
@@ -1709,9 +1812,9 @@ export default function App() {
 
     // â”€â”€ PAGE 2: Lux Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    let curY = sectionHeader("02 Â· LUX SUMMARY", 18)
+    let curY = sectionHeader("02 · LUX SUMMARY", 18)
 
-    const luxHead = ["FLOOR", "ROOM", "AREA (mÂ²)", "TARGET LX", "ACTUAL LX", "STATUS", "PROTOCOL", "FIX", "LOAD (W)"]
+    const luxHead = ["FLOOR", "ROOM", "AREA (m²)", "TARGET LX", "ACTUAL LX", "STATUS", "PROTOCOL", "FIX", "LOAD (W)"]
     const luxBody = allR.map(r => {
       const { areaM2, lux } = _calcRoomExport(r)
       const target  = Number(r.room?.targetLux ?? 0)
@@ -1748,7 +1851,7 @@ export default function App() {
     })
     // â”€â”€ PAGE 3: Fixture Schedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    curY = sectionHeader("03 Â· FIXTURE SCHEDULE", 18)
+    curY = sectionHeader("03 · FIXTURE SCHEDULE", 18)
 
     const schHead = ["FLOOR", "ROOM", "FIXTURE TYPE", "QTY", "LUMENS", "BEAM", "WATT", "TOTAL W", "PROTOCOL", "CCT"]
     const schBody = allR.flatMap(r => {
@@ -1779,11 +1882,11 @@ export default function App() {
 
     // â”€â”€ PAGE 4: Electrical Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    curY = sectionHeader("04 Â· ELECTRICAL SUMMARY", 18)
+    curY = sectionHeader("04 · ELECTRICAL SUMMARY", 18)
 
     // Section A — Circuit summary
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK)
-    doc.text("A Â· CIRCUIT SUMMARY", M, curY + 5)
+    doc.text("A · CIRCUIT SUMMARY", M, curY + 5)
     curY += 9
 
     const circHead = ["CIRCUIT", "FLOOR", "ROOM", "FIXTURES", "LOAD (W)", "MCB", "WIRE", "V-DROP %", "STATUS"]
@@ -1796,7 +1899,7 @@ export default function App() {
         const current   = load / 230
         const cableLen  = 20
         const RHO       = 0.01724
-        const area      = c.wireSize === "2.5mmÂ²" ? 2.5 : 1.5
+        const area      = c.wireSize === "2.5mm²" ? 2.5 : 1.5
         const vDrop     = (2 * cableLen * current * RHO / area) / 230 * 100
         const vStatus   = vDrop <= 3 ? "GOOD" : vDrop <= 5 ? "WARNING" : "CRITICAL"
         circBody.push([
@@ -1837,7 +1940,7 @@ export default function App() {
 
     // Section B — Driver schedule
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK)
-    doc.text("B Â· DRIVER SCHEDULE", M, curY)
+    doc.text("B · DRIVER SCHEDULE", M, curY)
     curY += 5
 
     const CCT_DRIVER_NOTE = {
@@ -1902,8 +2005,8 @@ export default function App() {
       // Room header
       curY = sectionHeader(`${r.floorName} — ${r.name}`, 18)
       doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(120, 120, 120)
-      const dimStr = rW > 0 && rH > 0 ? `${(rW/1000).toFixed(1)}m Ã— ${(rH/1000).toFixed(1)}m` : "—"
-      doc.text(`${dimStr}   Target: ${target || "—"} lux   Area: ${areaM2.toFixed(1)} mÂ²`, M, curY)
+      const dimStr = rW > 0 && rH > 0 ? `${(rW/1000).toFixed(1)}m × ${(rH/1000).toFixed(1)}m` : "—"
+      doc.text(`${dimStr}   Target: ${target || "—"} lux   Area: ${areaM2.toFixed(1)} m²`, M, curY)
       curY += 6
 
 
@@ -1915,7 +2018,7 @@ export default function App() {
         ["TARGET", target ? target + " lx" : "—"],
         ["RCR", rcr.toFixed(2)],
         ["UF", uf.toFixed(2)],
-        ["AREA", areaM2.toFixed(1) + " mÂ²"],
+        ["AREA", areaM2.toFixed(1) + " m²"],
       ]
       const boxW  = (PW - 2 * M - (statsItems.length - 1) * 3) / statsItems.length
       const boxH  = 14
@@ -1975,13 +2078,17 @@ export default function App() {
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
 
-      // Shared crop + image sizing (used by all three optional pages)
-      const bounds = canvasRef.current?.getRoomBounds?.()
-      const pad = 30
-      const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
-      const cropY = bounds ? Math.max(0, bounds.y - pad) : 0
-      const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
-      const cropH = bounds ? bounds.height + pad * 2 : stage.height()
+      const savedTransform = canvasRef.current?.getTransform?.() || { zoom: 1, x: 0, y: 0 }
+      try {
+        canvasRef.current?.setTransformImmediate?.(1, 0, 0)
+
+        // Shared crop + image sizing (used by all three optional pages)
+        const bounds = canvasRef.current?.getRoomBounds?.()
+        const pad = 30
+        const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
+        const cropY = bounds ? Math.max(0, bounds.y - pad) : 0
+        const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
+        const cropH = bounds ? bounds.height + pad * 2 : stage.height()
 
       const availW    = PW - 2 * M - 8
       const aspectRatio = cropH / cropW
@@ -2171,6 +2278,9 @@ export default function App() {
         doc.addImage(heatUrl, "PNG", imgX, imgY, imgW, imgH)
         pageNum++
       }
+      } finally {
+        canvasRef.current?.setTransformImmediate?.(savedTransform.zoom, savedTransform.x, savedTransform.y)
+      }
     }
 
     // Add "Page X of N" footer to every page now that total is known
@@ -2229,13 +2339,13 @@ export default function App() {
     ws2.addRow(["FLOOR", "ROOM", "LOAD (W)", "CIRCUITS", "MCB", "WIRE SIZE"])
     for (const r of allR) {
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-      let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mmÂ²"
+      let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mm²"
       for (const l of r.lights) {
         const w = l.watt ?? 0
         if (cur + w > MAX_CIRCUIT_WATT) { circuits++; cur = 0 }
         cur += w; circuits = Math.max(circuits, 1)
         mcb = cur <= 1380 ? "6A" : cur <= 2300 ? "10A" : "16A"
-        wire = cur <= 2944 ? "1.5mmÂ²" : "2.5mmÂ²"
+        wire = cur <= 2944 ? "1.5mm²" : "2.5mm²"
       }
       if (r.lights.length === 0) circuits = 0
       ws2.addRow([r.floorName, r.name, load + " W", circuits, mcb, wire + " FR"])
@@ -2244,7 +2354,7 @@ export default function App() {
     // Sheet 3: Room Summary
     const ws3 = wb.addWorksheet("Room Summary")
     ws3.columns = [22, 22, 14, 14, 14, 14, 12, 14].map(w => ({ width: w }))
-    ws3.addRow(["FLOOR", "ROOM", "AREA (mÂ²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"])
+    ws3.addRow(["FLOOR", "ROOM", "AREA (m²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"])
     for (const r of allR) {
       const { areaM2, lux } = _calcRoomExport(r)
       const target = Number(r.room?.targetLux ?? 0)
@@ -2384,7 +2494,7 @@ export default function App() {
     </div>
   )
 
-  // â”€â”€ Sidebar view â†’ leftTab mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ Sidebar view → leftTab mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const SIDEBAR_TO_LEFTTAB = {
     'luminaires':  'fixture',
     'calculation': 'ai',
@@ -2675,6 +2785,14 @@ export default function App() {
                 onMouseLeave={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
               >Heatmap</button>
 
+              <button
+                onClick={() => setShowLegend(p => !p)}
+                title="Toggle fixture legend"
+                style={{ background: showLegend ? "rgba(212,168,67,0.12)" : "transparent", border: showLegend ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showLegend ? "#d4a843" : "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (!showLegend) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
+                onMouseLeave={(e) => { if (!showLegend) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
+              >Legend</button>
+
               <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
 
               {/* â”€â”€ Group 3: Electrical / DALI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -2786,7 +2904,7 @@ export default function App() {
                     value=""
                     onChange={(e) => {
                       if (e.target.value) {
-                        selectedLights.forEach(light => updateLight(light.id, { protocol: e.target.value }))
+                        batchUpdateLights(selectedLights.map(l => l.id), { protocol: e.target.value })
                         e.target.value = ""
                       }
                     }}
@@ -2829,6 +2947,59 @@ export default function App() {
           {/* Scrollable canvas + detail panels */}
           <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d", minHeight: 0 }}>
 
+            {/* ── Fixture Legend Panel ──────────────────────────────────────── */}
+            {showLegend && (() => {
+              // Build per-fixtureId groups from placed lights
+              const groups = {}
+              for (const l of lights) {
+                const fid = l.fixtureId ?? l.category ?? 'unknown'
+                if (!groups[fid]) groups[fid] = { wattsUsed: [], name: l.name ?? l.label ?? fid, icon: null }
+                const w = l.watt ?? 0
+                if (w > 0) groups[fid].wattsUsed.push(w)
+              }
+              // Enrich with icon from CONFIGURABLE_FIXTURES
+              const cfMap = Object.fromEntries(CONFIGURABLE_FIXTURES.map(f => [f.id, f]))
+              const rows = Object.entries(groups).map(([fid, g]) => ({
+                fid,
+                icon: cfMap[fid]?.icon ?? '💡',
+                name: cfMap[fid]?.name ?? g.name,
+                minW: g.wattsUsed.length ? Math.min(...g.wattsUsed) : null,
+                maxW: g.wattsUsed.length ? Math.max(...g.wattsUsed) : null,
+              }))
+              if (rows.length === 0) return null
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 16,
+                    left: 16,
+                    zIndex: 900,
+                    background: '#141414',
+                    border: '1px solid #2a2a2a',
+                    borderRadius: 6,
+                    padding: '10px 14px',
+                    minWidth: 190,
+                    maxWidth: 260,
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.7)',
+                    fontFamily: "'Inter', system-ui, sans-serif",
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#d4a843', letterSpacing: '0.12em', marginBottom: 8, textTransform: 'uppercase' }}>Fixture Legend</div>
+                  {rows.map(({ fid, icon, name, minW, maxW }) => {
+                    const wattLabel = minW == null ? '—' : minW === maxW ? `${minW}W` : `${minW}W – ${maxW}W`
+                    return (
+                      <div key={fid} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0, width: 18, textAlign: 'center' }}>{icon}</span>
+                        <span style={{ fontSize: 11, color: '#cccccc', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                        <span style={{ fontSize: 10, color: '#888888', whiteSpace: 'nowrap', flexShrink: 0 }}>{wattLabel}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+
             {/* Settings panel moved to fixed right slide-in below */}
 
             {/* â”€â”€ Visual Editor Floating Panel â”€â”€ */}
@@ -2866,7 +3037,7 @@ export default function App() {
                   <button
                     onClick={() => setShowVisualEditor(false)}
                     style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 14, padding: 0 }}
-                  >âœ•</button>
+                  >✕</button>
                 </div>
                 <div style={{ padding: '12px', overflow: 'auto', flex: 1 }}>
                   {(() => {
@@ -2884,7 +3055,7 @@ export default function App() {
                     <input
                       type="range" min="5" max="20"
                       value={commonSize ?? 8}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureSize: Number(e.target.value) }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureSize: Number(e.target.value) })}
                       style={{ width: '100%', cursor: 'pointer' }}
                     />
                   </div>
@@ -2893,7 +3064,7 @@ export default function App() {
                     <input
                       type="color"
                       value={commonColor ?? '#ffffff'}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureColor: e.target.value }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureColor: e.target.value })}
                       style={{ width: '100%', height: 36, cursor: 'pointer', border: 'none', borderRadius: 3 }}
                     />
                   </div>
@@ -2901,7 +3072,7 @@ export default function App() {
                     <label style={{ fontSize: 14, color: '#d4a843', display: 'block', marginBottom: 6 }}>SHAPE</label>
                     <select
                       value={commonShape ?? 'circle'}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureShape: e.target.value }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureShape: e.target.value })}
                       style={{
                         width: '100%', padding: '8px 6px', background: '#1a1a1a',
                         color: '#cccccc', border: '1px solid #2a2a2a', borderRadius: 3,
@@ -3297,7 +3468,7 @@ export default function App() {
                 ) : selectedLights.length > 1 ? (
                   (() => {
                     const sel = selectedLights
-                    const batchUpdate = (updates) => sel.forEach(l => updateLight(l.id, updates))
+                    const batchUpdate = (updates) => batchUpdateLights(sel.map(l => l.id), updates)
                     const sizes  = sel.map(l => l.fixtureSize  ?? 8)
                     const colors = sel.map(l => l.fixtureColor ?? "#ffffff")
                     const shapes = sel.map(l => l.fixtureShape ?? "circle")
@@ -3406,7 +3577,7 @@ export default function App() {
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
             <span style={{ fontSize: 14, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>ROOM SETTINGS</span>
-            <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>âœ•</button>
+            <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             <RoomSettingsFloating
@@ -3496,7 +3667,7 @@ export default function App() {
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 14px", borderBottom: "1px solid #1e1e1e", flexShrink: 0 }}>
                 <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#d4a843", letterSpacing: "0.08em" }}>EXPORT</span>
-                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "'Inter', sans-serif", fontSize: 17, cursor: "pointer" }}>âœ•</button>
+                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "'Inter', sans-serif", fontSize: 17, cursor: "pointer" }}>✕</button>
               </div>
 
               {/* Scrollable body */}
@@ -3554,7 +3725,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, marginTop: 1,
                           }}>
-                            {checked && <span style={{ fontSize: 11, color: "#000", fontWeight: 700 }}>âœ“</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000", fontWeight: 700 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked}
                             onChange={() => setExportCanvasOptions(prev => ({ ...prev, [key]: !prev[key] }))}
@@ -3603,7 +3774,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, transition: "background 0.1s, border-color 0.1s",
                           }}>
-                            {checked && <span style={{ fontSize: 11, color: "#000000", fontWeight: 700, lineHeight: 1 }}>âœ“</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000000", fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked} onChange={() => toggleRoom(r.id)} style={{ display: "none" }} />
                           <span>{r.label}</span>
@@ -3632,7 +3803,7 @@ export default function App() {
                   </button>
                   <button style={btnStyle("#39c5cf", "#0a1a1e", "#1a3a40")} onClick={() => { setShowExportModal(false); handleExportPNG() }}>
                     <span style={{ fontSize: 17, fontWeight: 700, color: "#39c5cf", letterSpacing: "0.08em" }}>Export Canvas PNG</span>
-                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2Ã— pixel ratio</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
                   </button>
                   <button style={btnStyle("#888", "#181818", "#222222")} onClick={() => { setShowExportModal(false); setShowReport(true) }}>
                     <span style={{ fontSize: 17, fontWeight: 700, color: "#aaa", letterSpacing: "0.08em" }}>View Full Report</span>
@@ -3706,11 +3877,11 @@ export default function App() {
               <button
                 onClick={() => { setGateModal(null); navigate('/dashboard', { state: { openTab: 'subscription' } }) }}
                 style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 17, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
-              >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL â†’' : 'UPGRADE TO PRO â†’'}</button>
+              >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL →' : 'UPGRADE TO PRO →'}</button>
               <button
                 onClick={() => setGateModal(null)}
                 style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 17, cursor: 'pointer' }}
-              >âœ•</button>
+              >✕</button>
             </div>
           </div>
         </div>
@@ -3743,7 +3914,7 @@ export default function App() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
-              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>âœ•</button>
+              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
             </div>
             {[
               { group: "NAVIGATION", rows: [
