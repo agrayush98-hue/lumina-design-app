@@ -712,13 +712,17 @@ export default function App() {
   // â”€â”€ Mutation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function patchActiveRoom(updater) {
-    setFloors(prev => prev.map(f =>
-
-      f.id !== activeFloorId ? f : {
-        ...f,
-        rooms: f.rooms.map(r => r.id !== activeRoomId ? r : { ...r, ...updater(r) }),
-      }
-    ))
+    setFloors(prev => {
+      const targetFloorId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => {
+        if (String(f.id) !== String(targetFloorId)) return f
+        const targetRoomId = f.rooms.some(r => String(r.id) === String(activeRoomId)) ? activeRoomId : f.rooms[0]?.id
+        return {
+          ...f,
+          rooms: f.rooms.map(r => String(r.id) !== String(targetRoomId) ? r : { ...r, ...updater(r) }),
+        }
+      })
+    })
   }
 
   // â”€â”€ Light handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -887,8 +891,10 @@ export default function App() {
   }
 
   function patchActiveFloor(updater) {
-
-    setFloors(prev => prev.map(f => f.id !== activeFloorId ? f : { ...f, ...updater(f) }))
+    setFloors(prev => {
+      const targetId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => String(f.id) !== String(targetId) ? f : { ...f, ...updater(f) })
+    })
   }
 
   function updateFloorPlan(data) {
@@ -927,8 +933,18 @@ export default function App() {
 
 
   function removeFloorPlan() {
-    patchActiveFloor(() => ({ floorPlan: null }))
-    patchActiveRoom(() => ({ roomOffsetX: undefined, roomOffsetY: undefined }))
+    setFloors(prev => {
+      const targetFloorId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => {
+        if (String(f.id) !== String(targetFloorId)) return f
+        const targetRoomId = f.rooms.some(r => String(r.id) === String(activeRoomId)) ? activeRoomId : f.rooms[0]?.id
+        return {
+          ...f,
+          floorPlan: null,
+          rooms: f.rooms.map(r => String(r.id) !== String(targetRoomId) ? r : { ...r, roomOffsetX: undefined, roomOffsetY: undefined }),
+        }
+      })
+    })
   }
 
   function handleSetFloorPlanScale(scale) {
