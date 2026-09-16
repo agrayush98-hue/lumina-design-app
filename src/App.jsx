@@ -1674,6 +1674,15 @@ export default function App() {
     return Object.values(groups)
   }
 
+  function _electricalDeviceGroupsExport(roomObj) {
+    const groups = {}
+    for (const d of (roomObj.electricalDevices ?? [])) {
+      if (!groups[d.type]) groups[d.type] = { label: ELECTRICAL_DEVICE_TYPES[d.type]?.label ?? d.type, qty: 0 }
+      groups[d.type].qty++
+    }
+    return Object.values(groups)
+  }
+
   const PROTOCOL_LBL = { "NON-DIM": "Non-dim", "PHASE-CUT": "Triac/Phase-cut", "0-10V": "0-10V Analog", "DALI": "DALI", "ZIGBEE": "Zigbee" }
 
   async function handleExportPDF(exportMeta = {}, exportCanvasOptions = { placement: true, beam: false, heatmap: false }) {
@@ -2005,6 +2014,19 @@ export default function App() {
       }
     }
     makeTable(drvHead, drvBody, curY)
+
+    // â”€â”€ PAGE 5: Electrical Devices Schedule (skipped if no devices placed) â”€â”€â”€â”€
+    const hasAnyDevices = allR.some(r => (r.electricalDevices ?? []).length > 0)
+    if (hasAnyDevices) {
+      doc.addPage()
+      curY = sectionHeader("05 · ELECTRICAL DEVICES SCHEDULE", 18)
+
+      const devHead = ["FLOOR", "ROOM", "DEVICE TYPE", "QTY"]
+      const devBody = allR.flatMap(r =>
+        _electricalDeviceGroupsExport(r).map(g => [r.floorName, r.name, g.label, g.qty])
+      )
+      makeTable(devHead, devBody, curY)
+    }
 
     // â”€â”€ PAGES 5+: Per-room detail pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const CANVAS_W_PDF = 1400, CANVAS_H_PDF = 750
@@ -2398,6 +2420,19 @@ export default function App() {
       const status = lux === 0 || target === 0 ? "—" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
       ws3.addRow([r.floorName, r.name, areaM2.toFixed(1), target || "—", r.lights.length === 0 ? "—" : Math.round(lux), status, r.lights.length, load + " W"])
+    }
+
+    // Sheet 4: Electrical Devices (skipped if no devices placed)
+    const hasAnyDevices = allR.some(r => (r.electricalDevices ?? []).length > 0)
+    if (hasAnyDevices) {
+      const ws4 = wb.addWorksheet("Electrical Devices")
+      ws4.columns = [22, 22, 24, 10].map(w => ({ width: w }))
+      ws4.addRow(["FLOOR", "ROOM", "DEVICE TYPE", "QTY"])
+      for (const r of allR) {
+        for (const g of _electricalDeviceGroupsExport(r)) {
+          ws4.addRow([r.floorName, r.name, g.label, g.qty])
+        }
+      }
     }
 
     // Watermark sheet for non-paid users
@@ -3043,7 +3078,17 @@ export default function App() {
                 minW: g.wattsUsed.length ? Math.min(...g.wattsUsed) : null,
                 maxW: g.wattsUsed.length ? Math.max(...g.wattsUsed) : null,
               }))
-              if (rows.length === 0) return null
+              const deviceGroups = {}
+              for (const d of (electricalDevices ?? [])) {
+                if (!deviceGroups[d.type]) deviceGroups[d.type] = 0
+                deviceGroups[d.type]++
+              }
+              const deviceRows = Object.entries(deviceGroups).map(([type, count]) => ({
+                type, count,
+                label: ELECTRICAL_DEVICE_TYPES[type]?.label ?? type,
+                color: ELECTRICAL_DEVICE_TYPES[type]?.fill ?? '#888',
+              }))
+              if (rows.length === 0 && deviceRows.length === 0) return null
               return (
                 <div
                   style={{
@@ -3073,6 +3118,19 @@ export default function App() {
                       </div>
                     )
                   })}
+                  {deviceRows.length > 0 && (
+                    <>
+                      <div style={{ borderTop: '1px solid #2a2a2a', margin: '8px 0' }} />
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#d4a843', letterSpacing: '0.12em', marginBottom: 8, textTransform: 'uppercase' }}>Electrical Devices</div>
+                      {deviceRows.map(({ type, count, label, color }) => (
+                        <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <span style={{ width: 12, height: 12, borderRadius: 2, background: color, flexShrink: 0 }} />
+                          <span style={{ fontSize: 11, color: '#cccccc', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+                          <span style={{ fontSize: 10, color: '#888888', whiteSpace: 'nowrap', flexShrink: 0 }}>{count}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )
             })()}

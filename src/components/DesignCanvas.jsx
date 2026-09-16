@@ -1724,32 +1724,31 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       e.target.x(newX); e.target.y(newY)
       onMoveElectricalDevice?.(device.id, newX, newY)
     }
-    const handleDblClick = () => onDeleteElectricalDevice?.(device.id)
-
     let shapeEl
     if (def.shape === "rect-label") {
       shapeEl = (
         <Rect x={-S} y={-S * 0.65} width={S * 2} height={S * 1.3} cornerRadius={3}
-          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} />
       )
     } else if (def.shape === "square-label") {
       shapeEl = (
         <Rect x={-S} y={-S} width={S * 2} height={S * 2} cornerRadius={3}
-          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} />
       )
     } else if (def.shape === "circle-label") {
       shapeEl = (
-        <Circle radius={S} fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+        <Circle radius={S} fill={def.fill} stroke={def.stroke} strokeWidth={1.5} />
       )
     } else if (def.shape === "half-circle") {
       shapeEl = (
         <Arc innerRadius={0} outerRadius={S} angle={180} rotation={180}
-          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} />
       )
     }
 
     return (
-      <Group x={device.x} y={device.y} draggable onDragEnd={handleDragEnd}>
+      <Group x={device.x} y={device.y} draggable onDragEnd={handleDragEnd}
+        onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteElectricalDevice?.(device.id) }}>
         {shapeEl}
         {def.shape !== "half-circle" && def.label && (
           <Text text={def.label} fontSize={7} fontFamily="Inter, sans-serif" fill={def.textColor}
