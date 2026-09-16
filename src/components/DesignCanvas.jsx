@@ -1748,6 +1748,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
     return (
       <Group x={device.x} y={device.y} draggable onDragEnd={handleDragEnd}
+        onClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation() }}
         onDblClick={(e) => { e.cancelBubble = true; e.evt.stopPropagation(); onDeleteElectricalDevice?.(device.id) }}>
         {shapeEl}
         {def.shape !== "half-circle" && def.label && (
