@@ -1,12 +1,12 @@
 import React from "react"
 
 const C = {
-  bg:     "#0a1018",
-  border: "#1a2b3c",
+  bg:     "#1a1a1a",
+  border: "#2e2e2e",
   green:  "#3dba74",
-  label:  "#2d4f68",
-  value:  "#4a7a96",
-  accent: "#cdd9e5",
+  label:  "#888888",
+  value:  "#f0f0f0",
+  accent: "#d4a843",
   red:    "#d94f4f",
 }
 

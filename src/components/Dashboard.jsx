@@ -68,7 +68,7 @@ function fmt(date) {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-const CARD_COLORS = ["#39c5cf", "#d4a843", "#ff7c00", "#4da6ff", "#cc60ff", "#20c0f0"]
+const CARD_COLORS = ["#d4a843", "#555555", "#b8860b", "#888888", "#e8a830", "#3a3a3a"]
 
 function cardColor(name = "") {
   let h = 0

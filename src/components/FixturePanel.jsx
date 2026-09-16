@@ -4,24 +4,28 @@ import { getUserFixtures, saveUserFixture, updateUserFixture, deleteUserFixture 
 import { BRANDS, ALL_BRANDED, BRAND_NAMES, BRANDED_CATEGORIES, PROTO_OPTIONS } from '../data/brandedFixtures'
 
 const CATEGORIES = [
-  'COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP',
-  'CHANDELIER', 'PENDANT', 'TRACK_LIGHT', 'COVE_LIGHT', 'BOLLARD', 'FLOOD_LIGHT', 'SURFACE_PANEL',
+  'DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL WASHER', 'STRIP',
+  'CHANDELIER', 'PENDANT', 'TRACK', 'COVE_LIGHT', 'BOLLARD', 'FLOOD_LIGHT', 'SURFACE_PANEL',
+  'HIGH BAY', 'OUTDOOR', 'STEP LIGHT',
 ]
 
 const CAT_SHORT = {
-  COB_DOWNLIGHT: 'Downlight',
+  DOWNLIGHT:     'Downlight',
   SPOTLIGHT:     'Spotlight',
   PANEL:         'Panel',
   LINEAR:        'Linear',
-  WALL_WASHER:   'Wall Washer',
-  LED_STRIP:     'LED Strip',
+  'WALL WASHER': 'Wall Washer',
+  STRIP:         'LED Strip',
   CHANDELIER:    'Chandelier',
   PENDANT:       'Pendant',
-  TRACK_LIGHT:   'Track Light',
+  TRACK:         'Track Light',
   COVE_LIGHT:    'Cove Light',
   BOLLARD:       'Bollard',
   FLOOD_LIGHT:   'Flood Light',
   SURFACE_PANEL: 'Surface Panel',
+  'HIGH BAY':    'High Bay',
+  OUTDOOR:       'Outdoor',
+  'STEP LIGHT':  'Step Light',
 }
 
 const PROTOCOL_OPTIONS = [
@@ -34,7 +38,7 @@ const PROTOCOL_OPTIONS = [
 ]
 
 const EMPTY_FORM = {
-  name: '', category: 'COB_DOWNLIGHT', watt: '', lumens: '', beamAngle: '',
+  name: '', category: 'DOWNLIGHT', watt: '', lumens: '', beamAngle: '',
   cct: '3000K', tunable: false, brand: '', modelNumber: '', notes: '', voltage: 230,
   protocol: 'Room Default',
 }
@@ -75,7 +79,7 @@ function PanelInput({ label, value, onChange, placeholder, type = 'number' }) {
 
 // ── Accordion standard tab ────────────────────────────────────────────────────
 function StandardTab({ onSelect, isProfessional, onProfessionalGate }) {
-  const [openCat,    setOpenCat]    = useState('COB_DOWNLIGHT')
+  const [openCat,    setOpenCat]    = useState('DOWNLIGHT')
   const [picked,     setPicked]     = useState(null)   // { cat, watt }
   const [pickedWatt, setPickedWatt] = useState(null)
   const [pickedBeam, setPickedBeam] = useState(null)
@@ -131,7 +135,7 @@ function StandardTab({ onSelect, isProfessional, onProfessionalGate }) {
     const cfg = stripCfg
     onSelect(resolveFixture({
       id:           `lib-${Date.now()}`,
-      category:     'LED_STRIP',
+      category:     'STRIP',
       name:         `LED Strip ${cfg.length}m`,
       watt:         (cfg.wattPerMtr   ?? 0) * (cfg.length ?? 1),
       lumens:       (cfg.lumensPerMtr ?? 0) * (cfg.length ?? 1),
@@ -165,7 +169,7 @@ function StandardTab({ onSelect, isProfessional, onProfessionalGate }) {
         const meta     = CATEGORY_META[cat]
         const vis      = CATEGORY_VISUAL[cat]
         const isOpen   = openCat === cat
-        const isStrip  = cat === 'LED_STRIP'
+        const isStrip  = cat === 'STRIP'
         const isPro    = !!meta?.professionalOnly
         const locked   = isPro && !isProfessional
         const prevMeta = idx > 0 ? CATEGORY_META[CATEGORIES[idx - 1]] : null
@@ -353,7 +357,7 @@ function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
   }, [filtered])
 
   function handleSelect(fixture) {
-    const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+    const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.DOWNLIGHT
     onSelect(resolveFixture({
       id:        `branded-${fixture.id}-${Date.now()}`,
       category:  fixture.category,
@@ -453,7 +457,7 @@ function BrandedTab({ onSelect, isProfessional, onProfessionalGate }) {
                   <span style={{ fontSize: 9, color: '#444' }}>({fixtures.length})</span>
                 </div>
                 {fixtures.map(f => {
-                  const vis = CATEGORY_VISUAL[f.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+                  const vis = CATEGORY_VISUAL[f.category] ?? CATEGORY_VISUAL.DOWNLIGHT
                   return (
                     <BrandedRow key={f.id} fixture={f} vis={vis} onSelect={() => handleSelect(f)} />
                   )
@@ -517,7 +521,7 @@ function BrandedRow({ fixture, vis, onSelect }) {
 // ── My Fixtures row ───────────────────────────────────────────────────────────
 function FixtureRow({ fixture, isActive, onSelect, onEdit, onDelete }) {
   const [hovered, setHovered] = useState(false)
-  const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+  const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.DOWNLIGHT
   const aBtn = {
     height: 22, padding: '0 8px', background: 'transparent',
     border: '1px solid #2e2e2e', borderRadius: 3,
@@ -575,7 +579,7 @@ function FixtureRow({ fixture, isActive, onSelect, onEdit, onDelete }) {
 
 // ── Add / Edit form ───────────────────────────────────────────────────────────
 function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
-  const isStrip = data.category === 'LED_STRIP'
+  const isStrip = data.category === 'STRIP'
   const catMeta = CATEGORY_META[data.category]
   return (
     <div style={{ padding: '14px 16px', borderBottom: '1px solid #2e2e2e', background: '#111' }}>

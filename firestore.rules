@@ -11,7 +11,9 @@ service cloud.firestore {
     }
     match /users/{userId} {
       allow read:   if isAuth() && request.auth.uid == userId;
-      allow create: if isAuth() && request.auth.uid == userId;
+      allow create: if isAuth() && request.auth.uid == userId
+              && request.resource.data.subscription.status == 'trial'
+              && request.resource.data.subscription.plan == 'trial';
       allow update: if isAuth() && request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']);
       allow delete: if false;
     }

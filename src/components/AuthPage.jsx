@@ -4,418 +4,185 @@ import { auth } from "../firebase"
 import { useAuth } from "../contexts/AuthContext"
 
 export default function AuthPage() {
-  const { signup, login, resetPassword } = useAuth()
+  const { signup, login } = useAuth()
+  const [mode, setMode] = useState("login")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [error, setError] = useState("")
+  const [info, setInfo] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
-  const [mode,       setMode]       = useState("login")   // "login" | "register" | "reset"
-  const [email,      setEmail]      = useState("")
-  const [password,   setPassword]   = useState("")
-  const [confirm,    setConfirm]    = useState("")
-  const [error,      setError]      = useState(null)
-  const [info,       setInfo]       = useState(null)
-  const [loading,    setLoading]    = useState(false)
-  const [showReset,  setShowReset]  = useState(false)
-  const [resetEmail, setResetEmail] = useState("")
-  const [resetSent,  setResetSent]  = useState(false)
-
-  const isRegister = mode === "register"
-  const isReset    = mode === "reset"
+  function friendlyError(code) {
+    const map = {
+      "auth/user-not-found": "No account found with this email.",
+      "auth/wrong-password": "Incorrect password.",
+      "auth/email-already-in-use": "Email already registered.",
+      "auth/weak-password": "Password must be at least 6 characters.",
+      "auth/invalid-email": "Invalid email address.",
+    }
+    return map[code] || "Something went wrong. Please try again."
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setError(null)
-    setInfo(null)
-
-    if (isReset) {
-      setLoading(true)
-      try {
-        await resetPassword(email)
-        setInfo("Password reset email sent. Check your inbox.")
-        setMode("login")
-      } catch (err) {
-        setError(friendlyError(err.code))
-      } finally {
-        setLoading(false)
-      }
-      return
-    }
-
-    if (isRegister && password !== confirm) {
-      setError("Passwords do not match.")
-      return
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.")
-      return
-    }
-
-    setLoading(true)
+    setError(""); setInfo(""); setLoading(true)
     try {
-      if (isRegister) {
-        // Uses AuthContext.signup() which calls _initUserDocs — sets up trial, Firestore doc, welcome email
-        await signup(email, password)
-        if (auth.currentUser) {
-          await sendEmailVerification(auth.currentUser)
+      if (mode === "login") {
+        const cred = await login(email, password)
+        if (!cred.user.emailVerified) {
           await signOut(auth)
+          setError("Please verify your email before logging in.")
         }
+      } else {
+        const cred = await signup(email, password)
+        await sendEmailVerification(cred.user)
+        await signOut(auth)
         setInfo("Verification email sent. Please verify before logging in.")
         setMode("login")
-      } else {
-        await login(email, password)
-        if (!auth.currentUser?.emailVerified) {
-          await signOut(auth)
-          setError("Please verify your email first.")
-        }
       }
-    } catch (err) {
-      setError(friendlyError(err.code))
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(friendlyError(err.code)) }
+    finally { setLoading(false) }
+  }
+
+  async function handleGoogle() {
+    setError(""); setLoading(true)
+    try { await signInWithPopup(auth, new GoogleAuthProvider()) }
+    catch (err) { setError(friendlyError(err.code)) }
+    finally { setLoading(false) }
   }
 
   async function handlePasswordReset(e) {
     e.preventDefault()
-    try {
-      await sendPasswordResetEmail(auth, resetEmail)
-      setResetSent(true)
-    } catch (err) {
-      // silently ignore — don't reveal whether email exists
-    }
+    setLoading(true)
+    try { await sendPasswordResetEmail(auth, email); setResetSent(true) }
+    catch (err) { setError(friendlyError(err.code)) }
+    finally { setLoading(false) }
   }
 
-  const handleGoogleSignIn = async () => {
-    setError(null)
-    const provider = new GoogleAuthProvider()
-    try {
-      await signInWithPopup(auth, provider)
-      // onAuthStateChanged in AuthContext will call _initUserDocs if doc doesn't exist
-    } catch (error) {
-      if (error.code !== 'auth/popup-closed-by-user') {
-        setError(friendlyError(error.code) ?? error.message)
-      }
-    }
-  }
-
-  function switchMode(m) {
-    setMode(m)
-    setError(null)
-    setInfo(null)
-  }
-
-  function friendlyError(code) {
-    switch (code) {
-      case "auth/user-not-found":
-      case "auth/wrong-password":
-      case "auth/invalid-credential": return "Invalid email or password."
-      case "auth/email-already-in-use":  return "An account with this email already exists."
-      case "auth/invalid-email":         return "Please enter a valid email address."
-      case "auth/too-many-requests":     return "Too many attempts. Please try again later."
-      default: return "Authentication failed. Please try again."
-    }
-  }
-
-  const inputStyle = {
-    width: "100%",
-    padding: "10px 14px",
-    background: "#0d1520",
-    border: "1px solid #1a2b3c",
-    borderRadius: 4,
-    color: "#cdd9e5",
-    fontFamily: "IBM Plex Mono",
-    fontSize: 12,
-    outline: "none",
-    boxSizing: "border-box",
+  const S = {
+    wrap: { display:"flex", height:"100vh", width:"100%", overflow:"hidden", background:"#131313", fontFamily:"Inter,sans-serif" },
+    left: { flex:1, display:"flex", flexDirection:"column", justifyContent:"center", padding:"48px", background:"#0d0d0d", borderRight:"1px solid #222", backgroundImage:"radial-gradient(#222 1px,transparent 1px)", backgroundSize:"24px 24px" },
+    brand: { fontSize:40, fontWeight:700, color:"#d4a843", letterSpacing:"0.04em", marginBottom:16 },
+    tagline: { fontSize:16, color:"#888", marginBottom:48 },
+    right: { flex:1, display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", padding:32, background:"#111", position:"relative" },
+    card: { width:"100%", maxWidth:420, background:"#1a1a1a", border:"1px solid #222", padding:32 },
+    tabs: { display:"flex", borderBottom:"1px solid #222", marginBottom:32 },
+    tab: (active) => ({ flex:1, padding:"12px 0", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", border:"none", background:"none", cursor:"pointer", color:active?"#d4a843":"#888", borderBottom:(active?"2px solid #d4a843":"2px solid transparent")}),
+    label: { display:"block", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:"#555", marginBottom:6 },
+    input: { width:"100%", background:"#131313", border:"1px solid #222", color:"#e5e2e1", fontFamily:"IBM Plex Mono,monospace", fontSize:12, padding:"10px 12px", outline:"none", boxSizing:"border-box" },
+    inputErr: { width:"100%", background:"#131313", border:"1px solid #ef4444", color:"#e5e2e1", fontFamily:"IBM Plex Mono,monospace", fontSize:12, padding:"10px 12px", outline:"none", boxSizing:"border-box" },
+    btn: { width:"100%", background:"#d4a843", color:"#402d00", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", padding:"12px 0", border:"none", cursor:"pointer", marginTop:8 },
+    or: { display:"flex", alignItems:"center", gap:16, padding:"24px 0" },
+    orLine: { flex:1, height:1, background:"#222" },
+    orText: { fontSize:11, letterSpacing:"0.1em", color:"#555" },
+    googleBtn: { width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:12, background:"transparent", border:"1px solid #222", color:"#e5e2e1", padding:"10px 0", cursor:"pointer", fontSize:13 },
+    err: { color:"#ef4444", fontSize:11, fontFamily:"monospace", marginBottom:12 },
+    info: { color:"#4ade80", fontSize:11, fontFamily:"monospace", marginBottom:12 },
+    overlay: { position:"absolute", inset:0, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:50, padding:16 },
+    modal: { width:"100%", maxWidth:380, background:"#1a1a1a", border:"1px solid #222" },
+    modalHead: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", borderBottom:"1px solid #222" },
+    modalBody: { padding:16 },
+    modalFoot: { display:"flex", justifyContent:"flex-end", gap:12, padding:"12px 16px", borderTop:"1px solid #222", background:"#1c1b1b" },
+    ghostBtn: { background:"none", border:"none", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", color:"#555", cursor:"pointer" },
+    goldBtn: { background:"#d4a843", color:"#402d00", fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", padding:"8px 16px", border:"none", cursor:"pointer" },
+    iconBtn: { background:"none", border:"none", color:"#888", cursor:"pointer", fontSize:20, lineHeight:1 },
   }
 
   return (
-    <div style={{
-      position: "fixed", inset: 0,
-      background: "#090c10",
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      fontFamily: "IBM Plex Mono",
-    }}>
-      {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 4,
-          background: "linear-gradient(135deg, #1e4a6e 0%, #39c5cf 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 14, color: "#fff", fontWeight: 700, flexShrink: 0,
-        }}>L</div>
-        <span style={{ fontSize: 16, color: "#cdd9e5", letterSpacing: "0.15em" }}>LUMINA DESIGN</span>
+    <div style={S.wrap}>
+      <div style={S.left}>
+        <div style={S.brand}>LUMINA DESIGN</div>
+        <div style={S.tagline}>Professional Lighting Design Platform</div>
+        {[
+          { icon:"calculate", title:"Lux Calculations", desc:"High-precision photometric simulations." },
+          { icon:"settings_input_component", title:"DALI 2.0 Integration", desc:"Advanced control systems protocol mapping." },
+          { icon:"picture_as_pdf", title:"Automated PDF Export", desc:"Generate compliance-ready technical documentation." },
+        ].map(f => (
+          <div key={f.icon} style={{ display:"flex", gap:16, marginBottom:24 }}>
+            <span className="material-symbols-outlined" style={{ color:"#d4a843", flexShrink:0 }}>{f.icon}</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:"#e5e2e1", marginBottom:4 }}>{f.title}</div>
+              <div style={{ fontSize:12, color:"#888" }}>{f.desc}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Card */}
-      <div style={{
-        width: 360,
-        background: "#0d1520",
-        border: "1px solid #1a2b3c",
-        borderRadius: 8,
-        overflow: "hidden",
-        boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-      }}>
-        {/* Tab strip — hide on reset mode */}
-        {!isReset && (
-          <div style={{ display: "flex", borderBottom: "1px solid #1a2b3c" }}>
-            {["login", "register"].map(m => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                style={{
-                  flex: 1,
-                  padding: "12px 0",
-                  background: mode === m ? "#0a1018" : "transparent",
-                  border: "none",
-                  borderBottom: mode === m ? "2px solid #39c5cf" : "2px solid transparent",
-                  color: mode === m ? "#39c5cf" : "#2d4f68",
-                  fontFamily: "IBM Plex Mono",
-                  fontSize: 10,
-                  letterSpacing: "0.12em",
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                }}
-              >
-                {m === "login" ? "Sign In" : "Register"}
+      <div style={S.right}>
+        <div style={S.card}>
+          <div style={S.tabs}>
+            {["login","register"].map(m => (
+              <button key={m} style={S.tab(mode===m)} onClick={() => { setMode(m); setError(""); setInfo(""); }}>
+                {m==="login" ? "SIGN IN" : "REGISTER"}
               </button>
             ))}
           </div>
-        )}
-
-        {/* Reset password header */}
-        {isReset && (
-          <div style={{ padding: "16px 24px 0", borderBottom: "1px solid #1a2b3c" }}>
-            <button
-              onClick={() => switchMode("login")}
-              style={{ background: "none", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 9, cursor: "pointer", letterSpacing: "0.1em", padding: 0, marginBottom: 8 }}
-            >← BACK TO SIGN IN</button>
-            <div style={{ fontSize: 11, color: "#39c5cf", letterSpacing: "0.1em", paddingBottom: 12 }}>RESET PASSWORD</div>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: "24px 24px 20px" }}>
-
-          {isReset && (
-            <div style={{ marginBottom: 16, fontSize: 10, color: "#2d4f68", lineHeight: 1.6 }}>
-              Enter your email and we'll send you a password reset link.
+          {error && <div style={S.err}>{error}</div>}
+          {info  && <div style={S.info}>{info}</div>}
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom:16 }}>
+              <label style={S.label}>Email Address</label>
+              <input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="engineer@company.com" required />
             </div>
-          )}
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
-              EMAIL
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              style={inputStyle}
-            />
-          </div>
-
-          {!isReset && (
-            <div style={{ marginBottom: isRegister ? 14 : 8 }}>
-              <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
-                PASSWORD
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete={isRegister ? "new-password" : "current-password"}
-                style={inputStyle}
-              />
+            <div style={{ marginBottom:16 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:6 }}>
+                <label style={{ ...S.label, marginBottom:0 }}>Password</label>
+                {mode==="login" && <button type="button" onClick={() => { setMode("reset"); setError(""); }} style={{ fontSize:11, color:"#888", background:"none", border:"none", cursor:"pointer" }}>Forgot password?</button>}
+              </div>
+              <input style={error ? S.inputErr : S.input} type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
             </div>
-          )}
-
-          {/* Forgot password link */}
-          {mode === "login" && (
-            <div style={{ textAlign: "right", marginBottom: 16 }}>
-              <button
-                type="button"
-                onClick={() => { setResetEmail(""); setResetSent(false); setShowReset(true) }}
-                style={{ background: "none", border: "none", color: "#2d4f68", fontFamily: "IBM Plex Mono", fontSize: 9, cursor: "pointer", letterSpacing: "0.08em", padding: 0 }}
-              >Forgot password?</button>
-            </div>
-          )}
-
-          {isRegister && (
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>
-                CONFIRM PASSWORD
-              </label>
-              <input
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                required
-                autoComplete="new-password"
-                style={inputStyle}
-              />
-            </div>
-          )}
-
-          {error && (
-            <div style={{
-              marginBottom: 16, padding: "8px 12px",
-              background: "#1a0808", border: "1px solid #7f1d1d",
-              borderRadius: 4, color: "#f87171",
-              fontFamily: "IBM Plex Mono", fontSize: 10,
-            }}>
-              {error}
-            </div>
-          )}
-
-          {info && (
-            <div style={{
-              marginBottom: 16, padding: "8px 12px",
-              background: "#001a0a", border: "1px solid #166534",
-              borderRadius: 4, color: "#4ade80",
-              fontFamily: "IBM Plex Mono", fontSize: 10,
-            }}>
-              {info}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "11px 0",
-              background: loading ? "#0e1d2e" : "#0e2a3a",
-              border: "1px solid #39c5cf",
-              borderRadius: 4,
-              color: loading ? "#2d4f68" : "#39c5cf",
-              fontFamily: "IBM Plex Mono",
-              fontSize: 11,
-              letterSpacing: "0.12em",
-              cursor: loading ? "default" : "pointer",
-              transition: "background 0.15s",
-            }}
-          >
-            {loading
-              ? "Please wait..."
-              : isReset
-                ? "Send Reset Email"
-                : isRegister
-                  ? "Create Account"
-                  : "Sign In"}
-          </button>
-
-          {!isReset && (
-            <>
-              <div className="divider"><span>OR</span></div>
-
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className="google-signin-btn"
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  backgroundColor: "white",
-                  color: "#444",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontSize: 16,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 12,
-                  marginBottom: 16,
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18">
-                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-                  <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
-                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                </svg>
-                Sign in with Google
-              </button>
-            </>
-          )}
-        </form>
-      </div>
-
-      <div style={{ marginTop: 20, fontSize: 9, color: "#1a2b3c", letterSpacing: "0.08em" }}>
-        LUMINA DESIGN · LIGHTING CALCULATION TOOL
-      </div>
-
-      {/* ── Password Reset Modal ──────────────────────────────────────────── */}
-      {showReset && (
-        <div style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.75)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 200,
-        }} onClick={() => setShowReset(false)}>
-          <div style={{
-            width: 340,
-            background: "#0d1520",
-            border: "1px solid #1a2b3c",
-            borderRadius: 8,
-            overflow: "hidden",
-            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-            fontFamily: "IBM Plex Mono",
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: "14px 20px", borderBottom: "1px solid #1a2b3c", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: 10, color: "#39c5cf", letterSpacing: "0.12em" }}>RESET PASSWORD</div>
-              <button onClick={() => setShowReset(false)} style={{ background: "none", border: "none", color: "#2d4f68", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
-            </div>
-
-            {!resetSent ? (
-              <form onSubmit={handlePasswordReset} style={{ padding: "20px" }}>
-                <div style={{ marginBottom: 14, fontSize: 10, color: "#2d4f68", lineHeight: 1.6 }}>
-                  Enter your email and we'll send you a reset link.
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 9, color: "#2d4f68", letterSpacing: "0.1em", marginBottom: 6 }}>EMAIL</label>
-                  <input
-                    type="email"
-                    value={resetEmail}
-                    onChange={e => setResetEmail(e.target.value)}
-                    required
-                    autoFocus
-                    style={inputStyle}
-                  />
-                </div>
-                <button type="submit" style={{
-                  width: "100%", padding: "11px 0",
-                  background: "#0e2a3a", border: "1px solid #39c5cf",
-                  borderRadius: 4, color: "#39c5cf",
-                  fontFamily: "IBM Plex Mono", fontSize: 11, letterSpacing: "0.12em", cursor: "pointer",
-                }}>
-                  Send Reset Email
-                </button>
-              </form>
-            ) : (
-              <div style={{ padding: "28px 20px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, marginBottom: 12 }}>✉️</div>
-                <div style={{ fontSize: 11, color: "#4ade80", marginBottom: 8 }}>Reset email sent!</div>
-                <div style={{ fontSize: 10, color: "#2d4f68", lineHeight: 1.6, marginBottom: 20 }}>
-                  Check your inbox for a password reset link.
-                </div>
-                <button onClick={() => setShowReset(false)} style={{
-                  padding: "9px 24px",
-                  background: "#0e2a3a", border: "1px solid #39c5cf",
-                  borderRadius: 4, color: "#39c5cf",
-                  fontFamily: "IBM Plex Mono", fontSize: 11, letterSpacing: "0.12em", cursor: "pointer",
-                }}>
-                  Done
-                </button>
+            {mode==="register" && (
+              <div style={{ marginBottom:16 }}>
+                <label style={S.label}>Confirm Password</label>
+                <input style={S.input} type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} required />
               </div>
             )}
-          </div>
+            <button type="submit" style={S.btn} disabled={loading}>
+              {loading ? "..." : mode==="login" ? "SIGN IN" : "CREATE ACCOUNT"}
+            </button>
+          </form>
+          <div style={S.or}><div style={S.orLine}/><span style={S.orText}>OR</span><div style={S.orLine}/></div>
+          <button style={S.googleBtn} onClick={handleGoogle} disabled={loading}>
+            <span className="material-symbols-outlined" style={{ fontSize:20 }}>account_circle</span>
+            Continue with Google
+          </button>
         </div>
-      )}
+
+        {mode==="reset" && (
+          <div style={S.overlay}>
+            <div style={S.modal}>
+              <div style={S.modalHead}>
+                <span style={{ fontSize:13, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"#e5e2e1" }}>Reset Password</span>
+                <button style={S.iconBtn} onClick={() => { setMode("login"); setError(""); setResetSent(false); }}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              {!resetSent ? (
+                <>
+                  <div style={S.modalBody}>
+                    <p style={{ fontSize:12, color:"#888", marginBottom:12 }}>Enter your email to receive a password reset link.</p>
+                    <label style={S.label}>Email Address</label>
+                    <input style={S.input} type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="engineer@company.com" />
+                  </div>
+                  <div style={S.modalFoot}>
+                    <button style={S.ghostBtn} onClick={() => { setMode("login"); setError(""); }}>Cancel</button>
+                    <button style={S.goldBtn} onClick={handlePasswordReset} disabled={loading}>Send Reset Link</button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding:32, textAlign:"center" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize:40, color:"#d4a843", display:"block", marginBottom:16 }}>mail</span>
+                  <div style={{ fontSize:16, fontWeight:600, color:"#e5e2e1", marginBottom:8 }}>Reset link sent</div>
+                  <div style={{ fontSize:12, color:"#888", marginBottom:24 }}>Check your inbox at <span style={{ fontFamily:"monospace", color:"#ccc" }}>{email}</span></div>
+                  <button style={{ ...S.goldBtn, width:"100%", padding:"12px 0" }} onClick={() => { setMode("login"); setResetSent(false); }}>Back to Sign In</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

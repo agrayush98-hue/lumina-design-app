@@ -49,6 +49,11 @@ const ICONS = {
       <path d="M8.5 6.5L6.5 9h1.5l-1 2.5 3-3H8.5V6.5z" stroke={color} strokeWidth="1" fill={color}/>
     </svg>
   ),
+  'electrical':   ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="9 1 1 9 7 9 7 15 15 7 9 7 9 1" />
+    </svg>
+  ),
 }
 
 const NAV_ITEMS = [
@@ -57,6 +62,7 @@ const NAV_ITEMS = [
   { id: 'calculation', label: 'Calculation' },
   { id: 'heatmaps',    label: 'Heatmaps' },
   { id: 'dali-bus',    label: 'DALI Bus' },
+  { id: 'electrical',  label: 'Electrical' },
   { id: 'electrical-devices', label: 'Electrical Devices' },
   { id: 'reports',     label: 'Reports' },
 ]
@@ -97,36 +103,123 @@ function NavItem({ item, active, onClick }) {
   )
 }
 
-export default function Sidebar({ activeItem, onItemChange, children }) {
+export default function Sidebar({ activeItem, onItemChange, collapsed, onToggleCollapse, children }) {
+  if (collapsed) {
+    return (
+      <div style={{
+        width: 32,
+        background: '#111111',
+        borderRight: '1px solid #222222',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: 8,
+        flexShrink: 0,
+        height: '100%'
+      }}>
+        <button
+          onClick={onToggleCollapse}
+          title="Expand sidebar"
+          style={{
+            width: 24,
+            height: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: '#888888',
+            cursor: 'pointer',
+            fontSize: 14,
+          }}
+        >
+          »
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div style={{
-      width: 260,
-      minWidth: 260,
-      background: '#111111',
-      borderRight: '1px solid #1e1e1e',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      flexShrink: 0,
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'row', flexShrink: 0, height: '100%' }}>
 
-      {/* Navigation items */}
-      <div style={{ padding: '10px 8px 8px', borderBottom: '1px solid #1a1a1a', flexShrink: 0, overflowY: 'auto' }}>
-        {NAV_ITEMS.map(item => (
-          <NavItem
-            key={item.id}
-            item={item}
-            active={activeItem === item.id}
-            onClick={() => onItemChange(item.id)}
-          />
-        ))}
+      {/* 48px icon rail */}
+      <div style={{
+        width: 48,
+        background: '#111111',
+        borderRight: '1px solid #222222',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: 8,
+        flexShrink: 0,
+        overflowY: 'auto',
+      }}>
+        <button
+          onClick={onToggleCollapse}
+          title="Collapse sidebar"
+          style={{
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            color: '#555555',
+            cursor: 'pointer',
+            fontSize: 16,
+            marginBottom: 8,
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#cccccc'}
+          onMouseLeave={e => e.currentTarget.style.color = '#555555'}
+        >
+          «
+        </button>
+        {NAV_ITEMS.map(item => {
+          const active = activeItem === item.id
+          const Icon = ICONS[item.id]
+          return (
+            <button
+              key={item.id}
+              title={item.label}
+              onClick={() => onItemChange(item.id)}
+              style={{
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: active ? 'rgba(212,168,67,0.12)' : 'transparent',
+                border: 'none',
+                borderLeft: active ? '2px solid #d4a843' : '2px solid transparent',
+                color: active ? '#d4a843' : '#555555',
+                cursor: 'pointer',
+                marginBottom: 4,
+              }}
+            >
+              {Icon && <Icon size={20} color={active ? '#d4a843' : '#888888'} />}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Panel content — scrollable */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {children}
+      {/* Content panel */}
+      <div style={{
+        width: 212,
+        minWidth: 212,
+        background: '#111111',
+        borderRight: '1px solid #1e1e1e',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        pointerEvents: 'none',
+      }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', pointerEvents: 'auto' }}>
+          {children}
+        </div>
       </div>
+
     </div>
   )
 }

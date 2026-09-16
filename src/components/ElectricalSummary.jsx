@@ -1,13 +1,13 @@
 import React from "react"
 
 const C = {
-  bg:      "#0a1018",
-  bgAlt:   "#0d1520",
-  border:  "#1a2b3c",
-  label:   "#2d4f68",
-  value:   "#cdd9e5",
-  dim:     "#4a7a96",
-  accent:  "#39c5cf",
+  bg:      "#1a1a1a",
+  bgAlt:   "#141414",
+  border:  "#2e2e2e",
+  label:   "#888888",
+  value:   "#f0f0f0",
+  dim:     "#555555",
+  accent:  "#d4a843",
 }
 
 const COLS_FULL  = "1fr 70px 70px 70px 120px 90px 90px 80px"
@@ -87,7 +87,7 @@ export default function ElectricalSummary({ perRoomSummary, daliEnabled, totalBu
             gridTemplateColumns: cols,
             padding: "5px 14px",
             background: i % 2 === 0 ? C.bg : C.bgAlt,
-            borderBottom: `1px solid #0b1420`,
+            borderBottom: `1px solid #2e2e2e`,
             alignItems: "center",
             gap: 8,
           }}
@@ -136,8 +136,8 @@ export default function ElectricalSummary({ perRoomSummary, daliEnabled, totalBu
         display: "grid",
         gridTemplateColumns: cols,
         padding: "6px 14px",
-        background: "#0b1824",
-        borderTop: `1px solid #0f2030`,
+        background: "#141414",
+        borderTop: `1px solid #2e2e2e`,
         alignItems: "center",
         gap: 8,
       }}>

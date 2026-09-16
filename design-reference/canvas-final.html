@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Design - Lighting Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .dot-grid {
+            background-image: radial-gradient(circle at 1px 1px, #222222 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+        /* Scrollbar customization for a technical look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111111; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #353534; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555555; 
+        }
+        
+        .ruler-x {
+            background-image: linear-gradient(90deg, transparent 99px, #353534 99px);
+            background-size: 100px 100%;
+        }
+        .ruler-y {
+            background-image: linear-gradient(180deg, transparent 99px, #353534 99px);
+            background-size: 100% 100px;
+        }
+        .grid-snap {
+            background-image: linear-gradient(90deg, #1a1a1a 1px, transparent 1px),
+                              linear-gradient(180deg, #1a1a1a 1px, transparent 1px);
+            background-size: 50px 50px; /* Represents 1000mm scaled */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-tertiary-fixed-variant": "#214584",
+                      "inverse-primary": "#795900",
+                      "panel": "#1a1a1a",
+                      "error-container": "#93000a",
+                      "on-error": "#690005",
+                      "border": "#222222",
+                      "surface-tint": "#eec058",
+                      "text-primary": "#cccccc",
+                      "secondary-container": "#00acb6",
+                      "primary-fixed-dim": "#eec058",
+                      "tertiary": "#b3caff",
+                      "inverse-on-surface": "#313030",
+                      "background": "#131313",
+                      "surface-container": "#201f1f",
+                      "on-surface-variant": "#d2c5b1",
+                      "room-fill": "#0f1a0f",
+                      "text-muted": "#555555",
+                      "secondary-fixed": "#76f5ff",
+                      "gold-dim": "rgba(212, 168, 67, 0.12)",
+                      "on-secondary-fixed-variant": "#004f54",
+                      "on-secondary-fixed": "#002022",
+                      "outline": "#9a8f7d",
+                      "error": "#ffb4ab",
+                      "surface": "#111111",
+                      "secondary-fixed-dim": "#53d8e2",
+                      "surface-container-low": "#1c1b1b",
+                      "on-surface": "#e5e2e1",
+                      "inverse-surface": "#e5e2e1",
+                      "text-secondary": "#888888",
+                      "tertiary-fixed": "#d8e2ff",
+                      "tertiary-container": "#8eaef4",
+                      "on-primary-container": "#553e00",
+                      "surface-container-high": "#2a2a2a",
+                      "gold-soft": "#f0c97a",
+                      "on-secondary": "#00363a",
+                      "primary-fixed": "#ffdf9f",
+                      "on-tertiary-container": "#1b407f",
+                      "success": "#4ade80",
+                      "primary": "#f2c35b",
+                      "surface-container-highest": "#353534",
+                      "border-subtle": "#2a2a2a",
+                      "tertiary-fixed-dim": "#aec6ff",
+                      "surface-variant": "#353534",
+                      "on-primary": "#402d00",
+                      "secondary": "#53d8e2",
+                      "warning": "#f59e0b",
+                      "on-secondary-container": "#00393d",
+                      "surface-dim": "#131313",
+                      "on-tertiary-fixed": "#001a42",
+                      "surface-bright": "#3a3939",
+                      "on-primary-fixed-variant": "#5b4300",
+                      "on-background": "#e5e2e1",
+                      "outline-variant": "#4e4636",
+                      "on-tertiary": "#002e6a",
+                      "on-primary-fixed": "#261a00",
+                      "primary-container": "#d4a843",
+                      "on-error-container": "#ffdad6",
+                      "danger": "#ef4444"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0px",
+                      "lg": "0px",
+                      "xl": "0px",
+                      "full": "0px"
+              },
+              "spacing": {
+                      "margin-compact": "8px",
+                      "sidebar-right": "280px",
+                      "gutter": "12px",
+                      "header-height": "48px",
+                      "sidebar-left": "240px",
+                      "margin-standard": "16px"
+              },
+              "fontFamily": {
+                      "headline-modal": ["Inter"],
+                      "body-medium": ["Inter"],
+                      "headline-section": ["Inter"],
+                      "mono-value": ["IBM Plex Mono"],
+                      "mono-small": ["IBM Plex Mono"],
+                      "label-caps": ["Inter"],
+                      "body-standard": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-modal": ["17px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "body-medium": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "headline-section": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                      "mono-value": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "mono-small": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                      "label-caps": ["11px", {"lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                      "body-standard": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-text-primary h-screen w-screen overflow-hidden flex flex-col font-body-standard selection:bg-primary-container selection:text-on-primary-container">
+<!-- HEADER -->
+<header class="h-[48px] w-full bg-surface border-b border-border flex items-center justify-between px-4 z-50 shrink-0">
+<div class="flex items-center gap-6">
+<div class="font-headline-section text-headline-section font-bold text-primary tracking-tight">
+                LUMINA DESIGN
+            </div>
+<div class="h-4 w-px bg-border"></div>
+<div class="flex items-center gap-2 text-text-secondary hover:text-on-surface cursor-pointer transition-colors group">
+<span class="font-body-medium text-body-medium">Project_Alpha_Zone2.lx</span>
+<span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container-high transition-colors" title="Save">
+<span class="material-symbols-outlined text-[18px]">save</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary hover:bg-surface-container-high transition-colors" title="Share">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+</div>
+<div class="h-4 w-px bg-border"></div>
+<button class="h-7 px-3 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-surface-tint transition-colors">
+                EXPORT
+            </button>
+<button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-on-surface transition-colors ml-2" title="Profile">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+</div>
+</header>
+<!-- MAIN WORKSPACE -->
+<div class="flex-1 flex overflow-hidden">
+<!-- LEFT RAIL (Icons Only) -->
+<div class="w-[48px] bg-surface border-r border-border flex flex-col items-center py-2 z-40 shrink-0">
+<button class="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-surface-container-high hover:text-primary transition-colors mb-1" title="Layers">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-gold-dim border-l-2 border-primary text-primary mb-1 transition-all duration-150" title="Fixtures">
+<span class="material-symbols-outlined" data-icon="lightbulb" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-surface-container-high hover:text-primary transition-colors mb-1" title="Calculate">
+<span class="material-symbols-outlined" data-icon="calculate">calculate</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-surface-container-high hover:text-primary transition-colors mb-1" title="Components">
+<span class="material-symbols-outlined" data-icon="settings_input_component">settings_input_component</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-surface-container-high hover:text-primary transition-colors mb-1" title="List">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+</button>
+<div class="mt-auto">
+<button class="w-10 h-10 flex items-center justify-center text-text-secondary hover:bg-surface-container-high hover:text-primary transition-colors" title="Settings">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+<!-- LEFT COLLAPSIBLE PANEL (Fixtures) -->
+<div class="w-[280px] bg-panel border-r border-border flex flex-col z-30 shrink-0">
+<div class="h-12 border-b border-border flex items-center px-4 justify-between">
+<span class="font-label-caps text-label-caps text-text-primary">FIXTURES</span>
+<button class="text-text-secondary hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<div class="p-3 border-b border-border">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2 text-text-secondary text-[16px]">search</span>
+<input class="w-full bg-surface-container-lowest border border-border text-text-primary font-body-standard text-body-standard py-1.5 pl-8 pr-2 focus:border-primary focus:outline-none transition-colors placeholder:text-text-muted" placeholder="Search fixtures..." type="text"/>
+</div>
+<div class="bg-surface-container-lowest p-2"><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-12 h-2 border border-text-secondary bg-text-primary/20"></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">LN-1200</span><span class="font-mono-small text-[9px] text-text-secondary">36W | 4000K</span></div></div></div></div>
+<div class="flex-1 overflow-y-auto">
+<!-- Accordion Item 1 -->
+<div class="border-b border-border">
+<button class="w-full flex items-center justify-between p-3 hover:bg-surface-container-high transition-colors text-left group">
+<span class="font-body-medium text-body-medium text-text-primary group-hover:text-on-surface">Downlights</span>
+<span class="material-symbols-outlined text-[16px] text-text-secondary transition-transform rotate-180">expand_more</span>
+</button>
+<div class="bg-surface-container-lowest p-2 grid grid-cols-2 gap-2"><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-10 h-10 rounded-full border border-text-secondary flex items-center justify-center relative"><div class="w-1 h-1 bg-text-primary rounded-full"></div></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">DL-150</span><span class="font-mono-small text-[9px] text-text-secondary">18W | 3000K</span></div></div><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-10 h-10 rounded-full border border-text-secondary flex items-center justify-center relative"><div class="w-1.5 h-1.5 bg-text-primary rounded-full"></div></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">DL-200</span><span class="font-mono-small text-[9px] text-text-secondary">24W | 4000K</span></div></div></div>
+</div>
+<!-- Accordion Item 2 -->
+<div class="border-b border-border">
+<button class="w-full flex items-center justify-between p-3 hover:bg-surface-container-high transition-colors text-left group">
+<span class="font-body-medium text-body-medium text-text-primary group-hover:text-on-surface">Linear Profiles</span>
+<span class="material-symbols-outlined text-[16px] text-text-secondary transition-transform">expand_more</span>
+</button>
+<div class="bg-surface-container-lowest p-2"><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-12 h-2 border border-text-secondary bg-text-primary/20"></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">LN-1200</span><span class="font-mono-small text-[9px] text-text-secondary">36W | 4000K</span></div></div></div></div>
+<!-- Accordion Item 3 -->
+<div class="border-b border-border">
+<button class="w-full flex items-center justify-between p-3 hover:bg-surface-container-high transition-colors text-left group">
+<span class="font-body-medium text-body-medium text-text-primary group-hover:text-on-surface">Track Systems</span>
+<span class="material-symbols-outlined text-[16px] text-text-secondary transition-transform">expand_more</span>
+</button>
+<div class="bg-surface-container-lowest p-2"><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-12 h-3 border border-text-secondary flex items-center justify-center"><span class="material-symbols-outlined text-[12px] text-text-secondary">arrow_forward</span></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">TR-SPOT</span><span class="font-mono-small text-[9px] text-text-secondary">12W | 3000K</span></div></div></div></div>
+</div>
+</div>
+<!-- CANVAS AREA & FLOATING TOOLS -->
+<div class="flex-1 flex flex-col relative overflow-hidden bg-[#0d0d0d]">
+<!-- FLOOR/ROOM TABS -->
+<div class="h-[56px] w-full bg-panel border-b border-border flex flex-col z-20 shrink-0">
+<div class="h-[28px] border-b border-border flex items-center px-4 gap-4 bg-surface-container">
+<button class="text-primary font-mono-small text-[11px] h-full border-b-2 border-primary">Floor 1</button>
+<button class="text-text-secondary hover:text-text-primary font-mono-small text-[11px] h-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">add</span> Add Floor
+        </button>
+</div>
+<div class="h-[28px] flex items-center px-4 gap-4 bg-surface">
+<button class="text-primary font-mono-small text-[11px] h-full border-b-2 border-primary">Room 1</button>
+<button class="text-text-secondary hover:text-text-primary font-mono-small text-[11px] h-full">Room 2</button>
+<button class="text-text-secondary hover:text-text-primary font-mono-small text-[11px] h-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">add</span> Add Room
+        </button>
+</div>
+</div>
+<!-- CANVAS COORDINATE RULERS -->
+<div class="absolute top-[56px] left-0 right-0 h-[20px] bg-panel border-b border-border z-10 ruler-x">
+<div class="flex h-full items-end overflow-hidden font-mono-small text-[9px] text-text-secondary px-[20px] relative">
+<span class="absolute left-[100px] bottom-0">1000</span>
+<span class="absolute left-[200px] bottom-0">2000</span>
+<span class="absolute left-[300px] bottom-0">3000</span>
+<span class="absolute left-[400px] bottom-0">4000</span>
+<span class="absolute left-[500px] bottom-0">5000</span>
+</div>
+<div class="bg-surface-container-lowest p-2"><div class="border border-border p-3 cursor-pointer hover:border-primary transition-colors bg-surface flex flex-col items-center gap-3"><div class="w-12 h-2 border border-text-secondary bg-text-primary/20"></div><div class="flex flex-col items-center gap-0.5"><span class="font-mono-small text-[10px] text-text-primary">LN-1200</span><span class="font-mono-small text-[9px] text-text-secondary">36W | 4000K</span></div></div></div></div>
+<div class="absolute top-[76px] bottom-0 left-0 w-[20px] bg-panel border-r border-border z-10 ruler-y">
+<div class="flex flex-col w-full h-full items-end overflow-hidden font-mono-small text-[9px] text-text-secondary py-[20px] relative">
+<span class="absolute top-[100px] right-0 rotate-[-90deg] origin-right">1000</span>
+<span class="absolute top-[200px] right-0 rotate-[-90deg] origin-right">2000</span>
+<span class="absolute top-[300px] right-0 rotate-[-90deg] origin-right">3000</span>
+<span class="absolute top-[400px] right-0 rotate-[-90deg] origin-right">4000</span>
+</div>
+</div>
+<!-- SELECTION COUNT CHIP -->
+<div class="absolute top-[86px] left-1/2 transform -translate-x-1/2 bg-surface border border-border px-3 py-1 flex items-center gap-3 z-30 shadow-lg">
+<span class="font-mono-small text-[11px] text-primary">3 selected</span>
+<div class="w-px h-3 bg-border"></div>
+<span class="font-mono-small text-[11px] text-text-primary">54W</span>
+<div class="w-px h-3 bg-border"></div>
+<button class="font-mono-small text-[11px] text-text-secondary hover:text-on-surface">Group</button>
+<div class="w-px h-3 bg-border"></div>
+<button class="font-mono-small text-[11px] text-text-secondary hover:text-danger">Delete</button>
+</div>
+<!-- TOP TOOLBAR -->
+<div class="absolute top-[120px] left-1/2 transform -translate-x-1/2 h-[40px] bg-surface/90 backdrop-blur-md border border-border flex items-center px-2 z-20 shadow-lg gap-1"><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">undo</span></button></div><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">redo</span></button></div><div class="w-px h-5 bg-border mx-1"></div><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-primary bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">grid_on</span></button><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-border px-2 py-1 text-[9px] text-on-surface whitespace-nowrap opacity-0 group-hover/tip:opacity-100 pointer-events-none">Snap (S)</div></div><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">polyline</span></button><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-border px-2 py-1 text-[9px] text-on-surface whitespace-nowrap opacity-0 group-hover/tip:opacity-100 pointer-events-none">Auto Place (A)</div></div><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-danger hover:bg-error-container/20 transition-colors"><span class="material-symbols-outlined text-[18px]">delete</span></button><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-border px-2 py-1 text-[9px] text-on-surface whitespace-nowrap opacity-0 group-hover/tip:opacity-100 pointer-events-none">Clear (C)</div></div><div class="group/tip relative"><button class="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[18px]">gradient</span></button><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-border px-2 py-1 text-[9px] text-on-surface whitespace-nowrap opacity-0 group-hover/tip:opacity-100 pointer-events-none">Heatmap (H)</div></div><div class="w-px h-5 bg-border mx-1"></div><button class="h-6 px-2 ml-1 bg-gold-dim border border-primary text-primary font-label-caps text-[10px] flex items-center gap-1 hover:bg-primary/20 transition-colors"><span class="material-symbols-outlined text-[12px]">auto_awesome</span>AI</button></div>
+<!-- THE CANVAS -->
+<div class="absolute top-[76px] left-[20px] right-0 bottom-0 dot-grid overflow-hidden cursor-crosshair"><div class="absolute top-10 right-10 border border-dashed border-text-muted p-4 flex flex-col items-center gap-2 opacity-40 pointer-events-none"><span class="material-symbols-outlined text-text-muted">add_box</span><span class="font-mono-small text-[10px] text-text-muted">Draw a room to start</span></div>
+<!-- Mock Room -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] border border-outline-variant bg-room-fill/30 grid-snap relative">
+<!-- ROOM LABEL -->
+<div class="absolute top-2 left-2 flex flex-col gap-0.5 z-10 pointer-events-none">
+<span class="font-mono-small text-[10px] text-text-secondary uppercase">Conference Room A</span>
+<span class="font-mono-small text-[9px] text-text-muted">12000 × 8000 mm</span>
+</div>
+<!-- Dimension Lines -->
+<div class="absolute -top-6 left-0 right-0 flex items-center justify-between">
+<div class="w-px h-4 bg-outline-variant"></div>
+<div class="flex-1 h-px bg-outline-variant"></div>
+<span class="absolute left-1/2 transform -translate-x-1/2 -top-3 font-mono-small text-mono-small text-text-secondary bg-[#0d0d0d] px-1">12000 mm</span>
+<div class="w-px h-4 bg-outline-variant"></div>
+</div>
+<div class="absolute top-0 -left-6 bottom-0 flex flex-col items-center justify-between">
+<div class="w-4 h-px bg-outline-variant"></div>
+<div class="flex-1 w-px bg-outline-variant"></div>
+<span class="absolute top-1/2 transform -translate-y-1/2 -left-3 -rotate-90 font-mono-small text-mono-small text-text-secondary bg-[#0d0d0d] px-1">8000 mm</span>
+<div class="w-4 h-px bg-outline-variant"></div>
+</div>
+<!-- Fixtures Grid (2x4) -->
+<div class="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-0 p-12">
+<!-- Row 1 -->
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-success flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer shadow-[0_0_15px_rgba(74,222,128,0.2)]"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-success transition-colors">DALI_1.1</span>
+<!-- Connection line -->
+<div class="absolute right-0 top-1/2 w-1/2 h-px bg-success/30 border-dashed border-t border-success/50 -z-10 hidden group-hover:block"></div>
+<!-- Hover Tooltip -->
+<div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-surface-container-highest border border-border px-2 py-1 text-on-surface font-mono-small text-[10px] whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+    DL-150-3K | 18W | DALI 1.1 | 480lx
+</div>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-success flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer shadow-[0_0_15px_rgba(74,222,128,0.2)]"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-success transition-colors">DALI_1.2</span>
+<div class="absolute left-0 top-1/2 w-full h-px bg-success/30 border-dashed border-t border-success/50 -z-10 hidden group-hover:block"></div>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-success flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer shadow-[0_0_15px_rgba(74,222,128,0.2)]"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-success transition-colors">DALI_1.3</span>
+<div class="absolute left-0 top-1/2 w-full h-px bg-success/30 border-dashed border-t border-success/50 -z-10 hidden group-hover:block"></div>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-danger flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)]"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-danger transition-colors">DALI_1.4</span>
+<div class="absolute left-0 top-1/2 w-1/2 h-px bg-success/30 border-dashed border-t border-success/50 -z-10 hidden group-hover:block"></div>
+</div>
+<!-- Row 2 -->
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-text-muted flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-text-primary transition-colors">DALI_2.1</span>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-text-muted flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-text-primary transition-colors">DALI_2.2</span>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-primary flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer shadow-[0_0_15px_rgba(242,195,91,0.3)]">
+<div class="w-2 h-2 bg-primary rounded-none"></div>
+</div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-primary">DALI_2.3</span>
+<!-- Contextual Selection Overlay -->
+<div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-surface border border-primary px-2 py-1 flex items-center gap-2 whitespace-nowrap z-50">
+<span class="font-mono-small text-[10px] text-primary">ID: 2.3</span>
+<div class="w-px h-3 bg-border"></div>
+<span class="font-mono-small text-[10px] text-text-primary">18W</span>
+<div class="w-px h-3 bg-border"></div>
+<button class="text-text-secondary hover:text-primary"><span class="material-symbols-outlined text-[12px]">settings</span></button>
+</div>
+</div>
+<div class="relative flex items-center justify-center group">
+<div class="w-6 h-6 rounded-none border-2 border-text-muted flex items-center justify-center bg-surface-container-lowest z-10 cursor-pointer"></div>
+<span class="absolute top-full mt-1 font-mono-small text-[9px] text-text-secondary group-hover:text-text-primary transition-colors">DALI_2.4</span>
+</div>
+</div>
+</div>
+</div>
+<!-- BOTTOM LEFT CHIP -->
+<div class="absolute bottom-4 left-[36px] bg-surface/80 backdrop-blur-sm border border-border px-3 py-1.5 flex items-center gap-2 z-20">
+<span class="font-mono-value text-mono-value text-text-primary">480 LUX</span>
+<span class="text-success text-[8px]">●</span>
+<span class="font-label-caps text-label-caps text-success">OPTIMAL</span>
+</div>
+<!-- BOTTOM RIGHT MINI-MAP & ZOOM -->
+<div class="absolute bottom-4 right-4 flex items-end gap-3 z-20">
+<div class="flex items-center bg-surface/80 backdrop-blur-sm border border-border">
+<button class="w-7 h-7 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="font-mono-small text-[11px] text-text-primary px-2">67%</span>
+<button class="w-7 h-7 flex items-center justify-center text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<div class="w-px h-4 bg-border"></div>
+<button class="px-2 h-7 font-mono-small text-[10px] text-text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors">FIT</button>
+</div>
+<div class="w-[80px] h-[60px] bg-panel border border-border relative overflow-hidden shadow-lg">
+<div class="absolute inset-2 border border-outline-variant/30 flex items-center justify-center">
+<!-- viewport rect -->
+<div class="w-[80%] h-[70%] border border-primary bg-primary/10"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLLAPSED PANEL TOGGLE -->
+<div class="w-[16px] bg-panel border-l border-border flex items-center justify-center z-30 cursor-pointer hover:bg-surface-container-high transition-colors group shrink-0">
+<span class="material-symbols-outlined text-[14px] text-text-secondary group-hover:text-on-surface">chevron_left</span>
+</div>
+<!-- RIGHT EXPANDED INSPECTOR (Mocked state for demonstration if expanded) -->
+<div class="w-[280px] bg-panel border-l border-border flex flex-col z-30 shrink-0"><div class="h-12 border-b border-border flex items-center px-4 justify-between shrink-0"><span class="font-label-caps text-label-caps text-text-primary">INSPECTOR</span><button class="text-text-secondary hover:text-on-surface"><span class="material-symbols-outlined text-[16px]">close</span></button></div><div class="flex-1 overflow-y-auto flex flex-col gap-4 p-4"><!-- CARD 1: ROOM INTEL --><div class="bg-surface border border-border p-3 flex flex-col gap-3"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">analytics</span><span class="font-label-caps text-label-caps text-text-primary">ROOM INTEL</span></div><div class="grid grid-cols-2 gap-2"><div class="bg-surface-container-high px-2 py-1 text-primary font-mono-small text-[10px] text-center">480 LUX</div><div class="bg-surface-container-high px-2 py-1 text-text-primary font-mono-small text-[10px] text-center">4000K CCT</div><div class="bg-surface-container-high px-2 py-1 text-success font-mono-small text-[10px] text-center">&lt;19 UGR</div><div class="bg-surface-container-high px-2 py-1 text-text-primary font-mono-small text-[10px] text-center">IP20</div></div><div class="text-success font-label-caps text-[9px] flex items-center gap-1"><span>✓</span> EN 12464-1 COMPLIANT</div></div><!-- CARD 2: AVERAGE LUX --><div class="bg-surface border border-border p-3 flex flex-col items-center gap-2"><div class="w-full flex items-center"><span class="font-label-caps text-label-caps text-text-primary">AVG LUX CALCULATION</span></div><div class="text-[28px] font-mono-value text-success leading-none mt-2">480</div><div class="flex items-center gap-1.5 bg-success/10 px-2 py-0.5 border border-success/30"><span class="w-1.5 h-1.5 bg-success rounded-full"></span><span class="text-success font-label-caps text-[9px]">OPTIMAL</span></div><div class="text-text-muted font-mono-small text-[10px] mt-1">Target: 450 lux</div></div><!-- CARD 3: FIXTURE INSPECTOR --><div class="bg-surface border border-border p-3 flex flex-col gap-3"><div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-text-primary">FIXTURE INSPECTOR</span><span class="bg-primary/10 text-primary text-[9px] px-1.5 py-0.5 border border-primary/30 font-label-caps">1 SELECTED</span></div><div class="flex flex-col border border-border"><div class="flex justify-between p-2 bg-surface-container-high font-mono-small text-[10px]"><span class="text-text-secondary">Type:</span><span class="text-text-primary">DL-150-3K</span></div><div class="flex justify-between p-2 bg-surface font-mono-small text-[10px]"><span class="text-text-secondary">DALI Addr:</span><span class="text-text-primary">2.3</span></div><div class="flex justify-between p-2 bg-surface-container-high font-mono-small text-[10px]"><span class="text-text-secondary">Luminous Flux:</span><span class="text-text-primary">1800 lm</span></div><div class="flex justify-between p-2 bg-surface font-mono-small text-[10px]"><span class="text-text-secondary">Beam Angle:</span><span class="text-text-primary">36°</span></div><div class="flex justify-between p-2 bg-surface-container-high font-mono-small text-[10px]"><span class="text-text-secondary">Wattage:</span><span class="text-text-primary">18W</span></div></div></div><!-- CARD 4: ROOM DETAILS --><div class="bg-surface border border-border p-3 flex flex-col gap-3"><div class="font-label-caps text-label-caps text-text-primary">ROOM DETAILS</div><div class="flex flex-col gap-2"><div class="flex justify-between items-center font-mono-small text-[10px]"><span class="text-text-secondary">Area:</span><span class="text-text-primary">96.0 m²</span></div><div class="flex justify-between items-center font-mono-small text-[10px]"><span class="text-text-secondary">Mounting Ht:</span><input class="w-16 bg-surface-container-lowest border border-border text-right px-1 py-0.5 focus:border-primary focus:outline-none text-text-primary" type="text" value="2.70m"/></div><div class="flex justify-between items-center font-mono-small text-[10px]"><span class="text-text-secondary">RCR:</span><span class="text-text-primary">2.14</span></div><div class="flex justify-between items-center font-mono-small text-[10px]"><span class="text-text-secondary">Utilization F:</span><span class="text-text-primary">0.81</span></div></div></div></div></div>
+</div>
+<!-- BOTTOM BAR -->
+<footer class="h-[32px] w-full bg-surface-container-lowest border-t border-border flex items-center px-3 z-50 shrink-0">
+<div class="flex items-center gap-4 font-mono-small text-mono-small">
+<span class="text-text-secondary">Circuits: <span class="text-text-primary">144W</span></span>
+<div class="h-3 w-px bg-border"></div>
+<span class="text-text-secondary">Voltage: <span class="text-success">2.1% OK</span></span>
+<div class="h-3 w-px bg-border"></div>
+<span class="text-text-secondary">Driver: <span class="ml-1 px-2 py-0.5 bg-success/10 border border-success/30 rounded-full flex items-center gap-1.5 inline-flex"><span class="w-1.5 h-1.5 bg-success rounded-full"></span><span class="text-success text-[9px] font-label-caps">DALI LIVE</span></span></span>
+<div class="h-3 w-px bg-border"></div>
+<span class="text-text-secondary">Phase: <span class="text-primary">L1 Active</span></span>
+</div>
+<div class="ml-auto font-mono-small text-mono-small text-text-muted">
+            X: 1450 Y: 2200
+        </div>
+</footer>
+</body></html>

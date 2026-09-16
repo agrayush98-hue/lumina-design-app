@@ -137,6 +137,7 @@ export default function Navigation({
   onProjectNameChange,
   saving,
   onSave,
+  onLoadProject,
   onExport,
   onShare,
   onSignOut,
@@ -209,6 +210,15 @@ export default function Navigation({
           onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#888888' }}
         >
           {saving ? 'Saving…' : 'Save'}
+        </button>
+
+        <button
+          style={S.btnGhost}
+          onClick={onLoadProject}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#444444'; e.currentTarget.style.color = '#cccccc' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#888888' }}
+        >
+          Load Project
         </button>
 
         <button

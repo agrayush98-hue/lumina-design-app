@@ -1,4 +1,4 @@
-﻿import { useUndoRedo } from './hooks/useUndoRedo';
+import { useUndoRedo } from './hooks/useUndoRedo';
 import { useState, useRef, useMemo, useEffect, useCallback } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { onAuthStateChanged, signOut } from "firebase/auth"
@@ -25,6 +25,7 @@ import { FixtureLibraryPanel } from "./components/FixtureLibraryPanel"
 import Navigation from "./components/Navigation"
 import Sidebar from "./components/Sidebar"
 import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL, ELECTRICAL_DEVICE_TYPES } from "./data/fixtureLibrary"
+import { CONFIGURABLE_FIXTURES } from "./data/configurable-fixtures"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
 import { SIDEBAR_LEGEND } from "./utils/heatmapColors"
@@ -39,7 +40,7 @@ const MAX_CIRCUIT_WATT = 800
 const DALI_BUS_MAX    = 60
 const MAINT_FACTOR    = 0.8   // standard maintenance factor (MF) for lumen-method
 
-// Shared grid formula â€” used by both autoPlaceLights and suggestedFixtures display
+// Shared grid formula — used by both autoPlaceLights and suggestedFixtures display
 function calcGrid(targetLux, areaM2, uf, fixtureLumens, roomWidth, roomHeight) {
   const requiredLumens = (targetLux * areaM2) / (uf * MAINT_FACTOR)
   const numFixtures    = Math.max(1, Math.ceil(requiredLumens / fixtureLumens))
@@ -75,7 +76,7 @@ function calcRCR(widthMm, heightMm, mh) {
   return (5 * mh * (W + L)) / (W * L)
 }
 
-// Reflectance-aware UF â€” matches _calcRoomExport formula
+// Reflectance-aware UF — matches _calcRoomExport formula
 // cR/wR/fR are decimal fractions (e.g. 0.7 for 70%)
 function calcUF(rcr, cR = 0.7, wR = 0.5, fR = 0.2) {
   const avgRef = (cR + wR + fR) / 3
@@ -85,28 +86,89 @@ function calcUF(rcr, cR = 0.7, wR = 0.5, fR = 0.2) {
   return Math.min(0.95, Math.max(0.4, ufRaw))
 }
 
+const FIXTURE_TYPE_SHAPES = {
+  'cob-downlight': 'circle',
+  'smd-downlight': 'ring',
+  'ip65-downlight': 'cross-dot',
+  'pinhole-spotlight': 'diamond',
+  'tiltable-spotlight': 'gimbal',
+  'trimless-spotlight': 'triangle',
+  'surface-spotlight': 'square',
+  'recessed-wall-washer': 'flood',
+  'floor-washer': 'semicircle',
+  'track-spotlight': 'track',
+  'magnetic-track-spotlight': 'track',
+  'pendant-spotlight': 'pendant',
+  'linear-spotlight': 'rectangle',
+  'linear-diffused': 'pill',
+  'led-panel': 'panel-grid',
+  'cove-strip': 'cove-slot',
+  'high-bay': 'octagon',
+  'step-light': 'pill',
+  'outdoor-spotlight': 'floodlight',
+  'inground-uplight': 'spike',
+}
+
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255
+  const max = Math.max(r,g,b), min = Math.min(r,g,b)
+  let h=0, s=0, l=(max+min)/2
+  if (max !== min) {
+    const d = max-min
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min)
+    if (max===r) h = ((g-b)/d + (g<b?6:0))
+    else if (max===g) h = (b-r)/d + 2
+    else h = (r-g)/d + 4
+    h /= 6
+  }
+  return [h*360, s*100, l*100]
+}
+
+function hslToHex(h, s, l) {
+  s/=100; l/=100
+  const k = n => (n + h/30) % 12
+  const a = s * Math.min(l, 1-l)
+  const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)))
+  const toHex = x => Math.round(x*255).toString(16).padStart(2,'0')
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`
+}
+
+function wattageAdjustedColor(baseHex, watt, minWatt, maxWatt) {
+  if (!baseHex || minWatt == null || maxWatt == null || maxWatt === minWatt) return baseHex
+  const ratio = Math.max(0, Math.min(1, (watt - minWatt) / (maxWatt - minWatt)))
+  const [h, s, l] = hexToHsl(baseHex)
+  const newL = l + (40 - ratio*70)
+  return hslToHex(h, s, Math.max(10, Math.min(90, newL)))
+}
+
 function makeLight(id, x, y, fixture, lumensOverride) {
   // Prefer per-fixture visual props; fall back to category defaults
   const vis = fixture?.category ? (CATEGORY_VISUAL[fixture.category] ?? {}) : {}
+  // Wattage-based size scaling: 75% at lowest watt, 135% at highest
+  const _pMin = fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0
+  const _pMax = fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0
+  const _pVal = fixture?.power ?? fixture?.watt ?? 0
+  const _pRatio = (_pMax > _pMin) ? Math.max(0, Math.min(1, (_pVal - _pMin) / (_pMax - _pMin))) : 0.5
+  const _sizeScale = 0.75 + _pRatio * 0.6 // 75% at min watt → 135% at max watt
   return {
     id, x, y,
-    fixtureId:    fixture?.id,
+    fixtureId:    fixture?.fixtureId ?? fixture?.id,
     category:     fixture?.category ?? null,
     name:         fixture?.name ?? fixture?.label ?? "Fixture",
     brand:        fixture?.brand ?? null,
     label:        fixture?.label ?? fixture?.name ?? "Fixture",
-    watt:         fixture?.watt ?? 0,
+    watt:         fixture?.power ?? fixture?.watt ?? 0,
     lumens:       lumensOverride ?? fixture?.lumens ?? 0,
     beamAngle:    fixture?.beamAngle ?? 36,
     cri:          fixture?.cri ?? 80,
     efficacy:     fixture?.efficacy ?? null,
     mounting:     fixture?.mounting ?? null,
-    // Visual â€” fixture-level props take priority over category defaults
-    fill:         fixture?.fill         ?? vis.fill         ?? "#ffe9b0",
-    stroke:       fixture?.stroke       ?? vis.stroke       ?? "#ffb300",
+    // Visual — fixture-level props take priority over category defaults
+    fill:         wattageAdjustedColor(fixture?.fill ?? vis.fill ?? "#ffe9b0", fixture?.power ?? fixture?.watt ?? 0, fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0, fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0),
+    stroke:       wattageAdjustedColor(fixture?.stroke ?? vis.stroke ?? "#ffb300", fixture?.power ?? fixture?.watt ?? 0, fixture?.powerOptions ? Math.min(...fixture.powerOptions) : 0, fixture?.powerOptions ? Math.max(...fixture.powerOptions) : 0),
     glowColor:    fixture?.glowColor    ?? vis.glowColor    ?? "rgba(255,179,0,0.08)",
-    visualRadius: fixture?.visualRadius ?? vis.visualRadius ?? 6,
-    fixtureShape: fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
+    visualRadius: (fixture?.visualRadius ?? vis.visualRadius ?? 6) * _sizeScale,
+    fixtureShape: FIXTURE_TYPE_SHAPES[fixture?.fixtureId] ?? fixture?.fixtureShape ?? vis.fixtureShape ?? 'circle',
     fixtureColor: fixture?.fixtureColor ?? fixture?.fill   ?? vis.fill ?? "#ffe9b0",
     // Protocol
     protocol:     fixture?.protocol ?? null,
@@ -129,14 +191,14 @@ function computeCircuits(lights) {
         fixtures:  [],
         totalWatt: 0,
         mcb:       "6A",
-        wireSize:  "1.5mmÂ²",
+        wireSize:  "1.5mm²",
       }
       result.push(cur)
     }
     cur.fixtures.push(light)
     cur.totalWatt += w
     cur.mcb      = cur.totalWatt <= 1380 ? "6A" : cur.totalWatt <= 2300 ? "10A" : "16A"
-    cur.wireSize = cur.totalWatt <= 2944 ? "1.5mmÂ²" : "2.5mmÂ²"
+    cur.wireSize = cur.totalWatt <= 2944 ? "1.5mm²" : "2.5mm²"
   }
   return result
 }
@@ -219,7 +281,7 @@ function computePerRoomSummary(floors, daliAddresses, busTopologies, busCableLen
       const noCtr       = false  // new busCableLengths array never has noCtr
       const cableM      = daliBusNums.reduce((s, b) => s + (getCableEntry(b)?.totalCableM ?? 0), 0)
       return {
-        name:         `${floor.name} Â· ${room.name}`,
+        name:         `${floor.name} · ${room.name}`,
         fixtures:     room.lights.length,
         load:         room.lights.reduce((s, l) => s + (l.watt ?? 0), 0),
         circuitCount: circuits.length,
@@ -299,7 +361,7 @@ export default function App() {
     if (sub?.status === 'active' && sub?.plan === 'professional') return Infinity
     if (sub?.status === 'active' && sub?.plan === 'pro') return 5
     if (sub?.status === 'trial') return 5   // trial matches Pro limits
-    // Cancelled but still within renewsAt window â€” keep plan's room limit
+    // Cancelled but still within renewsAt window — keep plan's room limit
     if (sub?.status === 'cancelled') {
       const { status } = getTrialStatus()
       if (status === 'cancelled') {
@@ -318,7 +380,7 @@ export default function App() {
     }
   }
 
-  // AI tab gate â€” checks subscription AND monthly call limit
+  // AI tab gate — checks subscription AND monthly call limit
   async function openAiTab() {
     if (!isProActive()) { setGateModal({ feature: 'AI Recommend' }); return }
     if (!user) return
@@ -328,7 +390,7 @@ export default function App() {
         notify.warning(`AI call limit reached (${used}/${limit} this month). Resets on the 1st.`)
         return
       }
-    } catch (e) { console.error('Failed to check AI limit:', e) /* non-fatal â€” allow through if check fails */ }
+    } catch (e) { console.error('Failed to check AI limit:', e) /* non-fatal — allow through if check fails */ }
     setLeftSidebarCollapsed(false)
     setLeftTab('ai')
   }
@@ -362,9 +424,9 @@ export default function App() {
   }, [])
 
   const { state: floors, set: setFloors, undo, redo, canUndo, canRedo } = useUndoRedo([{
-    id: 1, name: "Floor 1", activeRoomId: 1, floorPlan: null,
+    id: 1, name: "Floor 1", activeRoomId: "1", floorPlan: null,
     rooms: [{
-      id: 1, name: "Room 1",
+      id: "1", name: "Room 1",
       room: { ...DEFAULT_ROOM },
       lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
     }],
@@ -392,9 +454,11 @@ export default function App() {
   const [editingName,        setEditingName]        = useState(false)
   const [saving,             setSaving]             = useState(false)
   const [showSettings,       setShowSettings]       = useState(false)
+  const [floorPlanAnalysis,  setFloorPlanAnalysis]  = useState(null)
   const [showAIRecommender,  setShowAIRecommender]  = useState(false)
   const [leftTab,            setLeftTab]            = useState('fixture')
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
   const [navTab,             setNavTab]             = useState('canvas')
   const [sidebarView,        setSidebarView]        = useState('luminaires')
   const [settingsPos,        setSettingsPos]        = useState({ x: 10, y: 50 })
@@ -402,6 +466,7 @@ export default function App() {
   const [visualEditorPos,    setVisualEditorPos]    = useState({ x: 400, y: 50 })
   const [showBeam,           setShowBeam]           = useState(false)
   const [showHeatmap,        setShowHeatmap]        = useState(false)
+  const [showLegend,         setShowLegend]         = useState(false)
   const [showAutoPlaceModal, setShowAutoPlaceModal] = useState(false)
   const [showEmergency,      setShowEmergency]      = useState(false)
   const [emergencyDuration,  setEmergencyDuration]  = useState("1hr")
@@ -416,7 +481,7 @@ export default function App() {
 
   const activeFloor   = floors.find(f => f.id === activeFloorId) ?? floors[0]
   const activeRoomId  = activeFloor.activeRoomId
-  const activeRoomObj = activeFloor.rooms.find(r => r.id === activeRoomId) ?? activeFloor.rooms[0]
+  const activeRoomObj = activeFloor.rooms.find(r => String(r.id) === String(activeRoomId)) ?? activeFloor.rooms[0]
   const { room, lights, dbMarkers, ctrMarkers, jbMarkers, emergencyLights = [], electricalDevices = [], roomOffsetX, roomOffsetY, drawnWidthPx, drawnHeightPx } = activeRoomObj
   const floorPlan = activeFloor.floorPlan ?? null
 
@@ -437,7 +502,7 @@ export default function App() {
     Number(room.ceilingHeight) || 2.8
   const mh          = autoCeiling - Number(room.falseCeiling || 0) - Number(room.workingPlane || 0.8)
   const rcr         = calcRCR(roomWidth, roomHeight, mh)
-  // Pass room reflectances to UF; stored as decimal fraction (0â€“1)
+  // Pass room reflectances to UF; stored as decimal fraction (0–1)
   const uf          = calcUF(
     rcr,
     Number(room.ceilingReflectance ?? 0.7),
@@ -446,7 +511,7 @@ export default function App() {
   )
   const totalLumens = lights.reduce((s, l) => s + (l.lumens ?? 0), 0)
   const totalWatt   = lights.reduce((s, l) => s + (l.watt   ?? 0), 0)
-  // Lumen method: E = (Î¦ Ã— UF Ã— MF) / A
+  // Lumen method: E = (Φ × UF × MF) / A
   const totalLux    = areaM2 === 0 ? 0 : (totalLumens * uf * MAINT_FACTOR) / areaM2
   const luxBreakdown = computeLuxBreakdown(lights, areaM2, uf)
 
@@ -529,7 +594,7 @@ export default function App() {
   const voltageDropResults = useMemo(() => {
     if (circuits.length === 0 || dbMarkers.length === 0 || roomWidth <= 0 || roomHeight <= 0) return []
     const SCALE = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
-    const RHO = 0.0175  // copper Î©Â·mmÂ²/m
+    const RHO = 0.0175  // copper Ω·mm²/m
 
     return circuits.map(c => {
       const avgX = c.fixtures.reduce((s, f) => s + (f.x ?? 0), 0) / c.fixtures.length
@@ -546,9 +611,9 @@ export default function App() {
       const current      = c.totalWatt / 230
 
       let cableSize, area
-      if (current <= 10)       { cableSize = "1.5mmÂ²"; area = 1.5 }
-      else if (current <= 16)  { cableSize = "2.5mmÂ²"; area = 2.5 }
-      else                     { cableSize = "4mmÂ²";   area = 4   }
+      if (current <= 10)       { cableSize = "1.5mm²"; area = 1.5 }
+      else if (current <= 16)  { cableSize = "2.5mm²"; area = 2.5 }
+      else                     { cableSize = "4mm²";   area = 4   }
 
       const vDropPercent = (2 * cableLengthM * current * RHO / area) / 230 * 100
       const status = vDropPercent <= 3 ? "GOOD" : vDropPercent <= 5 ? "WARNING" : "CRITICAL"
@@ -648,19 +713,24 @@ export default function App() {
   // â”€â”€ Mutation helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function patchActiveRoom(updater) {
-    setFloors(prev => prev.map(f =>
-
-      f.id !== activeFloorId ? f : {
-        ...f,
-        rooms: f.rooms.map(r => r.id !== activeRoomId ? r : { ...r, ...updater(r) }),
-      }
-    ))
+    setFloors(prev => {
+      const targetFloorId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => {
+        if (String(f.id) !== String(targetFloorId)) return f
+        const targetRoomId = f.rooms.some(r => String(r.id) === String(activeRoomId)) ? activeRoomId : f.rooms[0]?.id
+        return {
+          ...f,
+          rooms: f.rooms.map(r => String(r.id) !== String(targetRoomId) ? r : { ...r, ...updater(r) }),
+        }
+      })
+    })
   }
 
   // â”€â”€ Light handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function addLight(lightData) {
     const now = Date.now()
+
     if (now - lastAddLightTime.current < 100) return
     lastAddLightTime.current = now
     const normCat = (c) => (c ?? "").toUpperCase().replace(/[\s-]/g, "_")
@@ -735,6 +805,18 @@ export default function App() {
     })))
     setSelectedLights(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
   }, [])
+
+  function batchUpdateLights(ids, updates) {
+    const idSet = new Set(ids)
+    setFloors(prev => prev.map(f => ({
+      ...f,
+      rooms: f.rooms.map(r => ({
+        ...r,
+        lights: r.lights.map(l => idSet.has(l.id) ? { ...l, ...updates } : l),
+      })),
+    })))
+    setSelectedLights(prev => prev.map(l => idSet.has(l.id) ? { ...l, ...updates } : l))
+  }
 
   function updateLightsOfType(fixtureId, updates) {
     setFloors(prev => prev.map(f => ({
@@ -819,7 +901,7 @@ export default function App() {
           `Changing room dimensions will clear all ${activeRoomData.lights.length} placed fixture${activeRoomData.lights.length !== 1 ? 's' : ''}. Continue?`,
           { title: 'CLEAR FIXTURES?', confirmLabel: 'CLEAR & RESIZE', danger: true }
         )
-        if (!ok) return // user cancelled â€” keep old dimensions
+        if (!ok) return // user cancelled — keep old dimensions
       }
     }
 
@@ -830,17 +912,60 @@ export default function App() {
   }
 
   function patchActiveFloor(updater) {
-
-    setFloors(prev => prev.map(f => f.id !== activeFloorId ? f : { ...f, ...updater(f) }))
+    setFloors(prev => {
+      const targetId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => String(f.id) !== String(targetId) ? f : { ...f, ...updater(f) })
+    })
   }
 
   function updateFloorPlan(data) {
     patchActiveFloor(() => ({ floorPlan: data }))
   }
 
+  async function handleAnalyzeFloorPlan(floorPlan) {
+    if (!floorPlan?.url) return
+    showToast("Analyzing floor plan...")
+    try {
+      // Convert blob URL or data URL to base64
+      let base64, mediaType
+      if (floorPlan.url.startsWith("blob:")) {
+        const blob = await fetch(floorPlan.url).then(r => r.blob())
+        mediaType = blob.type || "image/jpeg"
+        const reader = new FileReader()
+        base64 = await new Promise(res => { reader.onload = e => res(e.target.result.split(",")[1]); reader.readAsDataURL(blob) })
+      } else {
+        base64 = floorPlan.url.split(",")[1]
+        mediaType = floorPlan.url.split(";")[0].split(":")[1]
+      }
+      const res = await fetch(import.meta.env.VITE_AI_WORKER_URL + "/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mediaType })
+      })
+      const data = await res.json()
+      if (data.error) { showToast("Analysis failed: " + data.error); return }
+
+      setFloorPlanAnalysis(data)
+      showToast("Analysis complete - " + (data.rooms?.length ?? 0) + " rooms detected")
+    } catch(e) {
+      showToast("Analysis failed")
+    }
+  }
+
+
   function removeFloorPlan() {
-    patchActiveFloor(() => ({ floorPlan: null }))
-    patchActiveRoom(() => ({ roomOffsetX: undefined, roomOffsetY: undefined }))
+    setFloors(prev => {
+      const targetFloorId = prev.some(f => String(f.id) === String(activeFloorId)) ? activeFloorId : prev[0]?.id
+      return prev.map(f => {
+        if (String(f.id) !== String(targetFloorId)) return f
+        const targetRoomId = f.rooms.some(r => String(r.id) === String(activeRoomId)) ? activeRoomId : f.rooms[0]?.id
+        return {
+          ...f,
+          floorPlan: null,
+          rooms: f.rooms.map(r => String(r.id) !== String(targetRoomId) ? r : { ...r, roomOffsetX: undefined, roomOffsetY: undefined }),
+        }
+      })
+    })
   }
 
   function handleSetFloorPlanScale(scale) {
@@ -866,7 +991,7 @@ export default function App() {
         setActiveTool("fixture")
         return
       }
-      // Create a new room inline with placement data already set â€” avoids async addRoom() race
+      // Create a new room inline with placement data already set — avoids async addRoom() race
       setFloors(prevFloors => prevFloors.map(f => {
         if (f.id !== activeFloorId) return f
         const newId = Math.max(...f.rooms.map(r => r.id), 0) + 1
@@ -897,7 +1022,7 @@ export default function App() {
       }))
     }
     setActiveTool("fixture")
-    showToast(`Room: ${widthM.toFixed(2)}m Ã— ${heightM.toFixed(2)}m`)
+    showToast(`Room: ${widthM.toFixed(2)}m × ${heightM.toFixed(2)}m`)
   }
 
   // â”€â”€ Room management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -917,11 +1042,13 @@ export default function App() {
     const newId = uid()
     setFloors(prev => prev.map(f => {
       if (f.id !== activeFloorId) return f
+      const usedNumbers = f.rooms.map(r => parseInt((r.name || '').replace(/\D/g, ''), 10)).filter(n => !isNaN(n))
+      const nextNum = usedNumbers.length ? Math.max(...usedNumbers) + 1 : f.rooms.length + 1
       return {
         ...f,
         activeRoomId: newId,
         rooms: [...f.rooms, {
-          id: newId, name: `Room ${f.rooms.length + 1}`,
+          id: newId, name: `Room ${nextNum}`,
           room: { ...DEFAULT_ROOM },
           lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
         }],
@@ -989,118 +1116,56 @@ export default function App() {
   // â”€â”€ Auto-place lights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function autoPlaceLights() {
-    // â”€â”€ Validate fixture selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!activeFixture) {
       showToast("Please select a fixture from the library first")
       return
     }
-
+    const W = roomWidth / 1000
+    const H = roomHeight / 1000
+    const area = W * H
+    if (area <= 0) { showToast("Please set room dimensions first"); return }
+    const variants = activeFixture.variants ?? []
+    const midVariant = variants[Math.floor(variants.length / 2)] ?? {}
+    const fixWatt   = midVariant.watt      ?? activeFixture.watt      ?? 12
+    const fixLumens = midVariant.lumens    ?? activeFixture.lumens    ?? (fixWatt * 90)
+    const fixBeam   = midVariant.beamAngle ?? activeFixture.beamAngle ?? 36
+    const targetLuxVal = Number(room.targetLux) || 300
+    const UF = uf ?? 0.75
+    const MF = 0.80
+    const needed = Math.ceil((targetLuxVal * area) / (fixLumens * UF * MF))
+    const count  = Math.min(needed, 36)
+    const cols = Math.max(1, Math.round(Math.sqrt(count * (W / H))))
+    const rows = Math.ceil(count / cols)
     const SCALE     = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
-    // When the room was drawn on the floor plan, use the exact drawn pixel box.
     const useDrawn  = roomOffsetX != null && drawnWidthPx != null
     const ROOM_PX_W = useDrawn ? drawnWidthPx  : roomWidth  * SCALE
     const ROOM_PX_H = useDrawn ? drawnHeightPx : roomHeight * SCALE
     const ROOM_X    = roomOffsetX != null ? roomOffsetX : 20
     const ROOM_Y    = roomOffsetY != null ? roomOffsetY : 30
-    // px-per-mm ratio: used to convert spacing into pixels correctly.
     const pxPerMm   = useDrawn ? drawnWidthPx / roomWidth : SCALE
-
-    // â”€â”€ Get fixture specs from activeFixture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // Default power: first option from powerOptions
-    const defaultPower = activeFixture.powerOptions?.[0] ?? 12
-
-    // Default beam angle: middle option from beamOptions (or closest to middle)
-    const beamOpts = activeFixture.beamOptions ?? []
-    const defaultBeamIdx = Math.floor(beamOpts.length / 2)
-    const defaultBeam = beamOpts[defaultBeamIdx]?.angle ?? 36
-
-    // Default chip: first option from chipOptions
-    const defaultChip = activeFixture.chipOptions?.[0] ?? { efficacy: 90 }
-
-    // Calculate lumens using activeFixture's calculateLumens function
-    const fixtureLumens = activeFixture.calculateLumens?.(defaultPower, defaultChip) ?? (defaultPower * 90)
-
-    // â”€â”€ Get spacing from ROOM_INTELLIGENCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const ROOM_INTELLIGENCE_MAP = {
-      "Living Room": { spacing: 2.5 },
-      "Kitchen": { spacing: 1.8 },
-      "Bedroom": { spacing: 3.0 },
-      "Bathroom": { spacing: 2.0 },
-      "Office": { spacing: 1.5 },
-      "Corridor": { spacing: 3.5 },
-      "Dining Room": { spacing: 2.2 },
-      "Conference Room": { spacing: 1.5 },
-      "Retail": { spacing: 1.2 },
-      "Museum": { spacing: 2.0 },
-      "Hospital Room": { spacing: 1.5 },
-      "Laboratory": { spacing: 1.2 },
-      "Production": { spacing: 1.8 },
-      "Warehouse": { spacing: 3.0 },
-    }
-    const roomType = room.roomType || "Living Room"
-    const spacingM = ROOM_INTELLIGENCE_MAP[roomType]?.spacing ?? 1.8
-    const spacingMm = spacingM * 1000
-
-    const { rows, cols } = calcGrid(
-      Number(room.targetLux), areaM2, uf, fixtureLumens, roomWidth, roomHeight,
-    )
-
-    // â”€â”€ Grid layout: spacing/2 offset from walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const spacingPx = spacingMm * pxPerMm
-    const wallOffPx = spacingPx / 2
-
-    const usableW = ROOM_PX_W - wallOffPx * 2
-    const usableH = ROOM_PX_H - wallOffPx * 2
-    const spX     = cols > 1 ? usableW / (cols - 1) : 0
-    const spY     = rows > 1 ? usableH / (rows - 1) : 0
-
-    // â”€â”€ Generate fixtures with activeFixture specs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const wallOffPx = 500 * pxPerMm
+    const usableW   = ROOM_PX_W - wallOffPx * 2
+    const usableH   = ROOM_PX_H - wallOffPx * 2
+    const spX       = cols > 1 ? usableW / (cols - 1) : 0
+    const spY       = rows > 1 ? usableH / (rows - 1) : 0
     const generated = []
     let ts = Date.now()
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        // Create fixture with activeFixture specs
-        const light = makeLight(
-          ts++,
-          Math.round(ROOM_X + wallOffPx + c * spX),
-          Math.round(ROOM_Y + wallOffPx + r * spY),
-          activeFixture,
-          fixtureLumens,
-        )
-        // Override watt and beamAngle with defaults if not in activeFixture
-        light.watt = activeFixture.watt ?? defaultPower
-        light.beamAngle = defaultBeam
+        const px = cols > 1 ? ROOM_X + wallOffPx + c * spX : ROOM_X + ROOM_PX_W / 2
+        const py = rows > 1 ? ROOM_Y + wallOffPx + r * spY : ROOM_Y + ROOM_PX_H / 2
+        const light = makeLight(ts++, Math.round(px), Math.round(py), activeFixture, fixLumens)
+        light.watt = fixWatt
+        light.lumens = fixLumens
+        light.beamAngle = fixBeam
         generated.push(light)
       }
     }
-
-    // â”€â”€ Lux-aware trim: remove outermost fixtures if over-lit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const targetLuxVal = Number(room.targetLux) || 300
-    const calcLuxForSet = (set) => {
-      if (areaM2 === 0 || set.length === 0) return 0
-      const lumens = set.reduce((s, l) => s + (l.lumens ?? 0), 0)
-      return (lumens * uf * MAINT_FACTOR) / areaM2
-    }
-
-    // Keep at least 1 fixture; remove furthest-from-centre first
-    const centerX = ROOM_X + ROOM_PX_W / 2
-    const centerY = ROOM_Y + ROOM_PX_H / 2
-    let trimmed = [...generated]
-    while (trimmed.length > 1 && calcLuxForSet(trimmed) > targetLuxVal * 1.2) {
-      let maxDist = -1, maxIdx = -1
-      trimmed.forEach((f, i) => {
-        const d = Math.hypot(f.x - centerX, f.y - centerY)
-        if (d > maxDist) { maxDist = d; maxIdx = i }
-      })
-      trimmed.splice(maxIdx, 1)
-    }
-
-    const finalLux = Math.round(calcLuxForSet(trimmed))
-    const removedCount = generated.length - trimmed.length
-    const trimNote = removedCount > 0 ? ` (${removedCount} removed â€” over-lit)` : ""
-    patchActiveRoom(() => ({ lights: trimmed }))
-    showToast(`${trimmed.length} ${activeFixture.name} fixtures placed â€” ${finalLux} lux achieved${trimNote}`)
+    const achievedLux = Math.round((generated.length * fixLumens * UF * MF) / area)
+    patchActiveRoom(r => ({ lights: [...r.lights, ...generated] }))
+    showToast(`Placed ${generated.length} fixtures - ${achievedLux} lux`)
   }
+
 
   // â”€â”€ Handle AutoPlaceModal selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function handleAutoPlace(modalData) {
@@ -1195,9 +1260,9 @@ export default function App() {
 
     const finalLux = Math.round(calcLuxForSet(trimmed))
     const removedCount = generated.length - trimmed.length
-    const trimNote = removedCount > 0 ? ` (${removedCount} removed â€” over-lit)` : ""
+    const trimNote = removedCount > 0 ? ` (${removedCount} removed — over-lit)` : ""
     patchActiveRoom(() => ({ lights: trimmed }))
-    showToast(`${trimmed.length} ${fixture.name} fixtures placed â€” ${finalLux} lux achieved${trimNote}`)
+    showToast(`${trimmed.length} ${fixture.name} fixtures placed — ${finalLux} lux achieved${trimNote}`)
     setShowAutoPlaceModal(false)
   }
 
@@ -1226,7 +1291,7 @@ export default function App() {
         totalWatts:  allRoomsForSave.reduce((s, r) => s + r.lights.reduce((w, l) => w + (l.watt ?? 0), 0), 0),
       }, user?.uid)
       setProjectId(id)
-      showToast("Project saved âœ“")
+      showToast("Project saved ✓")
     } catch (e) {
       showToast(`Save failed: ${e.message}`)
     } finally {
@@ -1234,15 +1299,52 @@ export default function App() {
     }
   }
 
+  function normalizeIds(floors) {
+    return (floors || []).map(f => ({
+      ...f,
+      id: String(f.id),
+      activeRoomId: String(f.activeRoomId ?? f.rooms?.[0]?.id ?? "1"),
+      rooms: (f.rooms || []).map(r => ({ ...r, id: String(r.id) }))
+    }))
+  }
+
+  function syncNextIdFromLoadedData(floorsList) {
+    let maxId = 9
+    const checkId = (id) => {
+      const num = parseInt(id, 10)
+      if (!isNaN(num) && num > maxId) {
+        maxId = num
+      }
+    }
+    
+    (floorsList || []).forEach(f => {
+      checkId(f.id)
+      if (f.rooms) {
+        f.rooms.forEach(r => {
+          checkId(r.id)
+          if (r.lights) r.lights.forEach(l => checkId(l.id))
+          if (r.dbMarkers) r.dbMarkers.forEach(m => checkId(m.id))
+          if (r.ctrMarkers) r.ctrMarkers.forEach(m => checkId(m.id))
+          if (r.jbMarkers) r.jbMarkers.forEach(m => checkId(m.id))
+          if (r.emergencyLights) r.emergencyLights.forEach(el => checkId(el.id))
+        })
+      }
+    })
+    
+    nextId.current = maxId + 1
+  }
+
   function handleLoadFromModal(id, data) {
     if (data.floors) {
-      setFloors(data.floors)
-      setActiveFloorId(data.floors[0]?.id ?? 1)
+      const nf = normalizeIds(data.floors)
+      syncNextIdFromLoadedData(nf)
+      setFloors(nf)
+      setActiveFloorId(String(nf[0]?.id ?? "1"))
       setProjectId(id)
     }
     if (data.name) setProjectName(data.name)
     setShowLoadModal(false)
-    showToast("Project loaded âœ“")
+    showToast("Project loaded ✓")
   }
 
   // Keep ref in sync so auto-save always has latest closure
@@ -1267,7 +1369,7 @@ export default function App() {
       ;(async () => {
         try {
           const data = await loadProject(pid)
-          // Ownership check â€” Firestore rules enforce this server-side too,
+          // Ownership check — Firestore rules enforce this server-side too,
           // but double-check client-side to prevent loading another user's project
           if (data.userId && user?.uid && data.userId !== user.uid) {
             showToast("Access denied: this project belongs to another account.")
@@ -1288,8 +1390,10 @@ export default function App() {
           sessionStorage.removeItem("lumina_pending_template")
           const tpl = JSON.parse(raw)
           if (tpl?.floors) {
-            setFloors(tpl.floors)
-            setActiveFloorId(tpl.floors[0]?.id ?? 1)
+            const tf = normalizeIds(tpl.floors)
+            syncNextIdFromLoadedData(tf)
+            setFloors(tf)
+            setActiveFloorId(String(tf[0]?.id ?? "1"))
             showToast(`Template loaded: ${tpl.name}`)
           }
         }
@@ -1303,7 +1407,7 @@ export default function App() {
       await fbShareProject(projectId)
       const url = `${window.location.origin}/share/${projectId}`
       navigator.clipboard?.writeText(url)
-      showToast("Share link copied to clipboard âœ“")
+      showToast("Share link copied to clipboard ✓")
     } catch (e) {
       showToast(`Share failed: ${e.message}`)
     }
@@ -1343,7 +1447,7 @@ export default function App() {
 
     // â”€â”€ Bug fix 3: LED_STRIP / COVE_LIGHT auto-expand quantity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // AI says "quantity: 1" meaning "one continuous strip around the room" but
-    // we place individual points â€” expand to cover the perimeter properly.
+    // we place individual points — expand to cover the perimeter properly.
     const isStripType = fixture.category === "LED_STRIP" || fixture.category === "COVE_LIGHT"
     let n = Math.max(1, quantity)
     let effectivePlacement = fixture.placement ?? "grid"
@@ -1481,7 +1585,7 @@ export default function App() {
     const existing   = lights ?? []
     for (const { fixture, quantity } of zones) {
       // Each zone is placed independently against only the user's pre-existing lights.
-      // We deliberately do NOT pass allLights from previous zones here â€” different
+      // We deliberately do NOT pass allLights from previous zones here — different
       // fixture types (downlights, strips, spots) are at different ceiling heights in
       // 3D and don't collide. Passing allLights caused zone 2+ to share the same
       // computed grid positions as zone 1 (d=0), triggering the overlap check and
@@ -1532,7 +1636,7 @@ export default function App() {
 
   // â”€â”€ Style helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // Active state for all toolbar toggles â€” warm gold on dark bg
+  // Active state for all toolbar toggles — warm gold on dark bg
   const tbActive = { background: "#1a1500", color: "#d4a843" }
 
   const activeLabel = activeFixture?.label ?? activeFixture?.name ?? "Fixture"
@@ -1562,7 +1666,7 @@ export default function App() {
       const ep = (l.protocol && l.protocol !== "Room Default") ? l.protocol : roomProtocol
       if (!groups[fid]) {
         const f = FIXTURE_MAP[fid]
-        groups[fid] = { label: f?.label ?? "Custom", lumens: l.lumens, beamAngle: f?.beamAngle ?? "â€”", watt: l.watt ?? 0, qty: 0, totalWatt: 0, protocol: ep }
+        groups[fid] = { label: f?.label ?? "Custom", lumens: l.lumens, beamAngle: f?.beamAngle ?? "—", watt: l.watt ?? 0, qty: 0, totalWatt: 0, protocol: ep }
       }
       groups[fid].qty++
       groups[fid].totalWatt += l.watt ?? 0
@@ -1581,7 +1685,7 @@ export default function App() {
     const allR        = _allRoomsForExport
     const totalFix    = allR.reduce((s, r) => s + r.lights.length, 0)
     const totalLoad   = allR.reduce((s, r) => s + r.lights.reduce((w, l) => w + (l.watt ?? 0), 0), 0)
-    const CYAN        = [0, 212, 255]
+    const GOLD        = [212, 168, 67]
     const DARK        = [17, 17, 17]
     const GRAY_HDR    = [240, 240, 240]
     const ROW_ALT     = [249, 249, 249]
@@ -1592,7 +1696,7 @@ export default function App() {
       "rgbw": "RGBW", "dali-dt8": "DALI DT8", "zigbee-cct": "Zigbee CCT",
     }
 
-    // Resolve a human-readable fixture label â€” never falls back to "Custom"
+    // Resolve a human-readable fixture label — never falls back to "Custom"
     function resolveLabel(light) {
       if (FIXTURE_MAP[light.fixtureId]) return FIXTURE_MAP[light.fixtureId].label
       const catLabel = CATEGORY_META[light.category]?.label
@@ -1605,14 +1709,14 @@ export default function App() {
       doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(160, 160, 160)
       doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2)
       doc.line(M, PH - 12, PW - M, PH - 12)
-      doc.text("LUMINA DESIGN Â· LIGHTING CALCULATION REPORT", M, PH - 8)
+      doc.text("LUMINA DESIGN · LIGHTING CALCULATION REPORT", M, PH - 8)
       doc.text(`Page ${n}${total ? ` of ${total}` : ""}`, PW - M, PH - 8, { align: "right" })
       doc.setTextColor(30, 30, 30)
     }
 
-    // Section header with cyan top-line
+    // Section header with gold top-line
     function sectionHeader(title, y) {
-      doc.setDrawColor(...CYAN); doc.setLineWidth(0.6)
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.6)
       doc.line(M, y - 1, PW - M, y - 1)
       doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.1)
       doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...DARK)
@@ -1620,7 +1724,7 @@ export default function App() {
       return y + 12
     }
 
-    // autoTable helper â€” consistent styles
+    // autoTable helper — consistent styles
     function makeTable(head, body, startY, opts = {}) {
       autoTable(doc, {
         startY,
@@ -1662,8 +1766,8 @@ export default function App() {
     doc.setFillColor(212, 175, 55)
     doc.rect(0, 0, 6, PH, "F")
 
-    // â”€â”€ Cover page layout â€” vertically centred between branding and footer â”€â”€
-    // Usable band: branding ends ~28mm, footer line at PH-12=285mm â†’ 257mm tall
+    // â”€â”€ Cover page layout — vertically centred between branding and footer â”€â”€
+    // Usable band: branding ends ~28mm, footer line at PH-12=285mm → 257mm tall
     const BRAND_BOTTOM = 28
     const FOOTER_TOP   = PH - 12
     const USABLE_H     = FOOTER_TOP - BRAND_BOTTOM   // 257mm
@@ -1693,7 +1797,7 @@ export default function App() {
     doc.setTextColor(255, 255, 255)
     doc.text(projectName.toUpperCase(), PW / 2, titleY, { align: "center" })
 
-    // Gold underline â€” width matches text width
+    // Gold underline — width matches text width
     const nameW = doc.getTextWidth(projectName.toUpperCase())
     doc.setDrawColor(212, 175, 55); doc.setLineWidth(1.5)
     doc.line(PW / 2 - nameW / 2, underY, PW / 2 + nameW / 2, underY)
@@ -1709,13 +1813,13 @@ export default function App() {
       doc.text(exportMeta.description, PW / 2, descY, { align: "center", maxWidth: PW - 60 })
     }
 
-    // Summary grid â€” dark cards, consistent M margins on both sides
+    // Summary grid — dark cards, consistent M margins on both sides
     const gridItems = [
-      ["PROJECT",        projectName || "â€”"],
-      ["CUSTOMER",       exportMeta.customerName || "â€”"],
-      ["COMPANY",        exportMeta.company || "â€”"],
-      ["ADDRESS",        exportMeta.address || "â€”"],
-      ["PREPARED BY",    exportMeta.preparedBy || user?.email || "â€”"],
+      ["PROJECT",        projectName || "—"],
+      ["CUSTOMER",       exportMeta.customerName || "—"],
+      ["COMPANY",        exportMeta.company || "—"],
+      ["ADDRESS",        exportMeta.address || "—"],
+      ["PREPARED BY",    exportMeta.preparedBy || user?.email || "—"],
       ["DATE",           date],
       ["FLOORS",         String(floors.length)],
       ["ROOMS",          String(allR.length)],
@@ -1745,21 +1849,21 @@ export default function App() {
 
     // â”€â”€ PAGE 2: Lux Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    let curY = sectionHeader("02 Â· LUX SUMMARY", 18)
+    let curY = sectionHeader("02 · LUX SUMMARY", 18)
 
-    const luxHead = ["FLOOR", "ROOM", "AREA (mÂ²)", "TARGET LX", "ACTUAL LX", "STATUS", "PROTOCOL", "FIX", "LOAD (W)"]
+    const luxHead = ["FLOOR", "ROOM", "AREA (m²)", "TARGET LX", "ACTUAL LX", "STATUS", "PROTOCOL", "FIX", "LOAD (W)"]
     const luxBody = allR.map(r => {
       const { areaM2, lux } = _calcRoomExport(r)
       const target  = Number(r.room?.targetLux ?? 0)
       const roomP   = r.room?.roomProtocol ?? "NON-DIM"
-      const status  = lux === 0 || target === 0 ? "â€”"
+      const status  = lux === 0 || target === 0 ? "—"
         : lux < target * 0.8  ? "UNDERLIT"
         : lux <= target * 1.2 ? "GOOD"
         : "OVERLIT"
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
       return [
         r.floorName, r.name, areaM2.toFixed(1),
-        target || "â€”", r.lights.length === 0 ? "â€”" : Math.round(lux),
+        target || "—", r.lights.length === 0 ? "—" : Math.round(lux),
         status, PROTOCOL_LBL[roomP] ?? roomP, r.lights.length, load + " W",
       ]
     })
@@ -1784,7 +1888,7 @@ export default function App() {
     })
     // â”€â”€ PAGE 3: Fixture Schedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    curY = sectionHeader("03 Â· FIXTURE SCHEDULE", 18)
+    curY = sectionHeader("03 · FIXTURE SCHEDULE", 18)
 
     const schHead = ["FLOOR", "ROOM", "FIXTURE TYPE", "QTY", "LUMENS", "BEAM", "WATT", "TOTAL W", "PROTOCOL", "CCT"]
     const schBody = allR.flatMap(r => {
@@ -1796,7 +1900,7 @@ export default function App() {
         const ep  = (l.protocol && l.protocol !== "Room Default") ? l.protocol : roomProtocol
         if (!groups[key]) groups[key] = {
           label: resolveLabel(l), lumens: l.lumens ?? 0,
-          beamAngle: l.beamAngle ?? (FIXTURE_MAP[l.fixtureId]?.beamAngle ?? "â€”"),
+          beamAngle: l.beamAngle ?? (FIXTURE_MAP[l.fixtureId]?.beamAngle ?? "—"),
           watt: l.watt ?? 0, qty: 0, totalWatt: 0,
           protocol: ep, cctType: l.cctType ?? "single",
         }
@@ -1805,7 +1909,7 @@ export default function App() {
       }
       return Object.values(groups).map(g => [
         r.floorName, r.name, g.label, g.qty,
-        g.lumens + " lm", g.beamAngle + "Â°", g.watt + " W", g.totalWatt + " W",
+        g.lumens + " lm", g.beamAngle + "°", g.watt + " W", g.totalWatt + " W",
         PROTOCOL_LBL[g.protocol] ?? g.protocol,
         CCT_LBL[g.cctType] ?? g.cctType,
       ])
@@ -1815,11 +1919,11 @@ export default function App() {
 
     // â”€â”€ PAGE 4: Electrical Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     doc.addPage()
-    curY = sectionHeader("04 Â· ELECTRICAL SUMMARY", 18)
+    curY = sectionHeader("04 · ELECTRICAL SUMMARY", 18)
 
-    // Section A â€” Circuit summary
+    // Section A — Circuit summary
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK)
-    doc.text("A Â· CIRCUIT SUMMARY", M, curY + 5)
+    doc.text("A · CIRCUIT SUMMARY", M, curY + 5)
     curY += 9
 
     const circHead = ["CIRCUIT", "FLOOR", "ROOM", "FIXTURES", "LOAD (W)", "MCB", "WIRE", "V-DROP %", "STATUS"]
@@ -1832,7 +1936,7 @@ export default function App() {
         const current   = load / 230
         const cableLen  = 20
         const RHO       = 0.01724
-        const area      = c.wireSize === "2.5mmÂ²" ? 2.5 : 1.5
+        const area      = c.wireSize === "2.5mm²" ? 2.5 : 1.5
         const vDrop     = (2 * cableLen * current * RHO / area) / 230 * 100
         const vStatus   = vDrop <= 3 ? "GOOD" : vDrop <= 5 ? "WARNING" : "CRITICAL"
         circBody.push([
@@ -1871,9 +1975,9 @@ export default function App() {
     })
     curY = doc.lastAutoTable.finalY + 8
 
-    // Section B â€” Driver schedule
+    // Section B — Driver schedule
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK)
-    doc.text("B Â· DRIVER SCHEDULE", M, curY)
+    doc.text("B · DRIVER SCHEDULE", M, curY)
     curY += 5
 
     const CCT_DRIVER_NOTE = {
@@ -1897,7 +2001,7 @@ export default function App() {
         const mA = g.watt <= 7 ? 350 : g.watt <= 14 ? 500 : g.watt <= 20 ? 700 : 1050
         const dimming = PROTOCOL_LBL[g.protocol] ?? "Non-dim"
         const note    = CCT_DRIVER_NOTE[g.cctType] ?? ""
-        drvBody.push([g.label, "CC", "220â€“240V AC", mA + " mA", g.qty, dimming, note])
+        drvBody.push([g.label, "CC", "220–240V AC", mA + " mA", g.qty, dimming, note])
       }
     }
     makeTable(drvHead, drvBody, curY)
@@ -1929,17 +2033,17 @@ export default function App() {
       const { areaM2, lux, rcr, uf } = _calcRoomExport(r)
       const target  = Number(r.room?.targetLux ?? 0)
       const load    = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-      const status  = lux === 0 || target === 0 ? "â€”"
+      const status  = lux === 0 || target === 0 ? "—"
         : lux < target * 0.8  ? "UNDERLIT"
         : lux <= target * 1.2 ? "GOOD"
         : "OVERLIT"
       const statusColor = status === "GOOD" ? [76,175,125] : status === "UNDERLIT" ? [224,123,42] : status === "OVERLIT" ? [224,82,82] : DARK
 
       // Room header
-      curY = sectionHeader(`${r.floorName} â€” ${r.name}`, 18)
+      curY = sectionHeader(`${r.floorName} — ${r.name}`, 18)
       doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(120, 120, 120)
-      const dimStr = rW > 0 && rH > 0 ? `${(rW/1000).toFixed(1)}m Ã— ${(rH/1000).toFixed(1)}m` : "â€”"
-      doc.text(`${dimStr}   Target: ${target || "â€”"} lux   Area: ${areaM2.toFixed(1)} mÂ²`, M, curY)
+      const dimStr = rW > 0 && rH > 0 ? `${(rW/1000).toFixed(1)}m × ${(rH/1000).toFixed(1)}m` : "—"
+      doc.text(`${dimStr}   Target: ${target || "—"} lux   Area: ${areaM2.toFixed(1)} m²`, M, curY)
       curY += 6
 
 
@@ -1947,11 +2051,11 @@ export default function App() {
       const statsItems = [
         ["FIXTURES", String(r.lights.length)],
         ["LOAD", load + " W"],
-        ["AVG LUX", r.lights.length === 0 ? "â€”" : String(Math.round(lux))],
-        ["TARGET", target ? target + " lx" : "â€”"],
+        ["AVG LUX", r.lights.length === 0 ? "—" : String(Math.round(lux))],
+        ["TARGET", target ? target + " lx" : "—"],
         ["RCR", rcr.toFixed(2)],
         ["UF", uf.toFixed(2)],
-        ["AREA", areaM2.toFixed(1) + " mÂ²"],
+        ["AREA", areaM2.toFixed(1) + " m²"],
       ]
       const boxW  = (PW - 2 * M - (statsItems.length - 1) * 3) / statsItems.length
       const boxH  = 14
@@ -1963,7 +2067,7 @@ export default function App() {
         doc.setFont("helvetica", "normal"); doc.setFontSize(6); doc.setTextColor(150, 150, 150)
         doc.text(lbl, bx + boxW / 2, curY + 4.5, { align: "center" })
         // Status value gets its own color
-        if (lbl === "AVG LUX" && status !== "â€”") doc.setTextColor(...statusColor)
+        if (lbl === "AVG LUX" && status !== "—") doc.setTextColor(...statusColor)
         else doc.setTextColor(...DARK)
         doc.setFont("helvetica", "bold"); doc.setFontSize(9)
         doc.text(val, bx + boxW / 2, curY + 11, { align: "center" })
@@ -1984,7 +2088,7 @@ export default function App() {
         const ep  = (l.protocol && l.protocol !== "Room Default") ? l.protocol : roomP
         if (!roomGroups[key]) roomGroups[key] = {
           label: resolveLabel(l), lumens: l.lumens ?? 0,
-          beamAngle: l.beamAngle ?? (FIXTURE_MAP[l.fixtureId]?.beamAngle ?? "â€”"),
+          beamAngle: l.beamAngle ?? (FIXTURE_MAP[l.fixtureId]?.beamAngle ?? "—"),
           watt: l.watt ?? 0, qty: 0, totalWatt: 0, totalLengthM: 0,
           category: l.category, protocol: ep, cctType: l.cctType ?? "single",
         }
@@ -1995,7 +2099,7 @@ export default function App() {
       for (const g of Object.values(roomGroups)) {
         roomBody.push([
           g.label, g.qty, g.watt + " W", g.lumens + " lm",
-          (g.category === "LED_STRIP" ? g.totalLengthM.toFixed(1) + " m" : g.beamAngle + "Â°"), CCT_LBL[g.cctType] ?? g.cctType,
+          (g.category === "LED_STRIP" ? g.totalLengthM.toFixed(1) + " m" : g.beamAngle + "°"), CCT_LBL[g.cctType] ?? g.cctType,
           PROTOCOL_LBL[g.protocol] ?? g.protocol,
           g.totalWatt + " W",
         ])
@@ -2011,13 +2115,17 @@ export default function App() {
       const wasBeam = showBeam
       const wasHeatmap = showHeatmap
 
-      // Shared crop + image sizing (used by all three optional pages)
-      const bounds = canvasRef.current?.getRoomBounds?.()
-      const pad = 30
-      const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
-      const cropY = bounds ? Math.max(0, bounds.y - pad) : 0
-      const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
-      const cropH = bounds ? bounds.height + pad * 2 : stage.height()
+      const savedTransform = canvasRef.current?.getTransform?.() || { zoom: 1, x: 0, y: 0 }
+      try {
+        canvasRef.current?.setTransformImmediate?.(1, 0, 0)
+
+        // Shared crop + image sizing (used by all three optional pages)
+        const bounds = canvasRef.current?.getRoomBounds?.()
+        const pad = 30
+        const cropX = bounds ? Math.max(0, bounds.x - pad) : 0
+        const cropY = bounds ? Math.max(0, bounds.y - pad) : 0
+        const cropW = bounds ? bounds.width  + pad * 2 : stage.width()
+        const cropH = bounds ? bounds.height + pad * 2 : stage.height()
 
       const availW    = PW - 2 * M - 8
       const aspectRatio = cropH / cropW
@@ -2059,7 +2167,7 @@ export default function App() {
 
         doc.addImage(dataUrl, "PNG", imgX, imgY, imgW, imgH)
 
-        // Distance annotations â€” derive scale
+        // Distance annotations — derive scale
         const CANVAS_W = 1400
         const CANVAS_H = 750
         const SCALE_PDF = Math.min((CANVAS_W - 260) / roomWidth, (CANVAS_H - 220) / roomHeight)
@@ -2207,6 +2315,9 @@ export default function App() {
         doc.addImage(heatUrl, "PNG", imgX, imgY, imgW, imgH)
         pageNum++
       }
+      } finally {
+        canvasRef.current?.setTransformImmediate?.(savedTransform.zoom, savedTransform.x, savedTransform.y)
+      }
     }
 
     // Add "Page X of N" footer to every page now that total is known
@@ -2224,7 +2335,7 @@ export default function App() {
         doc.setFont("helvetica", "bold")
         doc.setFontSize(28)
         doc.setTextColor(210, 210, 210)
-        doc.text("LUMINA DESIGN â€” FREE TRIAL", PW / 2, PH / 2, { align: "center", angle: 45 })
+        doc.text("LUMINA DESIGN — FREE TRIAL", PW / 2, PH / 2, { align: "center", angle: 45 })
       }
     }
 
@@ -2253,7 +2364,7 @@ export default function App() {
     let sr = 1, totalQty = 0, totalW = 0
     for (const r of allR) {
       for (const g of _fixtureGroupsExport(r)) {
-        ws1.addRow([sr++, r.floorName, r.name, g.label, g.lumens, g.beamAngle + "Â°", g.watt, g.qty, "No.", PROTOCOL_LBL[g.protocol] ?? g.protocol])
+        ws1.addRow([sr++, r.floorName, r.name, g.label, g.lumens, g.beamAngle + "°", g.watt, g.qty, "No.", PROTOCOL_LBL[g.protocol] ?? g.protocol])
         totalQty += g.qty; totalW += g.totalWatt
       }
     }
@@ -2265,13 +2376,13 @@ export default function App() {
     ws2.addRow(["FLOOR", "ROOM", "LOAD (W)", "CIRCUITS", "MCB", "WIRE SIZE"])
     for (const r of allR) {
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-      let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mmÂ²"
+      let circuits = 0, cur = 0, mcb = "6A", wire = "1.5mm²"
       for (const l of r.lights) {
         const w = l.watt ?? 0
         if (cur + w > MAX_CIRCUIT_WATT) { circuits++; cur = 0 }
         cur += w; circuits = Math.max(circuits, 1)
         mcb = cur <= 1380 ? "6A" : cur <= 2300 ? "10A" : "16A"
-        wire = cur <= 2944 ? "1.5mmÂ²" : "2.5mmÂ²"
+        wire = cur <= 2944 ? "1.5mm²" : "2.5mm²"
       }
       if (r.lights.length === 0) circuits = 0
       ws2.addRow([r.floorName, r.name, load + " W", circuits, mcb, wire + " FR"])
@@ -2280,20 +2391,20 @@ export default function App() {
     // Sheet 3: Room Summary
     const ws3 = wb.addWorksheet("Room Summary")
     ws3.columns = [22, 22, 14, 14, 14, 14, 12, 14].map(w => ({ width: w }))
-    ws3.addRow(["FLOOR", "ROOM", "AREA (mÂ²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"])
+    ws3.addRow(["FLOOR", "ROOM", "AREA (m²)", "TARGET LUX", "ACTUAL LUX", "STATUS", "FIXTURES", "LOAD (W)"])
     for (const r of allR) {
       const { areaM2, lux } = _calcRoomExport(r)
       const target = Number(r.room?.targetLux ?? 0)
-      const status = lux === 0 || target === 0 ? "â€”" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
+      const status = lux === 0 || target === 0 ? "—" : lux < target * 0.8 ? "UNDERLIT" : lux <= target * 1.2 ? "GOOD" : "OVERLIT"
       const load = r.lights.reduce((s, l) => s + (l.watt ?? 0), 0)
-      ws3.addRow([r.floorName, r.name, areaM2.toFixed(1), target || "â€”", r.lights.length === 0 ? "â€”" : Math.round(lux), status, r.lights.length, load + " W"])
+      ws3.addRow([r.floorName, r.name, areaM2.toFixed(1), target || "—", r.lights.length === 0 ? "—" : Math.round(lux), status, r.lights.length, load + " W"])
     }
 
     // Watermark sheet for non-paid users
     if (!isPaidPlan()) {
       const wsWM = wb.addWorksheet("FREE TRIAL")
       wsWM.columns = [{ width: 50 }]
-      const wmRow = wsWM.addRow(["LUMINA DESIGN â€” FREE TRIAL VERSION"])
+      const wmRow = wsWM.addRow(["LUMINA DESIGN — FREE TRIAL VERSION"])
       wmRow.font = { bold: true, size: 14, color: { argb: "FFD4A843" } }
       wsWM.addRow(["Upgrade to PRO or PROFESSIONAL to remove this watermark."])
       wsWM.orderNo = 0
@@ -2399,14 +2510,14 @@ export default function App() {
 
   if (authLoading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#555555" }}>
-      Authenticatingâ€¦
+      Authenticating…
     </div>
   )
 
   if (!user) return <AuthPage />
 
-  // â”€â”€ Mobile guard â€” canvas tool requires desktop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  if (typeof window !== "undefined" && window.innerWidth < 768) return (
+  // â”€â”€ Mobile guard — canvas tool requires desktop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (typeof window !== "undefined" && window.innerWidth < 400) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#000000", fontFamily: "'Inter', sans-serif", padding: 32, textAlign: "center", gap: 16 }}>
       <div style={{ fontSize: 40 }}>ðŸ–¥ï¸</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: "#d4a843", letterSpacing: "0.04em" }}>Desktop required</div>
@@ -2422,13 +2533,14 @@ export default function App() {
     </div>
   )
 
-  // â”€â”€ Sidebar view â†’ leftTab mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ Sidebar view → leftTab mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const SIDEBAR_TO_LEFTTAB = {
     'luminaires':  'fixture',
     'calculation': 'ai',
     'floor-plan':  'fixture',
     'heatmaps':    'fixture',
     'dali-bus':    'fixture',
+    'electrical':  'fixture',
     'reports':     'fixture',
   }
   function handleSidebarChange(view) {
@@ -2436,7 +2548,7 @@ export default function App() {
     if (SIDEBAR_TO_LEFTTAB[view]) setLeftTab(SIDEBAR_TO_LEFTTAB[view])
     if (view === 'heatmaps') setShowHeatmap(true)
     if (view === 'dali-bus' && !daliEnabled) setDaliEnabled(true)
-    if (view === 'reports') setShowExportModal(true)
+    if (view === 'reports') { if (!isProActive()) { setGateModal({ feature: 'Export' }); return } setShowExportModal(true) }
   }
 
   return (
@@ -2448,7 +2560,8 @@ export default function App() {
         onProjectNameChange={setProjectName}
         saving={saving}
         onSave={handleSave}
-        onExport={() => { setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
+        onLoadProject={() => setShowLoadModal(true)}
+        onExport={() => { if (!isProActive()) { setGateModal({ feature: 'Export' }); return } setExportRoomIds(floors.flatMap(f => f.rooms.map(r => r.id))); setShowExportModal(true) }}
         onShare={handleShare}
         onSignOut={() => signOut(auth)}
         onShowShortcuts={() => setShowShortcuts(true)}
@@ -2466,8 +2579,13 @@ export default function App() {
       <main style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
 
         {/* â”€â”€ Left: Sidebar (Nav + content panels) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <Sidebar activeItem={sidebarView} onItemChange={handleSidebarChange}>
-          {/* Fixture Library â€” shown when Luminaires or Floor Plan active */}
+        <Sidebar
+          activeItem={sidebarView}
+          onItemChange={handleSidebarChange}
+          collapsed={leftSidebarCollapsed}
+          onToggleCollapse={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+        >
+          {/* Fixture Library — shown when Luminaires or Floor Plan active */}
           {(sidebarView === 'luminaires' || sidebarView === 'floor-plan') && (
             <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
               <FixtureLibraryPanel
@@ -2480,7 +2598,7 @@ export default function App() {
             </div>
           )}
 
-          {/* AI Recommender â€” shown when Calculation active */}
+          {/* AI Recommender — shown when Calculation active */}
           <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'calculation' ? "flex" : "none", flexDirection: "column" }}>
             <AIRecommender
               activeRoom={room}
@@ -2557,11 +2675,130 @@ export default function App() {
               })}
             </div>
           </div>
+
+          {/* Electrical View */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'electrical' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
+            {(() => {
+              // Calculate phase loads and voltage drop
+              const phaseLoads = [0, 0, 0]
+              circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
+
+              const maxVDrop = voltageDropResults.length > 0
+                ? Math.max(...voltageDropResults.map(r => r.vDropPercent))
+                : null
+
+              const vDropColor = maxVDrop == null ? "#666666"
+                : maxVDrop <= 3 ? "#4ade80"  // Green - Good
+                : maxVDrop <= 5 ? "#fb923c"  // Orange - Warning
+                : "#ef4444"                  // Red - Critical
+
+              const StatCard = ({ label, value, subtext, color = "#cccccc" }) => (
+                <div style={{
+                  background: "#161616",
+                  border: "1px solid #222222",
+                  borderRadius: 6,
+                  padding: 12,
+                  marginBottom: 12,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4
+                }}>
+                  <div style={{ fontSize: 10, color: "#777777", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase" }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 600, color }}>
+                    {value}
+                  </div>
+                  {subtext && (
+                    <div style={{ fontSize: 12, color: "#888888" }}>
+                      {subtext}
+                    </div>
+                  )}
+                </div>
+              )
+
+              if (circuits.length === 0) {
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.6, padding: "40px 0" }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span style={{ fontSize: 13, color: "#888888", textAlign: "center" }}>No active circuits. Add fixtures to floor plan to calculate.</span>
+                  </div>
+                )
+              }
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#d4a843", marginBottom: 16, letterSpacing: "0.03em" }}>
+                    ELECTRICAL STATS
+                  </div>
+
+                  <StatCard
+                    label="Circuits"
+                    value={`${circuits.length} circuit${circuits.length !== 1 ? "s" : ""}`}
+                    subtext={`${totalWatt}W total load`}
+                  />
+
+                  <StatCard
+                    label="Voltage Drop"
+                    value={maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "—"}
+                    color={vDropColor}
+                    subtext={maxVDrop != null
+                      ? maxVDrop <= 3 ? "Excellent"
+                      : maxVDrop <= 5 ? "Acceptable"
+                      : "Critical"
+                      : "Not calculated"
+                    }
+                  />
+
+                  <StatCard
+                    label="Driver Schedule"
+                    value={`${driverSchedule.length} driver type${driverSchedule.length !== 1 ? "s" : ""}`}
+                    subtext={`${lights.length} fixture${lights.length !== 1 ? "s" : ""}`}
+                  />
+
+                  {/* Phase Balance */}
+                  <div style={{
+                    background: "#161616",
+                    border: "1px solid #222222",
+                    borderRadius: 6,
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8
+                  }}>
+                    <div style={{ fontSize: 10, color: "#777777", letterSpacing: "0.08em", fontWeight: 600, textTransform: "uppercase" }}>
+                      Phase Balance
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {["L1", "L2", "L3"].map((phase, i) => {
+                        const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Teal, Green, Amber
+                        const load = Math.round(phaseLoads[i])
+                        return (
+                          <div key={phase} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <div style={{ width: 6, height: 6, borderRadius: "50%", background: colors[i] }} />
+                              <span style={{ fontSize: 13, color: "#999999" }}>{phase}</span>
+                            </div>
+                            <span style={{ fontSize: 13, color: colors[i], fontWeight: 600 }}>{load}W</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#666666", marginTop: 2, borderTop: "1px solid #222222", paddingTop: 6 }}>
+                      3-phase distribution
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
         </Sidebar>
 
         {/* â”€â”€ Center: Canvas Area 1fr â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {/* navTab controls which main view shows: canvas / library */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#0d0d0d", minHeight: 0 }}>
 
           {/* â”€â”€ Library tab â”€â”€ */}
           {navTab === 'library' && (
@@ -2590,14 +2827,6 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", width: "100%", minWidth: "max-content" }}>
 
               {/* â”€â”€ Group 1: Canvas Tools â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-              <button
-                onClick={() => setShowAutoPlaceModal(true)}
-                title="Auto-place fixtures in room"
-                style={{ background: "transparent", border: "1px solid #2a2a2a", color: "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" }}
-              >Auto Place</button>
-
               <button
                 onClick={() => setSnapToGrid(p => !p)}
                 title="Toggle snap to grid"
@@ -2632,6 +2861,14 @@ export default function App() {
                 onMouseEnter={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
                 onMouseLeave={(e) => { if (!showHeatmap) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
               >Heatmap</button>
+
+              <button
+                onClick={() => setShowLegend(p => !p)}
+                title="Toggle fixture legend"
+                style={{ background: showLegend ? "rgba(212,168,67,0.12)" : "transparent", border: showLegend ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showLegend ? "#d4a843" : "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (!showLegend) { e.currentTarget.style.background = "#1e1e1e"; e.currentTarget.style.borderColor = "#444444"; e.currentTarget.style.color = "#cccccc" } }}
+                onMouseLeave={(e) => { if (!showLegend) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#2a2a2a"; e.currentTarget.style.color = "#888888" } }}
+              >Legend</button>
 
               <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
 
@@ -2720,7 +2957,7 @@ export default function App() {
                     setSidebarView('calculation')
                   }
                 }}
-                title="AI Recommend â€” Get AI-powered fixture suggestions"
+                title="AI Recommend — Get AI-powered fixture suggestions"
                 style={{ background: sidebarView === "calculation" ? "rgba(212,168,67,0.12)" : "transparent", border: sidebarView === "calculation" ? "1px solid #d4a843" : "1px solid #2a2a2a", color: sidebarView === "calculation" ? "#d4a843" : "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >AI RECOMMEND</button>
 
@@ -2736,7 +2973,7 @@ export default function App() {
                 style={{ background: showVisualEditor ? "rgba(212,168,67,0.12)" : "transparent", border: showVisualEditor ? "1px solid #d4a843" : "1px solid #2a2a2a", color: showVisualEditor ? "#d4a843" : "#888888", padding: "4px 8px", borderRadius: 5, cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif", transition: "all 0.15s" }}
               >Visual Editor</button>
 
-              {/* Protocol selector â€” only when fixtures selected */}
+              {/* Protocol selector — only when fixtures selected */}
               {selectedLights.length > 0 && (
                 <>
                   <div style={{ width: 1, height: 20, background: "#2a2a2a", margin: "0 8px" }} />
@@ -2744,7 +2981,7 @@ export default function App() {
                     value=""
                     onChange={(e) => {
                       if (e.target.value) {
-                        selectedLights.forEach(light => updateLight(light.id, { protocol: e.target.value }))
+                        batchUpdateLights(selectedLights.map(l => l.id), { protocol: e.target.value })
                         e.target.value = ""
                       }
                     }}
@@ -2785,7 +3022,60 @@ export default function App() {
           />
 
           {/* Scrollable canvas + detail panels */}
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 6, position: "relative", background: "#0d0d0d", minHeight: 0 }}>
+
+            {/* ── Fixture Legend Panel ──────────────────────────────────────── */}
+            {showLegend && (() => {
+              // Build per-fixtureId groups from placed lights
+              const groups = {}
+              for (const l of lights) {
+                const fid = l.fixtureId ?? l.category ?? 'unknown'
+                if (!groups[fid]) groups[fid] = { wattsUsed: [], name: l.name ?? l.label ?? fid, icon: null }
+                const w = l.watt ?? 0
+                if (w > 0) groups[fid].wattsUsed.push(w)
+              }
+              // Enrich with icon from CONFIGURABLE_FIXTURES
+              const cfMap = Object.fromEntries(CONFIGURABLE_FIXTURES.map(f => [f.id, f]))
+              const rows = Object.entries(groups).map(([fid, g]) => ({
+                fid,
+                icon: cfMap[fid]?.icon ?? '💡',
+                name: cfMap[fid]?.name ?? g.name,
+                minW: g.wattsUsed.length ? Math.min(...g.wattsUsed) : null,
+                maxW: g.wattsUsed.length ? Math.max(...g.wattsUsed) : null,
+              }))
+              if (rows.length === 0) return null
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 16,
+                    left: 16,
+                    zIndex: 900,
+                    background: '#141414',
+                    border: '1px solid #2a2a2a',
+                    borderRadius: 6,
+                    padding: '10px 14px',
+                    minWidth: 190,
+                    maxWidth: 260,
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.7)',
+                    fontFamily: "'Inter', system-ui, sans-serif",
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#d4a843', letterSpacing: '0.12em', marginBottom: 8, textTransform: 'uppercase' }}>Fixture Legend</div>
+                  {rows.map(({ fid, icon, name, minW, maxW }) => {
+                    const wattLabel = minW == null ? '—' : minW === maxW ? `${minW}W` : `${minW}W – ${maxW}W`
+                    return (
+                      <div key={fid} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 15, lineHeight: 1, flexShrink: 0, width: 18, textAlign: 'center' }}>{icon}</span>
+                        <span style={{ fontSize: 11, color: '#cccccc', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                        <span style={{ fontSize: 10, color: '#888888', whiteSpace: 'nowrap', flexShrink: 0 }}>{wattLabel}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
 
             {/* Settings panel moved to fixed right slide-in below */}
 
@@ -2824,7 +3114,7 @@ export default function App() {
                   <button
                     onClick={() => setShowVisualEditor(false)}
                     style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 14, padding: 0 }}
-                  >âœ•</button>
+                  >✕</button>
                 </div>
                 <div style={{ padding: '12px', overflow: 'auto', flex: 1 }}>
                   {(() => {
@@ -2842,7 +3132,7 @@ export default function App() {
                     <input
                       type="range" min="5" max="20"
                       value={commonSize ?? 8}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureSize: Number(e.target.value) }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureSize: Number(e.target.value) })}
                       style={{ width: '100%', cursor: 'pointer' }}
                     />
                   </div>
@@ -2851,7 +3141,7 @@ export default function App() {
                     <input
                       type="color"
                       value={commonColor ?? '#ffffff'}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureColor: e.target.value }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureColor: e.target.value })}
                       style={{ width: '100%', height: 36, cursor: 'pointer', border: 'none', borderRadius: 3 }}
                     />
                   </div>
@@ -2859,7 +3149,7 @@ export default function App() {
                     <label style={{ fontSize: 14, color: '#d4a843', display: 'block', marginBottom: 6 }}>SHAPE</label>
                     <select
                       value={commonShape ?? 'circle'}
-                      onChange={(e) => selectedLights.forEach(l => updateLight(l.id, { fixtureShape: e.target.value }))}
+                      onChange={(e) => batchUpdateLights(selectedLights.map(l => l.id), { fixtureShape: e.target.value })}
                       style={{
                         width: '100%', padding: '8px 6px', background: '#1a1a1a',
                         color: '#cccccc', border: '1px solid #2a2a2a', borderRadius: 3,
@@ -2896,7 +3186,7 @@ export default function App() {
               snapToGrid={snapToGrid}
               rcr={rcr}
               uf={uf}
-              targetLux={Number(room.targetLux)}
+              targetLux={Number(room.targetLux) || 300}
               activeTool={activeTool}
               activeFixtureCategory={activeFixtureCategory}
               activeFixture={activeFixture}
@@ -2966,115 +3256,7 @@ export default function App() {
 
           </div>
 
-          {/* Bottom electrical bar â€” only when circuits exist */}
-          {circuits.length > 0 && (() => {
-            // Calculate phase loads and voltage drop
-            const phaseLoads = [0, 0, 0]
-            circuits.forEach((c, i) => { phaseLoads[i % 3] += c.totalWatt })
 
-            const maxVDrop = voltageDropResults.length > 0
-              ? Math.max(...voltageDropResults.map(r => r.vDropPercent))
-              : null
-
-            // Color coding for voltage drop status
-            const vDropColor = maxVDrop == null ? "#666666"
-              : maxVDrop <= 3 ? "#4ade80"  // Green - Good
-              : maxVDrop <= 5 ? "#fb923c"  // Orange - Warning
-              : "#ef4444"                  // Red - Critical
-
-            // Reusable column component
-            const StatCol = ({ label, children, last }) => (
-              <div style={{
-                flex: 1,
-                borderRight: last ? "none" : "1px solid #1e1e1e",
-                padding: "0 20px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: 4
-              }}>
-                <div style={{
-                  fontSize: 11,
-                  color: "#999999",
-                  letterSpacing: "0.1em",
-                  fontWeight: 500,
-                  textTransform: "uppercase"
-                }}>
-                  {label}
-                </div>
-                {children}
-              </div>
-            )
-
-            return (
-              <div style={{
-                height: 68,
-                background: "#111111",
-                borderTop: "1px solid #1e1e1e",
-                display: "flex",
-                alignItems: "stretch",
-                flexShrink: 0,
-                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
-              }}>
-                {/* Circuits */}
-                <StatCol label="CIRCUITS">
-                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
-                    {circuits.length} circuit{circuits.length !== 1 ? "s" : ""}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {totalWatt}W total load
-                  </span>
-                </StatCol>
-
-                {/* Voltage Drop */}
-                <StatCol label="VOLTAGE DROP">
-                  <span style={{ fontSize: 17, color: vDropColor, fontWeight: 600 }}>
-                    {maxVDrop != null ? `${maxVDrop.toFixed(1)}%` : "â€”"}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {maxVDrop != null
-                      ? maxVDrop <= 3 ? "Excellent"
-                      : maxVDrop <= 5 ? "Acceptable"
-                      : "Critical"
-                      : "Not calculated"
-                    }
-                  </span>
-                </StatCol>
-
-                {/* Driver Schedule */}
-                <StatCol label="DRIVER SCHEDULE">
-                  <span style={{ fontSize: 17, color: "#cccccc", fontWeight: 500 }}>
-                    {driverSchedule.length} type{driverSchedule.length !== 1 ? "s" : ""}
-                  </span>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    {lights.length} fixture{lights.length !== 1 ? "s" : ""}
-                  </span>
-                </StatCol>
-
-                {/* Phase Balance */}
-                <StatCol label="PHASE BALANCE" last>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    {["L1", "L2", "L3"].map((phase, i) => {
-                      const colors = ["#22d3ee", "#4ade80", "#fbbf24"]  // Cyan, Green, Amber
-                      const load = Math.round(phaseLoads[i])
-                      return (
-                        <span key={phase} style={{
-                          fontSize: 14,
-                          color: colors[i],
-                          fontWeight: 600
-                        }}>
-                          {phase}: {load}W
-                        </span>
-                      )
-                    })}
-                  </div>
-                  <span style={{ fontSize: 17, color: "#999999" }}>
-                    3-phase distribution
-                  </span>
-                </StatCol>
-              </div>
-            )
-          })()}
 
           </>}  {/* end canvas tab */}
 
@@ -3095,7 +3277,7 @@ export default function App() {
             OVERLIT: { text: "#fb923c", bg: "rgba(251,146,60,0.1)", label: "OVERLIT" },
             DIM:     { text: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "UNDERLIT" },
           }
-          const luxColor = statusColors[luxStatus] || { text: "#555555", bg: "rgba(85,85,85,0.1)", label: "â€”" }
+          const luxColor = statusColors[luxStatus] || { text: "#555555", bg: "rgba(85,85,85,0.1)", label: "—" }
 
           // Phase loads for electrical section
           const phaseLoads = [0, 0, 0]
@@ -3124,17 +3306,73 @@ export default function App() {
 
           return (
             <div style={{
-              width: 240,
+              width: rightCollapsed ? 32 : 240,
               background: "#111111",
-              borderLeft: "1px solid #1e1e1e",
-              overflowY: "auto",
+              border: "1px solid #222222",
+              borderRadius: 8,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              margin: "52px 12px 12px 12px",
+              height: "calc(100% - 64px)",
+              overflowY: rightCollapsed ? "hidden" : "auto",
               display: "flex",
               flexDirection: "column",
               flexShrink: 0,
               fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             }}>
 
-              {/* ROOM INTELLIGENCE â€” at top */}
+              {rightCollapsed ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  paddingTop: 8,
+                  height: '100%'
+                }}>
+                  <button
+                    onClick={() => setRightCollapsed(false)}
+                    title="Expand panel"
+                    style={{
+                      width: 24,
+                      height: 24,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#888888',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                    }}
+                  >
+                    «
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    padding: '8px 8px 0 0',
+                    flexShrink: 0
+                  }}>
+                    <button
+                      onClick={() => setRightCollapsed(true)}
+                      title="Collapse panel"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#555555',
+                        cursor: 'pointer',
+                        fontSize: 16,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#cccccc'}
+                      onMouseLeave={e => e.currentTarget.style.color = '#555555'}
+                    >
+                      »
+                    </button>
+                  </div>
+
+                  {/* ROOM INTELLIGENCE — at top */}
               <RoomIntelligencePanel
                 room={room}
                 allFixtures={lights}
@@ -3162,7 +3400,7 @@ export default function App() {
                   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
                   
                 }}>
-                  {luxVal ?? "â€”"}
+                  {luxVal ?? "—"}
                 </div>
                 {luxStatus && (
                   <div style={{
@@ -3201,7 +3439,7 @@ export default function App() {
                         <div style={{ fontSize: 17, color: "#cccccc", fontWeight: 600, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {light.label ?? light.name ?? light.category ?? "Unknown"}
                         </div>
-                        {/* Specs grid â€” uncontrolled inputs, commit on blur */}
+                        {/* Specs grid — uncontrolled inputs, commit on blur */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                           {/* WATT */}
                           <div>
@@ -3237,7 +3475,7 @@ export default function App() {
                           </div>
                           {/* BEAM */}
                           <div>
-                            <label style={{ fontSize: 11, color: "#999999", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>BEAM (Â°)</label>
+                            <label style={{ fontSize: 11, color: "#999999", display: "block", marginBottom: 3, letterSpacing: "0.06em" }}>BEAM (°)</label>
                             <input
                               type="number" min="1" max="180" step="1"
                               defaultValue={light.beamAngle ?? 36}
@@ -3251,18 +3489,18 @@ export default function App() {
                               onFocus={(e) => { e.target.style.borderColor = "#d4a843" }}
                             />
                           </div>
-                          {/* CCT â€” read-only, fixture spec */}
+                          {/* CCT — read-only, fixture spec */}
                           <div>
                             <div style={{ fontSize: 11, color: "#555555", marginBottom: 3, letterSpacing: "0.06em" }}>CCT</div>
                             <div style={{ fontSize: 14, color: "#888888", fontWeight: 600, fontFamily: "'Inter', sans-serif", padding: "5px 6px", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 3 }}>
-                              {light.cct ? `${light.cct}K` : "â€”"}
+                              {light.cct ? `${light.cct}K` : "—"}
                             </div>
                           </div>
                         </div>
                         {/* Protocol badge */}
                         {light.protocol && light.protocol !== "NON-DIM" && light.protocol !== "Room Default" && (
                           <div style={{ padding: "6px 10px", borderRadius: 4, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.3)", fontSize: 14, color: "#60a5fa", fontWeight: 600, textAlign: "center" }}>
-                            {light.protocol === "DALI" ? `DALI â€¢ D:${light.daliAddress ?? "?"}` : light.protocol}
+                            {light.protocol === "DALI" ? `DALI • D:${light.daliAddress ?? "?"}` : light.protocol}
                           </div>
                         )}
                         {/* Visual options */}
@@ -3312,7 +3550,7 @@ export default function App() {
                 ) : selectedLights.length > 1 ? (
                   (() => {
                     const sel = selectedLights
-                    const batchUpdate = (updates) => sel.forEach(l => updateLight(l.id, updates))
+                    const batchUpdate = (updates) => batchUpdateLights(sel.map(l => l.id), updates)
                     const sizes  = sel.map(l => l.fixtureSize  ?? 8)
                     const colors = sel.map(l => l.fixtureColor ?? "#ffffff")
                     const shapes = sel.map(l => l.fixtureShape ?? "circle")
@@ -3344,7 +3582,7 @@ export default function App() {
                             <select value={allSameShape ? shapes[0] : ""}
                               onChange={(e) => batchUpdate({ fixtureShape: e.target.value })}
                               style={{ width: "100%", padding: "4px 6px", background: "#111111", color: "#e0e0e0", border: "1px solid #2a2a2a", borderRadius: 3, fontSize: 14, fontFamily: "'Inter', sans-serif", cursor: "pointer" }}>
-                              {!allSameShape && <option value="">â€” Mixed â€”</option>}
+                              {!allSameShape && <option value="">— Mixed —</option>}
                               <option value="circle">Circle</option>
                               <option value="square">Square</option>
                               <option value="diamond">Diamond</option>
@@ -3377,7 +3615,7 @@ export default function App() {
 
               {/* ROOM METRICS */}
               <Section title="Room">
-                <MetricRow label="Area"               value={`${areaM2.toFixed(1)}mÂ²`} />
+                <MetricRow label="Area"               value={`${areaM2.toFixed(1)}m²`} />
                 <MetricRow label="Mounting Height"    value={`${mh.toFixed(2)}m`} />
                 <MetricRow label="RCR"                value={rcr.toFixed(2)} />
                 <MetricRow label="Utilization Factor" value={uf.toFixed(2)} />
@@ -3401,7 +3639,8 @@ export default function App() {
                   subtitle="W"
                 />
               </Section>
-
+                </>
+              )}
             </div>
           )
         })()}
@@ -3413,14 +3652,14 @@ export default function App() {
       {showSettings && (
         <div style={{
           position: "fixed", top: 84, right: 0, bottom: 0, width: 320,
-          background: "#f9f9f9", borderLeft: "1px solid #e5e5e5",
+              background: "#141414", borderLeft: "1px solid #2a2a2a",
           display: "flex", flexDirection: "column",
           zIndex: 500, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
           fontFamily: "'Inter', sans-serif",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
             <span style={{ fontSize: 14, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>ROOM SETTINGS</span>
-            <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>âœ•</button>
+            <button onClick={() => setShowSettings(false)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 14, padding: 0 }}>✕</button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             <RoomSettingsFloating
@@ -3440,15 +3679,59 @@ export default function App() {
               onUploadFloorPlanBlocked={() => setGateModal({ feature: 'Floor plan upload' })}
               activeTool={activeTool}
               onSetActiveTool={setActiveTool}
+              onAnalyzeFloorPlan={handleAnalyzeFloorPlan}
               embedded
             />
           </div>
         </div>
       )}
 
+      {/* Floor Plan Analysis Panel */}
+      {floorPlanAnalysis && (
+        <div style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, width: 340,
+          background: "#111111", borderLeft: "1px solid #222222",
+          display: "flex", flexDirection: "column",
+          zIndex: 600, boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
+          fontFamily: "'Inter', sans-serif",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", borderBottom: "1px solid #222222", flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: "#d4a843", letterSpacing: "0.12em", fontWeight: 600 }}>AI FLOOR PLAN ANALYSIS</span>
+            <button onClick={() => setFloorPlanAnalysis(null)} style={{ background: "transparent", border: "none", color: "#888888", cursor: "pointer", fontSize: 16 }}>x</button>
+          </div>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: "#555555", lineHeight: 1.6 }}>{floorPlanAnalysis.summary?.substring(0, 150)}...</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+            <div style={{ fontSize: 10, color: "#555555", letterSpacing: "0.1em", padding: "8px 16px 4px" }}>DETECTED ROOMS - CLICK TO APPLY DIMENSIONS</div>
+            {(floorPlanAnalysis.rooms ?? []).map((room, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  updateRoom({ roomWidth: Math.round(room.widthM * 1000), roomHeight: Math.round(room.heightM * 1000) })
+                  showToast(`Applied: ${room.name} (${room.widthM}m x ${room.heightM}m)`)
+                }}
+                style={{
+                  padding: "10px 16px", cursor: "pointer", borderBottom: "1px solid #1a1a1a",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#1a1a1a"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <div>
+                  <div style={{ fontSize: 13, color: "#f0f0f0", marginBottom: 2 }}>{room.name}</div>
+                  <div style={{ fontSize: 10, color: "#555555", textTransform: "uppercase", letterSpacing: "0.08em" }}>{room.type}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#d4a843", fontFamily: "IBM Plex Mono" }}>{room.widthM}m x {room.heightM}m</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* â”€â”€ Export modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showExportModal && (() => {
-        const allExportRooms = floors.flatMap(f => f.rooms.map(r => ({ id: r.id, label: `${f.name} â€” ${r.name}` })))
+        const allExportRooms = floors.flatMap(f => f.rooms.map(r => ({ id: r.id, label: `${f.name} — ${r.name}` })))
         const allSelected    = allExportRooms.every(r => exportRoomIds.includes(r.id))
         const toggleRoom     = id => setExportRoomIds(prev =>
           prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -3466,7 +3749,7 @@ export default function App() {
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px 14px", borderBottom: "1px solid #1e1e1e", flexShrink: 0 }}>
                 <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 17, color: "#d4a843", letterSpacing: "0.08em" }}>EXPORT</span>
-                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "'Inter', sans-serif", fontSize: 17, cursor: "pointer" }}>âœ•</button>
+                <button onClick={() => setShowExportModal(false)} style={{ background: "transparent", border: "none", color: "#555555", fontFamily: "'Inter', sans-serif", fontSize: 17, cursor: "pointer" }}>✕</button>
               </div>
 
               {/* Scrollable body */}
@@ -3514,7 +3797,7 @@ export default function App() {
                       return (
                         <label key={key} style={{
                           display: "flex", alignItems: "flex-start", gap: 10,
-                          padding: "10px 12px", background: "#f9f9f9",
+                          padding: "10px 12px", background: "#1a1a1a",
                           border: `1px solid ${checked ? "#d4a843" : "#2e2e2e"}`,
                           borderRadius: 3, cursor: "pointer",
                         }}>
@@ -3524,7 +3807,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, marginTop: 1,
                           }}>
-                            {checked && <span style={{ fontSize: 11, color: "#000", fontWeight: 700 }}>âœ“</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000", fontWeight: 700 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked}
                             onChange={() => setExportCanvasOptions(prev => ({ ...prev, [key]: !prev[key] }))}
@@ -3573,7 +3856,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, transition: "background 0.1s, border-color 0.1s",
                           }}>
-                            {checked && <span style={{ fontSize: 11, color: "#000000", fontWeight: 700, lineHeight: 1 }}>âœ“</span>}
+                            {checked && <span style={{ fontSize: 11, color: "#000000", fontWeight: 700, lineHeight: 1 }}>✓</span>}
                           </div>
                           <input type="checkbox" checked={checked} onChange={() => toggleRoom(r.id)} style={{ display: "none" }} />
                           <span>{r.label}</span>
@@ -3598,11 +3881,11 @@ export default function App() {
                   </button>
                   <button style={btnStyle("#3dba74", "#0e1a0e", "#1a4020")} onClick={() => { setShowExportModal(false); handleExportBOQ() }}>
                     <span style={{ fontSize: 17, fontWeight: 700, color: "#3dba74", letterSpacing: "0.08em" }}>Export Excel BOQ</span>
-                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>3 sheets â€” Fixture BOQ, Electrical, Room Summary</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>3 sheets — Fixture BOQ, Electrical, Room Summary</span>
                   </button>
                   <button style={btnStyle("#39c5cf", "#0a1a1e", "#1a3a40")} onClick={() => { setShowExportModal(false); handleExportPNG() }}>
                     <span style={{ fontSize: 17, fontWeight: 700, color: "#39c5cf", letterSpacing: "0.08em" }}>Export Canvas PNG</span>
-                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2Ã— pixel ratio</span>
+                    <span style={{ fontSize: 11, color: "#888888", marginTop: 3 }}>High-resolution layout snapshot at 2× pixel ratio</span>
                   </button>
                   <button style={btnStyle("#888", "#181818", "#222222")} onClick={() => { setShowExportModal(false); setShowReport(true) }}>
                     <span style={{ fontSize: 17, fontWeight: 700, color: "#aaa", letterSpacing: "0.08em" }}>View Full Report</span>
@@ -3676,11 +3959,11 @@ export default function App() {
               <button
                 onClick={() => { setGateModal(null); navigate('/dashboard', { state: { openTab: 'subscription' } }) }}
                 style={{ flex: 1, background: '#d4a843', color: '#000000', border: 'none', borderRadius: 3, padding: '9px 0', fontSize: 17, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.06em' }}
-              >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL â†’' : 'UPGRADE TO PRO â†’'}</button>
+              >{gateModal.professionalOnly ? 'UPGRADE TO PROFESSIONAL →' : 'UPGRADE TO PRO →'}</button>
               <button
                 onClick={() => setGateModal(null)}
                 style={{ background: 'transparent', color: '#888888', border: '1px solid #333333', borderRadius: 3, padding: '9px 16px', fontSize: 17, cursor: 'pointer' }}
-              >âœ•</button>
+              >✕</button>
             </div>
           </div>
         </div>
@@ -3713,7 +3996,7 @@ export default function App() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", letterSpacing: "0.1em" }}>KEYBOARD SHORTCUTS</span>
-              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>âœ•</button>
+              <button onClick={() => setShowShortcuts(false)} style={{ background: "none", border: "none", color: "#555555", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>✕</button>
             </div>
             {[
               { group: "NAVIGATION", rows: [
@@ -3755,7 +4038,7 @@ export default function App() {
                 </div>
               </div>
             ))}
-            <div style={{ borderTop: "1px solid #e5e5e5", marginTop: 8, paddingTop: 12, fontSize: 11, color: "#444", letterSpacing: "0.06em" }}>
+            <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 12, fontSize: 11, color: "#888", letterSpacing: "0.06em" }}>
               Press <span style={{ color: "#d4a843" }}>?</span> or <span style={{ color: "#d4a843" }}>Escape</span> to dismiss
             </div>
           </div>

@@ -32,9 +32,9 @@ export default function SharedView() {
 
   if (loading) return (
     <div style={{
-      position: "fixed", inset: 0, background: "#090c10",
+      position: "fixed", inset: 0, background: "#0d0d0d",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "IBM Plex Mono", fontSize: 11, color: "#2d4f68", letterSpacing: "0.12em",
+      fontFamily: "IBM Plex Mono", fontSize: 11, color: "#555555", letterSpacing: "0.12em",
     }}>
       LOADING PROJECT...
     </div>
@@ -42,12 +42,12 @@ export default function SharedView() {
 
   if (error) return (
     <div style={{
-      position: "fixed", inset: 0, background: "#090c10",
+      position: "fixed", inset: 0, background: "#0d0d0d",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "IBM Plex Mono", gap: 12,
     }}>
-      <div style={{ fontSize: 11, color: "#d94f4f", letterSpacing: "0.1em" }}>UNABLE TO LOAD PROJECT</div>
-      <div style={{ fontSize: 10, color: "#2d4f68" }}>{error}</div>
+      <div style={{ fontSize: 11, color: "#dc2626", letterSpacing: "0.1em" }}>UNABLE TO LOAD PROJECT</div>
+      <div style={{ fontSize: 10, color: "#555555" }}>{error}</div>
     </div>
   )
 
@@ -81,29 +81,29 @@ export default function SharedView() {
   const totalLux = areaM2 === 0 ? 0 : (totalLumens * uf * 0.8) / areaM2
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#090c10", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0d0d0d", overflow: "hidden" }}>
 
       {/* Header */}
       <header style={{
         height: 48, display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0 20px", background: "#0d1117", borderBottom: "1px solid #1a2b3c",
-        color: "#cdd9e5", fontFamily: "IBM Plex Mono", flexShrink: 0,
+        padding: "0 20px", background: "#141414", borderBottom: "1px solid #2a2a2a",
+        color: "#e0e0e0", fontFamily: "IBM Plex Mono", flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             width: 22, height: 22, borderRadius: 3,
-            background: "linear-gradient(135deg, #1e4a6e 0%, #39c5cf 100%)",
+            background: "linear-gradient(135deg, #2a1e0e 0%, #d4a843 100%)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 10, color: "#fff", fontWeight: 600,
           }}>L</div>
-          <span style={{ color: "#4a7a96" }}>LUMINA DESIGN</span>
-          <span style={{ color: "#1a2b3c" }}>·</span>
+          <span style={{ color: "#888888" }}>LUMINA DESIGN</span>
+          <span style={{ color: "#2a2a2a" }}>·</span>
           <span style={{
-            padding: "2px 8px", background: "#1a0e2a",
-            border: "1px solid #7c3aed", borderRadius: 3,
-            color: "#a78bfa", fontSize: 9, letterSpacing: "0.1em",
+            padding: "2px 8px", background: "#1a1400",
+            border: "1px solid #d4a843", borderRadius: 3,
+            color: "#d4a843", fontSize: 9, letterSpacing: "0.1em",
           }}>SHARED VIEW</span>
-          <span style={{ color: "#cdd9e5", fontSize: 12 }}>{projectName}</span>
+          <span style={{ color: "#e0e0e0", fontSize: 12 }}>{projectName}</span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -111,20 +111,20 @@ export default function SharedView() {
             onClick={() => setShowReport(true)}
             style={{
               padding: "5px 14px", background: "transparent",
-              border: "1px solid #1a2b3c", borderRadius: 3,
-              color: "#4a7a96", fontFamily: "IBM Plex Mono", fontSize: 10,
+              border: "1px solid #2a2a2a", borderRadius: 3,
+              color: "#888888", fontFamily: "IBM Plex Mono", fontSize: 10,
               letterSpacing: "0.08em", cursor: "pointer",
             }}
           >View Report</button>
-          <div style={{ fontSize: 12, color: "#39c5cf" }}>Canvas v0.2</div>
+          <div style={{ fontSize: 12, color: "#d4a843" }}>Canvas v0.2</div>
         </div>
       </header>
 
       {/* Floor tabs (read-only) */}
       <div style={{
         height: 32, display: "flex", alignItems: "center",
-        padding: "0 20px", background: "#0a1018",
-        borderBottom: "1px solid #131d28", flexShrink: 0,
+        padding: "0 20px", background: "#111111",
+        borderBottom: "1px solid #2a2a2a", flexShrink: 0,
         fontFamily: "IBM Plex Mono", fontSize: 10, gap: 8,
       }}>
         {floors.map(f => (
@@ -133,23 +133,23 @@ export default function SharedView() {
             style={{
               padding: "3px 10px",
               background: f.id === activeFloorId ? "#2a1e0e" : "transparent",
-              border: `1px solid ${f.id === activeFloorId ? "#e8a830" : "#1a2b3c"}`,
+              border: `1px solid ${f.id === activeFloorId ? "#d4a843" : "#2a2a2a"}`,
               borderRadius: "3px 3px 0 0",
-              color: f.id === activeFloorId ? "#e8a830" : "#4a7a96",
+              color: f.id === activeFloorId ? "#d4a843" : "#888888",
               fontFamily: "IBM Plex Mono", fontSize: 10, cursor: "pointer",
             }}
           >{f.name}</button>
         ))}
-        <span style={{ color: "#1a2b3c", margin: "0 8px" }}>|</span>
+        <span style={{ color: "#2a2a2a", margin: "0 8px" }}>|</span>
         {activeFloor.rooms.map(r => (
           <button key={r.id}
             onClick={() => setActiveRoomId(r.id)}
             style={{
               padding: "3px 10px",
-              background: r.id === activeRoomId ? "#0e2a3a" : "transparent",
-              border: `1px solid ${r.id === activeRoomId ? "#39c5cf" : "#1a2b3c"}`,
+              background: r.id === activeRoomId ? "#1f1706" : "transparent",
+              border: `1px solid ${r.id === activeRoomId ? "#d4a843" : "#2a2a2a"}`,
               borderRadius: "3px 3px 0 0",
-              color: r.id === activeRoomId ? "#39c5cf" : "#4a7a96",
+              color: r.id === activeRoomId ? "#d4a843" : "#888888",
               fontFamily: "IBM Plex Mono", fontSize: 10, cursor: "pointer",
             }}
           >{r.name}</button>
@@ -186,8 +186,8 @@ export default function SharedView() {
       {/* Watermark */}
       <div style={{
         height: 28, display: "flex", alignItems: "center", justifyContent: "center",
-        background: "#0a1018", borderTop: "1px solid #131d28",
-        fontFamily: "IBM Plex Mono", fontSize: 9, color: "#1a2b3c", letterSpacing: "0.12em",
+        background: "#111111", borderTop: "1px solid #2a2a2a",
+        fontFamily: "IBM Plex Mono", fontSize: 9, color: "#2a2a2a", letterSpacing: "0.12em",
         flexShrink: 0,
       }}>
         POWERED BY LUMINA DESIGN

@@ -20,7 +20,7 @@
  */
 
 import crypto from 'crypto'
-import { getAdminDb } from './_adminDb.js'
+import { getAdminDb, getAdminAuth } from './_adminDb.js'
 
 // Razorpay sends the raw body — Vercel parses it by default.
 // We need the raw body string to verify the HMAC signature.
@@ -168,6 +168,14 @@ export default async function handler(req, res) {
 
     console.log('[razorpay-webhook] ✓ Subscription activated for userId:', userId,
       '| plan:', planId)
+
+    try {
+      const adminAuth = getAdminAuth()
+      await adminAuth.setCustomUserClaims(userId, { plan: planId, subStatus: 'active' })
+      console.log('[razorpay-webhook] ✓ Custom claims set for userId:', userId)
+    } catch (e) {
+      console.error('[razorpay-webhook] Failed to set custom claims:', e.message)
+    }
 
     return res.status(200).json({ received: true, activated: true })
   } catch (e) {

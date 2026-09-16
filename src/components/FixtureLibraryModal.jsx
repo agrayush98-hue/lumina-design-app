@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { CATEGORY_META, CATEGORY_VISUAL, resolveFixture } from '../data/fixtureLibrary'
 import { getUserFixtures, saveUserFixture, updateUserFixture, deleteUserFixture } from '../firebase'
 
-const CATEGORIES = ['COB_DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL_WASHER', 'LED_STRIP']
+const CATEGORIES = ['DOWNLIGHT', 'SPOTLIGHT', 'PANEL', 'LINEAR', 'WALL WASHER', 'STRIP']
 
 const PROTOCOL_OPTIONS = [
   { value: 'Room Default', label: 'Room Default' },
@@ -14,14 +14,14 @@ const PROTOCOL_OPTIONS = [
 ]
 
 const EMPTY_FORM = {
-  name: '', category: 'COB_DOWNLIGHT', watt: '', lumens: '', beamAngle: '',
+  name: '', category: 'DOWNLIGHT', watt: '', lumens: '', beamAngle: '',
   cct: '3000K', tunable: false, brand: '', modelNumber: '', notes: '', voltage: 230,
   protocol: 'Room Default',
 }
 
 function defaultCardConfig(category) {
   const meta = CATEGORY_META[category]
-  if (category === 'LED_STRIP') {
+  if (category === 'STRIP') {
     return { beamAngle: 120, cct: '3000K', voltage: 24, wattPerMtr: 10, lumensPerMtr: 800, length: 1, protocol: 'Room Default' }
   }
   return { watt: meta.variants[0].watt, beamAngle: meta.beamAngles[0], cct: meta.cctOptions[0], protocol: 'Room Default' }
@@ -77,7 +77,7 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
   if (!config) return null
   const meta    = CATEGORY_META[category]
   const vis     = CATEGORY_VISUAL[category]
-  const isStrip = category === 'LED_STRIP'
+  const isStrip = category === 'STRIP'
   const variant = !isStrip ? (meta.variants.find(v => v.watt === config.watt) ?? meta.variants[0]) : null
 
   const displayWatt   = isStrip ? `${config.wattPerMtr ?? 0}W/m` : `${config.watt ?? 0}W`
@@ -182,7 +182,7 @@ function CategoryCard({ category, config, onConfigChange, onSelect }) {
 
 // ── My Fixtures card ──────────────────────────────────────────────────────────
 function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
-  const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.COB_DOWNLIGHT
+  const vis = CATEGORY_VISUAL[fixture.category] ?? CATEGORY_VISUAL.DOWNLIGHT
   const catMeta = CATEGORY_META[fixture.category]
   return (
     <div style={{
@@ -253,7 +253,7 @@ function MyFixtureCard({ fixture, onSelect, onEdit, onDelete }) {
 
 // ── Add / Edit form ───────────────────────────────────────────────────────────
 function FixtureForm({ data, onChange, onSave, onCancel, saving, isEdit }) {
-  const isStrip = data.category === 'LED_STRIP'
+  const isStrip = data.category === 'STRIP'
   const catMeta = CATEGORY_META[data.category]
 
   function field(key, label, type = 'text', placeholder = '') {
@@ -434,7 +434,7 @@ export default function FixtureLibraryModal({ userId, onSelect, onClose }) {
     const cfg  = cardConfigs[category]
     if (!cfg) return
     const meta    = CATEGORY_META[category]
-    const isStrip = category === 'LED_STRIP'
+    const isStrip = category === 'STRIP'
     let watt, lumens
 
     if (isStrip) {
