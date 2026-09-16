@@ -1677,7 +1677,7 @@ export default function App() {
   function _electricalDeviceGroupsExport(roomObj) {
     const groups = {}
     for (const d of (roomObj.electricalDevices ?? [])) {
-      if (!groups[d.type]) groups[d.type] = { label: ELECTRICAL_DEVICE_TYPES[d.type]?.label ?? d.type, qty: 0 }
+      if (!groups[d.type]) groups[d.type] = { label: ELECTRICAL_DEVICE_TYPES[d.type]?.label || (d.type === 'wall-light' ? 'Wall Light' : d.type), qty: 0 }
       groups[d.type].qty++
     }
     return Object.values(groups)
@@ -3085,7 +3085,7 @@ export default function App() {
               }
               const deviceRows = Object.entries(deviceGroups).map(([type, count]) => ({
                 type, count,
-                label: ELECTRICAL_DEVICE_TYPES[type]?.label ?? type,
+                label: ELECTRICAL_DEVICE_TYPES[type]?.label || (type === 'wall-light' ? 'Wall Light' : type),
                 color: ELECTRICAL_DEVICE_TYPES[type]?.fill ?? '#888',
               }))
               if (rows.length === 0 && deviceRows.length === 0) return null
