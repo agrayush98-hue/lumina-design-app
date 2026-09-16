@@ -27,6 +27,22 @@ export const CATEGORY_VISUAL = {
   SURFACE_PANEL: { fill: '#f8d4a8', stroke: '#ff9800', glowColor: 'rgba(255,152,0,0.12)',   visualRadius: 12, fixtureShape: 'panel-grid' },
 }
 
+// ── Electrical device types — non-lighting devices placed on canvas ───────────
+export const ELECTRICAL_DEVICE_TYPES = {
+  'mcb-sp':      { label: 'MCB',  shape: 'rect-label',   fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'mcb-dp':      { label: 'MCB2', shape: 'rect-label',   fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'mcb-tp':      { label: 'MCB3', shape: 'rect-label',   fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'isolator':    { label: 'ISO',  shape: 'square-label', fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'rccb':        { label: 'RCCB', shape: 'rect-label',   fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'rcbo':        { label: 'RCBO', shape: 'rect-label',   fill: '#791f1f', stroke: '#e24b4a', textColor: '#f7c1c1' },
+  'fan':         { label: 'FAN',  shape: 'circle-label', fill: '#412402', stroke: '#ba7517', textColor: '#fac775' },
+  'exhaust-fan': { label: 'EF',   shape: 'circle-label', fill: '#412402', stroke: '#ba7517', textColor: '#fac775' },
+  'ac-indoor':   { label: 'AC',   shape: 'rect-label',   fill: '#412402', stroke: '#ba7517', textColor: '#fac775' },
+  'ac-outdoor':  { label: 'ODU',  shape: 'square-label', fill: '#412402', stroke: '#ba7517', textColor: '#fac775' },
+  'geyser':      { label: 'GYS',  shape: 'rect-label',   fill: '#412402', stroke: '#ba7517', textColor: '#fac775' },
+  'wall-light':  { label: '',     shape: 'half-circle',  fill: '#ffe9b0', stroke: '#ffb300', textColor: '#412402' },
+}
+
 // ── Category metadata — drives modal UI ───────────────────────────────────────
 export const CATEGORY_META = {
   // ── Standard ──────────────────────────────────────────────────────────────

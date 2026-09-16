@@ -42,6 +42,13 @@ const ICONS = {
       <path d="M6 8h4M6 10.5h4M6 6h2" stroke={color} strokeWidth="1.25" strokeLinecap="round"/>
     </svg>
   ),
+  'electrical-devices': ({ size = 16, color = 'currentColor' }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="4" width="12" height="8" rx="1.5" stroke={color} strokeWidth="1.25" fill="none"/>
+      <path d="M5 4V2M11 4V2M5 14v-2M11 14v-2" stroke={color} strokeWidth="1.25" strokeLinecap="round"/>
+      <path d="M8.5 6.5L6.5 9h1.5l-1 2.5 3-3H8.5V6.5z" stroke={color} strokeWidth="1" fill={color}/>
+    </svg>
+  ),
 }
 
 const NAV_ITEMS = [
@@ -50,6 +57,7 @@ const NAV_ITEMS = [
   { id: 'calculation', label: 'Calculation' },
   { id: 'heatmaps',    label: 'Heatmaps' },
   { id: 'dali-bus',    label: 'DALI Bus' },
+  { id: 'electrical-devices', label: 'Electrical Devices' },
   { id: 'reports',     label: 'Reports' },
 ]
 
@@ -104,7 +112,7 @@ export default function Sidebar({ activeItem, onItemChange, children }) {
     }}>
 
       {/* Navigation items */}
-      <div style={{ padding: '10px 8px 8px', borderBottom: '1px solid #1a1a1a', flexShrink: 0 }}>
+      <div style={{ padding: '10px 8px 8px', borderBottom: '1px solid #1a1a1a', flexShrink: 0, overflowY: 'auto' }}>
         {NAV_ITEMS.map(item => (
           <NavItem
             key={item.id}

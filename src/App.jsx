@@ -24,7 +24,7 @@ import ConnectionStatus from "./components/ConnectionStatus"
 import { FixtureLibraryPanel } from "./components/FixtureLibraryPanel"
 import Navigation from "./components/Navigation"
 import Sidebar from "./components/Sidebar"
-import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL } from "./data/fixtureLibrary"
+import { FIXTURE_LIBRARY, FIXTURE_MAP, CATEGORY_META, CATEGORY_VISUAL, ELECTRICAL_DEVICE_TYPES } from "./data/fixtureLibrary"
 import { saveProject, loadProject, shareProject as fbShareProject, checkAiLimit, incrementAiCall } from "./firebase"
 import { fromMM, getStoredUnit } from "./utils/units"
 import { SIDEBAR_LEGEND } from "./utils/heatmapColors"
@@ -366,11 +366,12 @@ export default function App() {
     rooms: [{
       id: 1, name: "Room 1",
       room: { ...DEFAULT_ROOM },
-      lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
+      lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
     }],
   }])
   const [activeFloorId,      setActiveFloorId]      = useState(1)
   const [activeTool,         setActiveTool]         = useState("fixture")
+  const [activeElectricalDeviceType, setActiveElectricalDeviceType] = useState(null)
   const [activeFixtureId,    setActiveFixtureId]    = useState(FIXTURE_LIBRARY[0].id)
   const [snapToGrid,         setSnapToGrid]         = useState(true)
   const [daliEnabled,        setDaliEnabled]        = useState(false)
@@ -416,7 +417,7 @@ export default function App() {
   const activeFloor   = floors.find(f => f.id === activeFloorId) ?? floors[0]
   const activeRoomId  = activeFloor.activeRoomId
   const activeRoomObj = activeFloor.rooms.find(r => r.id === activeRoomId) ?? activeFloor.rooms[0]
-  const { room, lights, dbMarkers, ctrMarkers, jbMarkers, emergencyLights = [], roomOffsetX, roomOffsetY, drawnWidthPx, drawnHeightPx } = activeRoomObj
+  const { room, lights, dbMarkers, ctrMarkers, jbMarkers, emergencyLights = [], electricalDevices = [], roomOffsetX, roomOffsetY, drawnWidthPx, drawnHeightPx } = activeRoomObj
   const floorPlan = activeFloor.floorPlan ?? null
 
   const activeFixture         = recentCustom.find(f => f.id === activeFixtureId) ?? FIXTURE_MAP[activeFixtureId] ?? FIXTURE_LIBRARY[0]
@@ -782,6 +783,26 @@ export default function App() {
     }))
   }
 
+  // ── Electrical device handlers ─────────────────────────────────────────────
+
+  function addElectricalDevice(type, x, y) {
+    patchActiveRoom(r => ({
+      electricalDevices: [...(r.electricalDevices ?? []), { id: Date.now(), type, x, y }],
+    }))
+  }
+
+  function moveElectricalDevice(id, x, y) {
+    patchActiveRoom(r => ({
+      electricalDevices: (r.electricalDevices ?? []).map(d => d.id === id ? { ...d, x, y } : d),
+    }))
+  }
+
+  function deleteElectricalDevice(id) {
+    patchActiveRoom(r => ({
+      electricalDevices: (r.electricalDevices ?? []).filter(d => d.id !== id),
+    }))
+  }
+
   // â”€â”€ Room settings & floor plan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   async function updateRoom(newRoom) {
@@ -861,7 +882,7 @@ export default function App() {
             drawnWidthPx,
             drawnHeightPx,
             floorPlan: f.floorPlan,
-            lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
+            lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
           }],
         }
       }))
@@ -872,7 +893,7 @@ export default function App() {
         roomOffsetY:    Math.max(0, y1),
         drawnWidthPx,
         drawnHeightPx,
-        lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
+        lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
       }))
     }
     setActiveTool("fixture")
@@ -902,7 +923,7 @@ export default function App() {
         rooms: [...f.rooms, {
           id: newId, name: `Room ${f.rooms.length + 1}`,
           room: { ...DEFAULT_ROOM },
-          lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
+          lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
         }],
       }
     }))
@@ -942,7 +963,7 @@ export default function App() {
       rooms: [{
         id: newRoomId, name: "Room 1",
         room: { ...DEFAULT_ROOM },
-        lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [],
+        lights: [], dbMarkers: [], ctrMarkers: [], jbMarkers: [], emergencyLights: [], electricalDevices: [],
       }],
     }])
     setActiveFloorId(newFloorId)
@@ -2299,6 +2320,8 @@ export default function App() {
       if (e.key === 'Escape') {
         setSelectedLights([])
         setShowShortcuts(false)
+        setActiveElectricalDeviceType(null)
+        setActiveTool('fixture')
         return
       }
 
@@ -2494,6 +2517,44 @@ export default function App() {
                 <div style={{ fontSize: 17, color: "#555555", marginBottom: 4 }}>BUS CAPACITY</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: "#cccccc" }}>{daliAddresses?.buses?.length ?? 0} <span style={{ fontSize: 14, fontWeight: 400, color: "#666666" }}>buses</span></div>
               </div>
+            </div>
+          </div>
+
+          {/* Electrical Devices panel */}
+          <div style={{ flex: 1, overflow: "auto", display: sidebarView === 'electrical-devices' ? "flex" : "none", flexDirection: "column", padding: 16 }}>
+            <div style={{ fontWeight: 600, color: "#cccccc", marginBottom: 12, fontSize: 14 }}>Electrical devices</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {Object.entries(ELECTRICAL_DEVICE_TYPES).map(([type, def]) => {
+                const selected = activeTool === 'electrical-device' && activeElectricalDeviceType === type
+                return (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setActiveTool('electrical-device')
+                      setActiveElectricalDeviceType(type)
+                    }}
+                    title={def.label || type}
+                    style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                      gap: 4, padding: "10px 8px",
+                      background: selected ? "rgba(212,168,67,0.12)" : "#161616",
+                      border: selected ? "1px solid #d4a843" : "1px solid #2a2a2a",
+                      borderRadius: 6, cursor: "pointer",
+                      fontFamily: "'Inter', sans-serif", transition: "all 0.15s",
+                    }}
+                  >
+                    <div style={{
+                      width: 24, height: 24, borderRadius: def.shape === 'circle-label' ? "50%" : 4,
+                      background: def.fill, border: `1.5px solid ${def.stroke}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 8, fontWeight: 700, color: def.textColor,
+                    }}>
+                      {def.shape !== 'half-circle' ? def.label : ''}
+                    </div>
+                    <span style={{ fontSize: 11, color: selected ? "#d4a843" : "#999999" }}>{def.label || 'Wall Light'}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </Sidebar>
@@ -2855,6 +2916,11 @@ export default function App() {
               onAddEmergencyLight={addEmergencyLight}
               onMoveEmergencyLight={moveEmergencyLight}
               onDeleteEmergencyLight={deleteEmergencyLight}
+              electricalDevices={electricalDevices}
+              activeElectricalDeviceType={activeElectricalDeviceType}
+              onAddElectricalDevice={addElectricalDevice}
+              onMoveElectricalDevice={moveElectricalDevice}
+              onDeleteElectricalDevice={deleteElectricalDevice}
               onUpdateLight={updateLight}
               onUpdateLightsOfType={updateLightsOfType}
               roomOffsetX={roomOffsetX}

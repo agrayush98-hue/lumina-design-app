@@ -5,6 +5,7 @@ import { toMM, fromMM, getStoredUnit, UNIT_OPTIONS, UNIT_KEY } from "../utils/un
 import { useToast } from "./Toast"
 import { getLuxAtPoint } from "../utils/luxCalculator"
 import { HEATMAP_STOPS } from "../utils/heatmapColors"
+import { ELECTRICAL_DEVICE_TYPES } from "../data/fixtureLibrary"
 
 const CANVAS_W = 1400
 const CANVAS_H = 750
@@ -94,6 +95,11 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   onAddEmergencyLight,
   onMoveEmergencyLight,
   onDeleteEmergencyLight,
+  electricalDevices,
+  activeElectricalDeviceType,
+  onAddElectricalDevice,
+  onMoveElectricalDevice,
+  onDeleteElectricalDevice,
   onUpdateLight,
   onUpdateLightsOfType,
   roomOffsetX,
@@ -578,6 +584,8 @@ const DesignCanvas = forwardRef(function DesignCanvas({
       onAddLight({ id: crypto.randomUUID(), x, y })
     } else if (activeTool === "emergency") {
       onAddEmergencyLight?.(x, y)
+    } else if (activeTool === "electrical-device" && activeElectricalDeviceType) {
+      onAddElectricalDevice?.(activeElectricalDeviceType, x, y)
     } else {
       onAddMarker(activeTool, x, y)
     }
@@ -1625,6 +1633,52 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     )
   }
 
+  // ── Electrical device symbol ────────────────────────────────────
+  function ElectricalDeviceSymbol({ device }) {
+    const def = ELECTRICAL_DEVICE_TYPES[device.type]
+    if (!def) return null
+    const S = 12
+    function handleDragEnd(e) {
+      const newX = Math.min(Math.max(e.target.x(), ROOM_X + S), ROOM_X + ROOM_PX_W - S)
+      const newY = Math.min(Math.max(e.target.y(), ROOM_Y + S), ROOM_Y + ROOM_PX_H - S)
+      e.target.x(newX); e.target.y(newY)
+      onMoveElectricalDevice?.(device.id, newX, newY)
+    }
+    const handleDblClick = () => onDeleteElectricalDevice?.(device.id)
+
+    let shapeEl
+    if (def.shape === "rect-label") {
+      shapeEl = (
+        <Rect x={-S} y={-S * 0.65} width={S * 2} height={S * 1.3} cornerRadius={3}
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+      )
+    } else if (def.shape === "square-label") {
+      shapeEl = (
+        <Rect x={-S} y={-S} width={S * 2} height={S * 2} cornerRadius={3}
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+      )
+    } else if (def.shape === "circle-label") {
+      shapeEl = (
+        <Circle radius={S} fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+      )
+    } else if (def.shape === "half-circle") {
+      shapeEl = (
+        <Arc innerRadius={0} outerRadius={S} angle={180} rotation={180}
+          fill={def.fill} stroke={def.stroke} strokeWidth={1.5} onDblClick={handleDblClick} />
+      )
+    }
+
+    return (
+      <Group x={device.x} y={device.y} draggable onDragEnd={handleDragEnd}>
+        {shapeEl}
+        {def.shape !== "half-circle" && def.label && (
+          <Text text={def.label} fontSize={7} fontFamily="Inter, sans-serif" fill={def.textColor}
+            width={S * 2} align="center" offsetX={S} offsetY={3.5} listening={false} />
+        )}
+      </Group>
+    )
+  }
+
   // ── Preview metrics ───────────────────────────────────────────
   const STRIP_FILL = "#cc60ff"
 
@@ -1659,7 +1713,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
     { id: "freehand", label: "~ FREEHAND" },
   ]
 
-  const isPlacementTool = activeTool === "fixture" || activeTool === "draw-room" || activeTool === "emergency"
+  const isPlacementTool = activeTool === "fixture" || activeTool === "draw-room" || activeTool === "emergency" || activeTool === "electrical-device"
   const stageCursor = panning ? "grabbing" : (spaceDown.current ? "grab" : (isPlacementTool ? "crosshair" : "default"))
 
   // ── Room size popup handlers ──────────────────────────────────
@@ -1936,6 +1990,9 @@ const DesignCanvas = forwardRef(function DesignCanvas({
 
             {/* Emergency fixtures */}
             {showEmergency && (emergencyLights ?? []).map(ef => <EmergencyFixture key={ef.id} ef={ef} />)}
+
+            {/* Electrical devices */}
+            {(electricalDevices ?? []).map(d => <ElectricalDeviceSymbol key={d.id} device={d} />)}
 
           </Layer>
 
