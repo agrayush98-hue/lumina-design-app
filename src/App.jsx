@@ -2162,7 +2162,7 @@ export default function App() {
       if (exportCanvasOptions.placement) {
         if (wasBeam) setShowBeam(false)
         if (wasHeatmap) setShowHeatmap(false)
-        await new Promise(r => setTimeout(r, 300))
+        await new Promise(r => setTimeout(r, 800))
         const dataUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
         if (wasBeam) setShowBeam(true)
         if (wasHeatmap) setShowHeatmap(true)
@@ -2300,7 +2300,7 @@ export default function App() {
       if (exportCanvasOptions.beam) {
         setShowBeam(true)
         setShowHeatmap(false)
-        await new Promise(r => setTimeout(r, 300))
+        await new Promise(r => setTimeout(r, 800))
         const beamUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
         setShowBeam(wasBeam)
         doc.addPage()
@@ -2321,7 +2321,7 @@ export default function App() {
       if (exportCanvasOptions.heatmap) {
         setShowHeatmap(true)
         setShowBeam(false)
-        await new Promise(r => setTimeout(r, 300))
+        await new Promise(r => setTimeout(r, 800))
         const heatUrl = stage.toDataURL({ pixelRatio: 3, x: cropX, y: cropY, width: cropW, height: cropH })
         setShowHeatmap(wasHeatmap)
         doc.addPage()
