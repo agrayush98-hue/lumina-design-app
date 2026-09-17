@@ -1976,7 +1976,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
                     fill="transparent"
                     opacity={isActive ? 1 : 0.5}
                     cornerRadius={3}
-                    listening={!isActive}
+                    listening={!isActive && activeTool === 'select'}
                     onClick={() => {
                       if (!isActive && !isStripMode && activeTool === "select") {
                         onSelectRoom?.(r.id)
