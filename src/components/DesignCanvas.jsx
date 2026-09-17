@@ -613,6 +613,7 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   // ── Stage-level click — handles fixture/marker placement when floor plan is loaded
   //    (room-fill Rect is hidden when floorPlan is set, so we fall back to the Stage)
   function handleStageClick(e) {
+    if (e.target !== e.target.getStage()) return
     if (isPanning.current) return
     if (isStripMode) return
     if (activeTool === "draw-room") return
