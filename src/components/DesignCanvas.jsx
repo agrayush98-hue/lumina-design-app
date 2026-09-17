@@ -613,12 +613,12 @@ const DesignCanvas = forwardRef(function DesignCanvas({
   // ── Stage-level click — handles fixture/marker placement when floor plan is loaded
   //    (room-fill Rect is hidden when floorPlan is set, so we fall back to the Stage)
   function handleStageClick(e) {
-    console.log('[CLICK DEBUG]', 'target:', e.target?.constructor?.name, 'draggable:', e.target?.draggable?.(), 'parent draggable:', e.target?.getParent?.()?.draggable?.(), 'activeTool:', activeTool)
     const clickedDraggable = e.target?.draggable?.() || e.target?.getParent?.()?.draggable?.()
     if (clickedDraggable) return
     if (isPanning.current) return
     if (isStripMode) return
     if (activeTool === "draw-room") return
+    console.log('[CLICK DEBUG]', 'target:', e.target?.constructor?.name, 'activeTool:', activeTool, 'insideRoom result:', insideRoom(toWorld({ x: e.evt.offsetX, y: e.evt.offsetY }).x, toWorld({ x: e.evt.offsetX, y: e.evt.offsetY }).y))
     // When no floor plan, the room-fill Rect handles clicks via its own onClick.
     // However, if the room-fill Rect fails to capture the click for any reason,
     // we fallback to checking if the stage click was inside the room area.
